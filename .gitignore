@@ -127,3 +127,33 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# PyCharm
+.idea/
+# Vim
+.vim/
+# Visual Studio Code
+.vscode/
+
+# Spreadsheets
+*.csv
+
+# Images
+vision_images/
+vision_videos/
+*.raw
+*.jpg
+*.jpeg
+*.png
+*.bag
+*.tiff
+*.bmp
+
+# Videos
+*.avi
+*.mov
+*.mp4
+*.m4a
+*.wmv
+*.mkv
+*.flv
