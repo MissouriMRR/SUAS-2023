@@ -1,3 +1,12 @@
+---
+name: Feature implementation
+about: Merge changes into develop branch
+title: ''
+labels: ''
+assignees: ''
+
+---
+
 closes \#<issue_number>
 
 # Feature Name
