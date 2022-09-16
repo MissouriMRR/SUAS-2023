@@ -15,30 +15,29 @@ def extract_gps(path: str) -> GPSData:
     waypoints = []
     boundaryPoints = []
 
-    print('Waypoints Loaded:')
     for i in dataFile['waypoints']:
         latitude = i['latitude']
         longitude = i['longitude']
         altitude = i['altitude']
-        print(f'Latitude: {latitude} Longitude: {longitude} @ Altitude {altitude}')
 
-        waypoint = Waypoint(i['latitude'], i['longitude'], i['altitude'])
+        waypoint = Waypoint(latitude, longitude, altitude)
         waypoints.append(waypoint)
     
     print('Boundary Points Loaded:')
     for i in dataFile['flyzones']['boundaryPoints']:
         latitude = i['latitude']
         longitude = i['longitude']
-        print(f'Latitude: {latitude} Longitude: {longitude}')
 
-        boundaryPoint = BoundaryPoint(i['latitude'], i['longitude'])
+        boundaryPoint = BoundaryPoint(latitude, longitude)
         boundaryPoints.append(boundaryPoint)
 
     altitudeMin = dataFile['flyzones']['altitudeMin']
     altitudeMax = dataFile['flyzones']['altitudeMax']
 
-    print(f'{altitudeMin} {altitudeMax}')
     return {'waypoints': waypoints, 'boundaryPoints': boundaryPoints, 'altitudeMin': altitudeMin, 'altitudeMax': altitudeMax}
+
+if __name__ == "__main__":
+    extract_gps('flight/waypoint_data.json')
 
     
 
