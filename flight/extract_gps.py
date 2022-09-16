@@ -1,15 +1,19 @@
 from collections import namedtuple
+from typing import List, NamedTuple, TypeAlias
 import json
 
-def extract_gps():
-    with open("flight/waypoint_data.json") as waypoint_data:
+GPSData: TypeAlias = dict(list(NamedTuple), list(NamedTuple), int, int)
+
+def extract_gps(path: str) -> GPSData:
+    
+    Waypoint = namedtuple('Waypoint', ['latitude', 'longitude', 'altitude'])
+    BoundaryPoint = namedtuple('BoundaryPoint', ['latitude', 'longitude'])
+    
+    with open(path) as waypoint_data:
         dataFile = json.load(waypoint_data)
 
     waypoints = []
     boundaryPoints = []
-
-    Waypoint = namedtuple('Waypoint', ['latitude', 'longitude', 'altitude'])
-    BoundaryPoint = namedtuple('BoundaryPoint', ['latitude', 'longitude'])
 
     print('Waypoints Loaded:')
     for i in dataFile['waypoints']:
@@ -34,9 +38,8 @@ def extract_gps():
     altitudeMax = dataFile['flyzones']['altitudeMax']
 
     print(f'{altitudeMin} {altitudeMax}')
-    return waypoints, boundaryPoints, altitudeMin, altitudeMax
+    return {'waypoints': waypoints, 'boundaryPoints': boundaryPoints, 'altitudeMin': altitudeMin, 'altitudeMax': altitudeMax}
 
-extract_gps()
     
 
     
