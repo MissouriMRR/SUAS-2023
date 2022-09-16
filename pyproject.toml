@@ -6,7 +6,7 @@ authors = []
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 pip = "^22.0.4"
 mavsdk = "*"
 numpy = "^1.21.2"
