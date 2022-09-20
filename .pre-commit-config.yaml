@@ -1,0 +1,47 @@
+repos:
+-   repo: https://github.com/ambv/black
+    rev: 22.3.0
+    hooks:
+    -   id: black
+        additional_dependencies: ['click<8.1']
+        language_version: python3.10
+        args:
+          ["--line-length=100"]
+
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.2.0  # Use the ref you want to point at
+    hooks:
+    -   id: check-json
+    -   id: check-xml
+    -   id: check-yaml
+    -   id: check-toml
+    -   id: check-added-large-files
+    -   id: check-merge-conflict
+    -   id: check-case-conflict
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: mixed-line-ending
+        args: ["--fix=lf"]
+        description: Forces line endings to the UNIX LF character
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v0.942'
+    hooks:
+    -   id: mypy
+        args: ["--config-file=.mypy.ini"]
+        additional_dependencies: ['numpy>=1.21.2']
+
+-   repo: https://github.com/PyCQA/pylint
+    rev: 'v2.13.7'
+    hooks:
+    -   id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+        args:
+          [
+                # "-rn", # only display messages
+                # "-sn", # don't display the score
+                "--rcfile=.pylintrc", # link to config file
+          ]
