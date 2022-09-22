@@ -1,5 +1,7 @@
-"""Contains the extract_gps() function for extracting data out of
-the provided waypoint data JSON file for the SUAS competition."""
+"""
+Contains the extract_gps() function for extracting data out of
+the provided waypoint data JSON file for the SUAS competition.
+"""
 from collections import namedtuple
 from typing import Any, List, NamedTuple
 import json
@@ -16,35 +18,37 @@ GPSData = TypedDict(
 
 
 def extract_gps(path: str) -> GPSData:
-    """Returns the waypoints, boundary points, and altitude limits from a waypoint data file.
+    """
+    Returns the waypoints, boundary points, and altitude limits from a waypoint data file.
 
-    Args:
-        path (str): File path to the waypoint data JSON file.
+    Parameters
+    ----------
+    path : str
+        File path to the waypoint data JSON file.
 
-    Returns:
-        GPSData: TypedDict[
-            list(NamedTuple(int, int, int)), list(NamedTuple(int, int)), list(int, int)
-        ]
-            The data in the waypoint data file
-            waypoints : list(NamedTuple(int, int, int))
-                Waypoint : NamedTuple(int, int, int)
-                    latitude : int
-                        The latitude of the waypoint.
-                    longitude : int
-                        The longitude of the waypoint.
-                    altitude : int
-                        The altitude of the waypoint.
-            boundary_points : list(NamedTuple(int, int, int))
-                BoundaryPoint : NamedTuple(int, int, int)
-                    latitude : int
-                        The latitude of the boundary point.
-                    longitude : int
-                        The longitude of the boundary point.
-            altitude_limits : list(int, int)
-                altitude_min : int
-                    The minimum altitude that the drone must fly at all times.
-                altitude_max : int
-                    The maximum altitude that the drone must fly at all times.
+    Returns
+    -------
+    GPSData : TypedDict[list[NamedTuple[int, int, int]], list[NamedTuple[int, int]], list[int, int]]
+        The data in the waypoint data file
+        waypoints : list[NamedTuple[int, int, int]]
+            Waypoint : NamedTuple[int, int, int]
+                latitude : int
+                    The latitude of the waypoint.
+                longitude : int
+                    The longitude of the waypoint.
+                altitude : int
+                    The altitude of the waypoint.
+        boundary_points : list[NamedTuple[int, int, int]]
+            BoundaryPoint : NamedTuple[int, int, int]
+                latitude : int
+                    The latitude of the boundary point.
+                longitude : int
+                    The longitude of the boundary point.
+        altitude_limits : list[int, int]
+            altitude_min : int
+                The minimum altitude that the drone must fly at all times.
+            altitude_max : int
+                The maximum altitude that the drone must fly at all times.
     """
     # Initialize namedtuples to store latitude/longitude/altitude data for provided points
     Waypoint = namedtuple("Waypoint", ["latitude", "longitude", "altitude"])
@@ -89,6 +93,6 @@ def extract_gps(path: str) -> GPSData:
     return waypoint_data
 
 
-# If run on it's own, use the default data location
+# If run on its own, use the default data location
 if __name__ == "__main__":
     extract_gps("flight/data/waypoint_data.json")
