@@ -4,6 +4,7 @@ the provided waypoint data JSON file for the SUAS competition.
 """
 from typing import Any, List, NamedTuple
 import json
+import argparse
 from typing_extensions import TypedDict
 
 # Initialize namedtuples to store latitude/longitude/altitude data for provided points
@@ -131,4 +132,9 @@ def extract_gps(path: str) -> GPSData:
 
 # If run on its own, use the default data location
 if __name__ == "__main__":
-    extract_gps("flight/data/waypoint_data.json")
+    # Read file to be used as the data file using the -file argument
+    parser: argparse.ArgumentParser = argparse.ArgumentParser()
+    parser.add_argument("-file")
+    args: argparse.Namespace = parser.parse_args()
+
+    extract_gps(vars(args)["file"])
