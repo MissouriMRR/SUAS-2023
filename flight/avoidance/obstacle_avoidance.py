@@ -7,12 +7,13 @@ from typing import Optional
 from mavsdk import System
 from mavsdk.telemetry import Position
 
-# TODO: Update type to actual type # pylint: disable=fixme
+# TODO: Update types to the correct types # pylint: disable=fixme
+Obstacle = dict[str, float]
 Coordinate = dict[str, float]
 
 
 async def calculate_avoidance_path(
-    drone: System, obstacle: Coordinate, position: Optional[Position]
+    drone: System, obstacle: Obstacle, position: Optional[Position]
 ) -> list[Coordinate]:
     """
     Given a drone and an obstacle, calculates a path avoiding the obstacle
