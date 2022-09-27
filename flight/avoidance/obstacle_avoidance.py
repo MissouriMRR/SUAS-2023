@@ -2,19 +2,42 @@
 Contains a moving obstacle avoidance function
 """
 
+from dataclasses import dataclass
 from typing import Optional
 
 from mavsdk import System
 from mavsdk.telemetry import Position
 
-# TODO: Update types to the correct types # pylint: disable=fixme
+# TODO: Update type to the correct type # pylint: disable=fixme
 Obstacle = dict[str, float]
-Coordinate = dict[str, float]
+
+
+@dataclass
+class Point:
+    """
+    A point in 3D space
+
+    Attributes
+    ----------
+    utm_x : float
+        The x-coordinate of this point in the UTM coordinate system
+    utm_y : float
+        The y-coordinate of this point in the UTM coordinate system
+    utm_zone_number : int
+        The UTM zone this point is in
+    utm_zone_letter : str
+        The letter of the UTM latitude band
+    """
+
+    utm_x: float
+    utm_y: float
+    utm_zone_number: int
+    utm_zone_letter: str
 
 
 async def calculate_avoidance_path(
     drone: System, obstacle: Obstacle, position: Optional[Position]
-) -> list[Coordinate]:
+) -> list[Point]:
     """
     Given a drone and a moving obstacle, calculates a path avoiding the obstacle
 
