@@ -1,5 +1,5 @@
 """
-Contains an obstacle avoidance function
+Contains a moving obstacle avoidance function
 """
 
 from typing import Optional
@@ -16,7 +16,7 @@ async def calculate_avoidance_path(
     drone: System, obstacle: Obstacle, position: Optional[Position]
 ) -> list[Coordinate]:
     """
-    Given a drone and an obstacle, calculates a path avoiding the obstacle
+    Given a drone and a moving obstacle, calculates a path avoiding the obstacle
 
     Parameters
     ----------
