@@ -6,8 +6,13 @@ DEFAULT_RUN_DESCRIPTION: str = "Test flight for SUAS 2023"
 
 
 class StateSettings:
-    def __init__(self, simple_takeoff: bool = False, title: str = DEFAULT_RUN_TITLE,
-                 description: str = DEFAULT_RUN_DESCRIPTION, waypoints: int = DEFAULT_WAYPOINTS) -> None:
+    def __init__(
+        self,
+        simple_takeoff: bool = False,
+        title: str = DEFAULT_RUN_TITLE,
+        description: str = DEFAULT_RUN_DESCRIPTION,
+        waypoints: int = DEFAULT_WAYPOINTS,
+    ) -> None:
         """
         Default Constructor for flight settings
 

@@ -20,6 +20,7 @@ class Takeoff(State):
     run(drone: System) -> Waypoints
         Lift the drone from takeoff location and begin movement to first waypoint
     """
+
     async def run(self, drone: System) -> Waypoints:
         """
         Run takeoff procedure to move drone upwards using offboard or action functions
@@ -35,4 +36,3 @@ class Takeoff(State):
             Next state to fly waypoint path
         """
         return Waypoints(self.state_settings)
-

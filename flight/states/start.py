@@ -20,6 +20,7 @@ class Start(State):
     begin(drone: System) -> PreProcess
         Start the state machine & proceed to PreProcess state
     """
+
     async def begin(self, drone: System) -> PreProcess:
         """
         Start state machine and pass to PreProcess state

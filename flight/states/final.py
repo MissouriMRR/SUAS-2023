@@ -19,6 +19,7 @@ class Final(State):
     run(drone: System) -> None
         Does nothing and ends state machine
     """
+
     async def run(self, drone: System) -> None:
         """
         Do nothing state to log end of competition code and terminate state machine

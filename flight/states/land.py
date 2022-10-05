@@ -20,6 +20,7 @@ class Land(State):
     run(drone: System) -> Final
         Land the drone safely from operational altitude
     """
+
     async def run(self, drone: System) -> Final:
         """
         Maneuver the drone to the landing location and safely land the drone

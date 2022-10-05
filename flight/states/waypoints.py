@@ -20,6 +20,7 @@ class Waypoints(State):
     run(drone: System) -> Union(Waypoints, ODLC)
         Process set of waypoints and fly within 25ft of each
     """
+
     async def run(self, drone: System) -> ODLC:
         """
         Run through list of waypoints & fly within 25ft of each desired point

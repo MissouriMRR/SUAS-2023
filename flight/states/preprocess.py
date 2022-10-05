@@ -20,6 +20,7 @@ class PreProcess(State):
     run(drone: System) -> Takeoff
         Generate an in-bounds flight path from the given GPS data
     """
+
     async def run(self, drone: System) -> Takeoff:
         """
         Given GPS coordinates of boundary & waypoints, create efficient flight path
