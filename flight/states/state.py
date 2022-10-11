@@ -43,7 +43,9 @@ class State:
         logging.info("State %s has begun", self.name)
         self.state_settings: StateSettings = state_settings
 
-    async def run(self, drone: System) -> Start | PreProcess | Takeoff | Waypoints | ODLC | AirDrop | Land | Final:
+    async def run(
+        self, drone: System
+    ) -> Start | PreProcess | Takeoff | Waypoints | ODLC | AirDrop | Land | Final:
         """
         Flight mission code for each state
 
