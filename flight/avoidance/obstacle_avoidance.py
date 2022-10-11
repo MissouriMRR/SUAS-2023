@@ -27,9 +27,9 @@ class Point:
     Attributes
     ----------
     utm_x : float
-        The x-coordinate of this point in the UTM coordinate system
+        The x-coordinate of this point, in meters, in UTM coordinates
     utm_y : float
-        The y-coordinate of this point in the UTM coordinate system
+        The y-coordinate of this point, in meters, in UTM coordinates
     utm_zone_number : int
         The UTM zone this point is in
     utm_zone_letter : str
