@@ -3,6 +3,14 @@
 import logging
 from mavsdk import System
 from flight.state_settings import StateSettings
+from flight.states.start import Start
+from flight.states.preprocess import PreProcess
+from flight.states.takeoff import Takeoff
+from flight.states.waypoints import Waypoints
+from flight.states.odlcs import ODLC
+from flight.states.airdrop import AirDrop
+from flight.states.land import Land
+from flight.states.final import Final
 
 
 class State:
@@ -35,7 +43,7 @@ class State:
         logging.info("State %s has begun", self.name)
         self.state_settings: StateSettings = state_settings
 
-    async def run(self, drone: System) -> None:
+    async def run(self, drone: System) -> Start | PreProcess | Takeoff | Waypoints | ODLC | AirDrop | Land | Final:
         """
         Flight mission code for each state
 
