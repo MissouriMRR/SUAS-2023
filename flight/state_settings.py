@@ -39,6 +39,7 @@ class StateSettings:
     run_description(new_description: str) -> None
         Sets a new description for the new flight
     """
+
     def __init__(
         self,
         simple_takeoff: bool = False,

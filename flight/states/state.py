@@ -79,4 +79,3 @@ class State:
             Name of current state
         """
         return type(self).__name__
-
