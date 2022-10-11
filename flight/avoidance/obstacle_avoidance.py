@@ -91,7 +91,7 @@ class Point:
             position.latitude_deg, position.longitude_deg
         )
 
-        # Can't directly unpack argument return value because mypy complains
+        # Can't directly unpack function return value because mypy complains
         return cls(easting, northing, zone_number, zone_letter, None)
 
 
