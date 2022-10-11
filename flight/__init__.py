@@ -18,6 +18,5 @@ STATES: Dict[str, State] = {
     "ODLC Scanning": ODLC,
     "Air Drop": AirDrop,
     "Land": Land,
-    "Final State": Final
-
+    "Final State": Final,
 }
