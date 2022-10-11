@@ -1,8 +1,6 @@
 """Fly through the entire waypoint path after takeoff"""
 
-import logging
 from mavsdk import System
-from flight.state_settings import StateSettings
 from flight.states.state import State
 from flight.states.odlcs import ODLC
 
@@ -11,13 +9,9 @@ class Waypoints(State):
     """
     State to run through waypoint flight path
 
-    Attributes
-    ----------
-    None
-
     Methods
     -------
-    run(drone: System) -> Union(Waypoints, ODLC)
+    run(drone: System) -> ODLC
         Process set of waypoints and fly within 25ft of each
     """
 
@@ -32,7 +26,7 @@ class Waypoints(State):
 
         Returns
         -------
-        Union[Waypoints, ODLC] : State
+        ODLC : State
             Re-fly the waypoints if we failed to reach a waypoint boundary, or progress to ODLC flight stage
         """
         return ODLC(self.state_settings)

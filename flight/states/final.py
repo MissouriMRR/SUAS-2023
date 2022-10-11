@@ -2,17 +2,12 @@
 
 import logging
 from mavsdk import System
-from flight.state_settings import StateSettings
 from flight.states.state import State
 
 
 class Final(State):
     """
     Last state in the state machine to end the competition code
-
-    Attributes
-    ----------
-    None
 
     Methods
     -------

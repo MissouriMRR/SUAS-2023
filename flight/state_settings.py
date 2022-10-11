@@ -6,6 +6,39 @@ DEFAULT_RUN_DESCRIPTION: str = "Test flight for SUAS 2023"
 
 
 class StateSettings:
+    """
+    Class to contain basic information for a flight, as well as some flight parameters
+
+    Attributes
+    ----------
+    __simple_takeoff: bool
+        Sets if the drone will ascend vertically or at an angle
+    __run_title: str
+        The name for the current flight operation
+    __run_description: str
+        A small description for the current flight
+    __num_waypoints: int
+        The number of waypoints to fly for the current flight test
+
+    Methods
+    -------
+    simple_takeoff() -> bool
+        Returns the status of the takeoff type for the flight
+    simple_takeoff(simple_takeoff: bool) -> None
+        Sets the parameter for a simple or diagonal takeoff
+    num_waypoints() -> int
+        Returns the number of waypoints to fly for the current flight
+    num_waypoints(waypoints: int) -> None
+        Setter for configuring the number of waypoints to fly for the flight test
+    run_title() -> str
+        `Returns the flight title
+    run_title(new_title: str) -> None
+        Sets a new title for the current flight
+    run_description() -> str
+        Returns the small description for the current flight
+    run_description(new_description: str) -> None
+        Sets a new description for the new flight
+    """
     def __init__(
         self,
         simple_takeoff: bool = False,

@@ -2,7 +2,6 @@
 
 import logging
 from mavsdk import System
-from flight.state_settings import StateSettings
 from flight.states.state import State
 from flight.states.preprocess import PreProcess
 
@@ -10,10 +9,6 @@ from flight.states.preprocess import PreProcess
 class Start(State):
     """
     Preliminary state to initiate state machine
-
-    Attributes
-    ----------
-    None
 
     Methods
     -------

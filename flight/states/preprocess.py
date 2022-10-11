@@ -1,8 +1,6 @@
 """Generate a flight path for the waypoints within the flight boundaries"""
 
-import logging
 from mavsdk import System
-from flight.state_settings import StateSettings
 from flight.states.state import State
 from flight.states.takeoff import Takeoff
 
@@ -10,10 +8,6 @@ from flight.states.takeoff import Takeoff
 class PreProcess(State):
     """
     State to generate flight paths for competition
-
-    Attributes
-    ----------
-    None
 
     Methods
     -------

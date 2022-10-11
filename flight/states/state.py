@@ -16,8 +16,9 @@ class State:
 
     Methods
     -------
-    run(drone: System) -> None
+    run(drone: System)
         Runs the code for each state and return the next, or None if at the end of the state machine
+        For the base class, NotImplementedError is raised
     check_arm_or_arm(drone: System) -> None
         Verifies if drone is armed, and if not, arms it
     """
@@ -34,7 +35,7 @@ class State:
         logging.info("State %s has begun", self.name)
         self.state_settings: StateSettings = state_settings
 
-    async def run(self, drone: System) -> None:
+    async def run(self, drone: System):
         """
         Flight mission code for each state
 
@@ -42,8 +43,13 @@ class State:
         ----------
         drone : System
             MAVSDK drone object used to manipulate drone position & attitude
+
+        Raises
+        ------
+        NotImplementedError
+            Since this is the base State class, this run() function should not be utilized.
         """
-        return
+        raise NotImplementedError("Base class function should not be called.")
 
     async def check_arm_or_arm(self, drone: System) -> None:
         """
@@ -73,3 +79,4 @@ class State:
             Name of current state
         """
         return type(self).__name__
+

@@ -1,8 +1,6 @@
 """Run takeoff function to raise the drone to our desired altitude"""
 
-import logging
 from mavsdk import System
-from flight.state_settings import StateSettings
 from flight.states.state import State
 from flight.states.waypoints import Waypoints
 
@@ -10,10 +8,6 @@ from flight.states.waypoints import Waypoints
 class Takeoff(State):
     """
     Runs takeoff procedure to lift the drone to preset altitude
-
-    Attributes
-    ----------
-    None
 
     Methods
     -------
