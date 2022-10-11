@@ -5,8 +5,6 @@ Contains a moving obstacle avoidance function
 # pylint: disable=fixme
 
 from dataclasses import dataclass
-from typing import Optional
-from typing import Union
 
 from mavsdk import System
 from mavsdk.telemetry import Position as MavsdkPosition
@@ -16,8 +14,7 @@ import utm
 
 # Input points are dicts with time and UTM coordinate data
 # May change in the future
-# Optional[float] for time, allows type to be used for points without time
-InputPoint = dict[str, Union[float, int, str, Optional[float]]]
+InputPoint = dict[str, float | int | str]
 
 
 # TODO: Maybe add a time component
@@ -45,12 +42,12 @@ class Point:
     utm_y: float
     utm_zone_number: int
     utm_zone_letter: str
-    altitude: Optional[float]
+    altitude: float | None
 
     @classmethod
     def from_dict(cls, position_data: InputPoint) -> "Point":
         """
-        Converts a dict with position data to a Point object
+        Factory method accepting a dict with position data
 
         Parameters
         ----------
@@ -63,7 +60,6 @@ class Point:
         A new Point object
         """
 
-        # TODO: Fix pylint errors
         return cls(
             float(position_data["utm_x"]),
             float(position_data["utm_y"]),
@@ -75,7 +71,7 @@ class Point:
     @classmethod
     def from_mavsdk_position(cls, position: MavsdkPosition) -> "Point":
         """
-        Converts a position data dict to a Point object
+        Factory method accepting a mavsdk.telemetry.Position object
 
         Parameters
         ----------
@@ -87,14 +83,21 @@ class Point:
         A new Point object
         """
 
-        # TODO: Fix pylint errors
-        return cls(*utm.from_latlon(position.latitude_deg, position.longitude_deg), None)
+        easting: float
+        northing: float
+        zone_number: int
+        zone_letter: str
+        easting, northing, zone_number, zone_letter = utm.from_latlon(
+            position.latitude_deg, position.longitude_deg
+        )
+
+        # Can't directly unpack argument return value because mypy complains
+        return cls(easting, northing, zone_number, zone_letter, None)
 
 
 async def calculate_avoidance_path(
     drone: System,
     obstacle_data: list[InputPoint],
-    position: Optional[MavsdkPosition],
     avoidance_radius: float = 10.0,
 ) -> list[Point]:
     """
@@ -106,11 +109,8 @@ async def calculate_avoidance_path(
         The drone for which the path will be calculated for
     obstacle_data : list[InputPoint]
         Previously known positions
-    position : Optional[Position] = None
-        The position of the drone
-        The current position of the drone will be used if not provided
     avoidance_radius : float
-        The radius of the sphere, in meters, from the predicted center of the obstacle that the drone should avoid
+        The radius around the predicted center of the obstacle the drone should avoid
 
     Returns
     -------
@@ -120,12 +120,9 @@ async def calculate_avoidance_path(
 
     # Get position of drone
     raw_drone_position: MavsdkPosition
-    if position is None:
-        async for position in drone.telemetry.position():
-            raw_drone_position = position
-            break
-    else:
+    async for position in drone.telemetry.position():
         raw_drone_position = position
+        break
 
     # Convert drone position to UTM Point
     drone_position: Point = Point.from_mavsdk_position(raw_drone_position)
