@@ -16,7 +16,7 @@ class State:
 
     Methods
     -------
-    run(drone: System)
+    run(drone: System) -> None
         Runs the code for each state and return the next, or None if at the end of the state machine
         For the base class, NotImplementedError is raised
     check_arm_or_arm(drone: System) -> None
@@ -35,7 +35,7 @@ class State:
         logging.info("State %s has begun", self.name)
         self.state_settings: StateSettings = state_settings
 
-    async def run(self, drone: System):
+    async def run(self, drone: System) -> None:
         """
         Flight mission code for each state
 
@@ -69,7 +69,7 @@ class State:
                 break
 
     @property
-    def name(self):
+    def name(self) -> str:
         """
         Getter function to return name & type of state
 
