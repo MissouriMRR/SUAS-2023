@@ -92,7 +92,7 @@ class Point:
         )
 
         # Can't directly unpack function return value because mypy complains
-        return cls(easting, northing, zone_number, zone_letter, None)
+        return cls(easting, northing, zone_number, zone_letter, position.absolute_altitude_m)
 
 
 async def calculate_avoidance_path(
