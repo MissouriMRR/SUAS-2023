@@ -1,4 +1,3 @@
-
 """
 This file contains code to filter contours to identify the odlc shapes from an already processed
 image.
@@ -59,18 +58,20 @@ def test_min_area_box(contour: contour_type, test_box_ratio: int = 3) -> bool:
     return True
 
 
-def test_bounding_box(contour: contour_type, dims: Tuple[int, int], test_area_ratio: int = 10) -> bool:
+def test_bounding_box(
+    contour: contour_type, dims: Tuple[int, int], test_area_ratio: int = 10
+) -> bool:
     """
     TODO: document code
     """
     bounding_box: rectangle_type = cv2.boundingRect(contour)
 
-    box_area: float = abs(bounding_box[0, 0, 0]-bounding_box[0, 1, 0])*abs(
-        bounding_box[0, 1, 1]-bounding_box[0, 2, 1]
+    box_area: float = abs(bounding_box[0, 0, 0] - bounding_box[0, 1, 0]) * abs(
+        bounding_box[0, 1, 1] - bounding_box[0, 2, 1]
     )
-    img_area: float = dims[0]*dims[1]
+    img_area: float = dims[0] * dims[1]
 
-    return img_area/box_area >= test_area_ratio
+    return img_area / box_area >= test_area_ratio
 
 
 def test_jaggedness(contour: contour_type) -> bool:
@@ -82,7 +83,9 @@ def test_jaggedness(contour: contour_type) -> bool:
     """
     moments = cv2.moments(contour)
     # com is Center of Mass, com = (y_coord, x_coord)
-    com: NDArray[Shape["2"], Float64] = np.array(((moments["m01"] / moments["m00"]), (moments["m10"] / moments["m00"])), dtype=np.float64)
+    com: NDArray[Shape["2"], Float64] = np.array(
+        ((moments["m01"] / moments["m00"]), (moments["m10"] / moments["m00"])), dtype=np.float64
+    )
 
     dists_calc = np.vectorize(lambda p: cv2.norm(p[0] - com))
 
@@ -91,12 +94,14 @@ def test_jaggedness(contour: contour_type) -> bool:
     dists_median: float = np.median(dists_com)
     dists_outlier_range: float = 1.5 * (np.quantile(dists_com, 0.75) - np.quantile(dists_com, 0.25))
 
-    if np.all(dists_com < dists_median+dists_outlier_range):
+    if np.all(dists_com < dists_median + dists_outlier_range):
         return True
     return False
 
 
-def test_polygonness(contour: contour_type, approx: contour_type, dims: Tuple[int, int], test_ratio: float = 0.75) -> bool:
+def test_polygonness(
+    contour: contour_type, approx: contour_type, dims: Tuple[int, int], test_ratio: float = 0.75
+) -> bool:
     """
     dims param should probably be bounding box dims not image dims
     TODO: document code
@@ -118,7 +123,9 @@ def test_circleness(contour: contour_type, bw_image: single_channel_image_type):
     """
 
 
-def filter_contour(contour: contour_type, hierarchy: hierarchy_type, contour_index: int, image: image_type) -> bool:
+def filter_contour(
+    contour: contour_type, hierarchy: hierarchy_type, contour_index: int, image: image_type
+) -> bool:
     """
     TODO: document code
     """
