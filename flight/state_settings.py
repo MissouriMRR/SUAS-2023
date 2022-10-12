@@ -70,7 +70,7 @@ class StateSettings:
     @property
     def simple_takeoff(self) -> bool:
         """
-        Sets simple_takeoff as a private member variable
+        Gets simple_takeoff as a private member variable
 
         Returns
         -------
@@ -95,7 +95,7 @@ class StateSettings:
     @property
     def num_waypoints(self) -> int:
         """
-        Sets the number of waypoints as a private member variable
+        Gets the number of waypoints as a private member variable
 
         Returns
         -------

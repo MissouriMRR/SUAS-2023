@@ -25,4 +25,4 @@ class Final(State):
             MAVSDK object to manipulate drone position and attitude
         """
         logging.debug("End of state machine.")
-        return None
+        return

@@ -22,6 +22,7 @@ class PreProcess(State):
         Parameters
         ----------
         drone : System
+            MAVSDK object used to access and manipulate drone operations
 
         Returns
         -------
