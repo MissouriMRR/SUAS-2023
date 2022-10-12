@@ -11,7 +11,6 @@ import mavsdk.telemetry
 
 import utm
 
-
 # Input points are dicts with time and UTM coordinate data
 # May change in the future
 InputPoint = dict[str, float | int | str]
@@ -93,6 +92,43 @@ class Point:
 
         # Can't directly unpack function return value because mypy complains
         return cls(easting, northing, zone_number, zone_letter, position.absolute_altitude_m)
+
+
+@dataclass
+class Velocity:
+    """
+    A velocity in 3D space
+
+    Attributes
+    ----------
+    north_vel : float
+        Eastward velocity in meters per second
+    east_vel : float
+        Northward velocity in meters per second
+    down_vel : float
+        Downward velocity in meters per second
+    """
+
+    north_vel: float
+    east_vel: float
+    down_vel: float
+
+    @classmethod
+    def from_mavsdk_velocityned(cls, velocity: mavsdk.telemetry.VelocityNed) -> "Velocity":
+        """
+        Factory method accepting a mavsdk.telemetry.VelocityNed object
+
+        Parameters
+        ----------
+        velocity : mavsdk.telemetry.VelocityNed
+            A velocity (NED) from MAVSDK
+
+        Returns
+        -------
+        A new Velocity object
+        """
+
+        return cls(velocity.north_m_s, velocity.east_m_s, velocity.down_m_s)
 
 
 async def calculate_avoidance_path(
