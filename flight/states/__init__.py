@@ -1,5 +1,5 @@
 """Initialization File for state exporting"""
-from typing import Dict
+from typing import Type, Dict
 from flight.states.state import State
 from flight.states.start import Start
 from flight.states.preprocess import PreProcess
@@ -11,7 +11,7 @@ from flight.states.land import Land
 from flight.states.final import Final
 
 """ The STATES dictionary is used to export the various state modules under these given names """
-STATES: Dict[str, State] = {
+STATES: Dict[str, Type[Start | PreProcess | Takeoff | Waypoints | ODLC | AirDrop | Land | Final]] = {
     "Start_State": Start,
     "Pre_Process": PreProcess,
     "Takeoff": Takeoff,
