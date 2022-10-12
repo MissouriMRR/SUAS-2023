@@ -6,8 +6,8 @@ Contains a moving obstacle avoidance function
 
 from dataclasses import dataclass
 
-from mavsdk import System
-from mavsdk.telemetry import Position as MavsdkPosition
+import mavsdk
+import mavsdk.telemetry
 
 import utm
 
@@ -69,7 +69,7 @@ class Point:
         )
 
     @classmethod
-    def from_mavsdk_position(cls, position: MavsdkPosition) -> "Point":
+    def from_mavsdk_position(cls, position: mavsdk.telemetry.Position) -> "Point":
         """
         Factory method accepting a mavsdk.telemetry.Position object
 
@@ -96,7 +96,7 @@ class Point:
 
 
 async def calculate_avoidance_path(
-    drone: System,
+    drone: mavsdk.System,
     obstacle_data: list[InputPoint],
     avoidance_radius: float = 10.0,
 ) -> list[Point]:
@@ -105,7 +105,7 @@ async def calculate_avoidance_path(
 
     Parameters
     ----------
-    drone : System
+    drone : mavsdk.System
         The drone for which the path will be calculated for
     obstacle_data : list[InputPoint]
         Previously known positions
@@ -119,7 +119,7 @@ async def calculate_avoidance_path(
     """
 
     # Get position of drone
-    raw_drone_position: MavsdkPosition
+    raw_drone_position: mavsdk.telemetry.Position
     async for position in drone.telemetry.position():
         raw_drone_position = position
         break
