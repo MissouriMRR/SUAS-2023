@@ -163,8 +163,18 @@ async def calculate_avoidance_path(
     # Convert drone position to UTM Point
     drone_position: Point = Point.from_mavsdk_position(raw_drone_position)
 
+    # Get velocity of drone
+    raw_drone_velocity: mavsdk.telemetry.VelocityNed
+    async for velocity in drone.telemetry.velocity_ned():
+        raw_drone_velocity = velocity
+        break
+
+    # Convert drone position to Velocity object
+    # Units don't change, only the type of the object
+    drone_velocity: Velocity = Velocity.from_mavsdk_velocityned(raw_drone_velocity)
+
     # TODO: Do something useful with these variables
-    print(obstacle_data, drone_position, avoidance_radius)
+    print(obstacle_data, drone_position, drone_velocity, avoidance_radius)
 
     raise NotImplementedError
 
