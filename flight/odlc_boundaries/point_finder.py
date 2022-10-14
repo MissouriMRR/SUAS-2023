@@ -74,7 +74,6 @@ def scale_polygon(my_polygon: Polygon, scale_factor: float) -> Polygon:
 def find_closest_point(
     odlc: Dict[str, float],
     boundary_points: List[Dict[str, float]],
-    obstacles: List[Dict[str, float]],
 ) -> Tuple[Dict[str, float], List[float]]:
     """Finds the closest safe point to the ODLC while staying within the flight boundary
     Parameters
@@ -95,14 +94,6 @@ def find_closest_point(
 
     boundary_shape = Polygon(poly_points)
     odlc_shape = Point(odlc["utm_x"], odlc["utm_y"])
-
-    for obstacle in obstacles:
-        # create obstacle as shapely shape
-        circle = Point(obstacle["utm_x"], obstacle["utm_y"]).buffer(obstacle["radius"]).boundary
-        obstacle_shape = Polygon(circle)
-
-        # remove obstacle area from boundary polygon
-        boundary_shape = boundary_shape.difference(obstacle_shape)
 
     # scale down boundary by 1% to add a safety margin
     boundary_shape = scale_polygon(boundary_shape, 0.01)

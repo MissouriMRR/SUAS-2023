@@ -11,7 +11,6 @@ def plot_data(
     closest_point: Dict[str, float],
     old_boundary: List[Dict[str, float]],
     new_boundary: List[Tuple[float, float]],
-    obstacles: List[Dict[str, float]],
 ) -> None:
     """Plots the waypoints, obstacles, and flight path between waypoints
     Parameters
@@ -28,14 +27,6 @@ def plot_data(
         Point data for all obstacles
     """
 
-    # plot obstacles
-    for obstacle in obstacles:
-        x = obstacle["utm_x"]
-        y = obstacle["utm_y"]
-        radius = obstacle["radius"]
-
-        plt.gca().add_patch(plt.Circle((x, y), radius, color="red"))
-
     # plot boundary 1
     x_1, y_1 = [], []
     for point in old_boundary:
@@ -51,7 +42,6 @@ def plot_data(
     plt.plot(x_2, y_2, "bo-")
 
     # plot odlc and closest point to odlc
-    plt.plot(odlc["utm_x"], odlc["utm_y"], marker="*")
     plt.plot(closest_point["utm_x"], closest_point["utm_y"], marker="*")
 
     plt.gca().set_aspect(1)
