@@ -144,7 +144,7 @@ async def calculate_avoidance_path(
     drone : mavsdk.System
         The drone for which the path will be calculated for
     obstacle_data : list[InputPoint]
-        Previously known positions
+        Positions at previous times of the obstacle (probably another drone)
     avoidance_radius : float
         The radius around the predicted center of the obstacle the drone should avoid
 
@@ -162,6 +162,21 @@ async def calculate_avoidance_path(
 
     # Convert drone position to UTM Point
     drone_position: Point = Point.from_mavsdk_position(raw_drone_position)
+
+    # Convert obstacle data to list of Point
+    obstacle_positions: list[Point] = [Point.from_dict(in_point) for in_point in obstacle_data]
+
+    # TODO: Make the function work if UTM zones differ
+    # Check if all positions are in the same UTM zone
+    point: Point
+    for point in obstacle_positions:
+        if (
+            point.utm_zone_letter != drone_position.utm_zone_letter
+            or point.utm_zone_number != drone_position.utm_zone_number
+        ):
+            raise ValueError(
+                "Points are in different UTM zones (Note: tell obstacle avoidance team to fix this)"
+            )
 
     # Get velocity of drone
     raw_drone_velocity: mavsdk.telemetry.VelocityNed
