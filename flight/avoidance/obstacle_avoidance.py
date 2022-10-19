@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 import mavsdk
 import mavsdk.telemetry
-
+import numpy as np
 import utm
 
 # Input points are dicts with time and UTM coordinate data
@@ -16,7 +16,6 @@ import utm
 InputPoint = dict[str, float | int | str]
 
 
-# TODO: Maybe add a time component
 # TODO: Maybe move to a different file in this directory
 @dataclass
 class Point:
@@ -35,13 +34,16 @@ class Point:
         The letter of the UTM latitude band
     altitude : float
         The altitude of the point above sea level, in meters
+    time : float | None
+        The time at which an object was at this point, in Unix time
     """
 
     utm_x: float
     utm_y: float
     utm_zone_number: int
     utm_zone_letter: str
-    altitude: float | None
+    altitude: float
+    time: float | None
 
     @classmethod
     def from_dict(cls, position_data: InputPoint) -> "Point":
@@ -64,7 +66,8 @@ class Point:
             float(position_data["utm_y"]),
             int(position_data["utm_zone_number"]),
             str(position_data["utm_zone_letter"]),
-            None,
+            float(position_data["altitude"]),  # TODO: Change key to actual key in data input
+            float(position_data["time"]),
         )
 
     @classmethod
@@ -91,7 +94,7 @@ class Point:
         )
 
         # Can't directly unpack function return value because mypy complains
-        return cls(easting, northing, zone_number, zone_letter, position.absolute_altitude_m)
+        return cls(easting, northing, zone_number, zone_letter, position.absolute_altitude_m, None)
 
 
 @dataclass
@@ -188,8 +191,33 @@ async def calculate_avoidance_path(
     # Units don't change, only the type of the object
     drone_velocity: Velocity = Velocity.from_mavsdk_velocityned(raw_drone_velocity)
 
+    # Degree of polynomial used in polynomial regression
+    polynomial_degree: int = 3
+    # Create list of times
+    obstacle_times: list[float] = [
+        point.time for point in obstacle_positions if point.time is not None
+    ]
+
+    # Should hopefully never fail, otherwise I will have a mental breakdown
+    assert len(obstacle_times) == len(obstacle_positions)
+
+    # TODO: Research better models for predicting the obstacle's path
+    # Use polynomial regression to model the obstacle's path
+    # The polynomial is arr[0] * t**n + arr[1] * t**(n - 1) + ... + arr[n - 1] * t + arr[n]
+    x_polynomial: list[float] = list(
+        np.polyfit([point.utm_x for point in obstacle_positions], obstacle_times, polynomial_degree)
+    )
+    y_polynomial: list[float] = list(
+        np.polyfit([point.utm_y for point in obstacle_positions], obstacle_times, polynomial_degree)
+    )
+    altitude_polynomial: list[float] = list(
+        np.polyfit(
+            [point.altitude for point in obstacle_positions], obstacle_times, polynomial_degree
+        )
+    )
+
     # TODO: Do something useful with these variables
-    print(obstacle_data, drone_position, drone_velocity, avoidance_radius)
+    print(x_polynomial, y_polynomial, altitude_polynomial, drone_velocity, avoidance_radius)
 
     raise NotImplementedError
 
