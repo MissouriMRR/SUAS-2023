@@ -2,6 +2,7 @@
 Defines and implements the Point class used in obstacle_avoidance.py
 """
 
+import time
 from dataclasses import dataclass
 
 import mavsdk.telemetry
@@ -39,7 +40,7 @@ class Point:
     utm_zone_number: int
     utm_zone_letter: str
     altitude: float
-    time: float | None
+    time: float
 
     @classmethod
     def from_dict(cls, position_data: InputPoint) -> "Point":
@@ -85,9 +86,12 @@ class Point:
         northing: float
         zone_number: int
         zone_letter: str
+        # Can't unpack tuple because mypy complains
         easting, northing, zone_number, zone_letter = utm.from_latlon(
             position.latitude_deg, position.longitude_deg
         )
 
-        # Can't directly unpack function return value because mypy complains
-        return cls(easting, northing, zone_number, zone_letter, position.absolute_altitude_m, None)
+        # Use time.time() as the time for the point
+        return cls(
+            easting, northing, zone_number, zone_letter, position.absolute_altitude_m, time.time()
+        )

@@ -69,17 +69,12 @@ async def calculate_avoidance_path(
     # Units don't change, only the type of the object
     drone_velocity: Velocity = Velocity.from_mavsdk_velocityned(raw_drone_velocity)
 
-    obstacle_positions.sort(key=lambda p: p.time or 0.0)
+    obstacle_positions.sort(key=lambda p: p.time)
 
     # Degree of polynomial used in polynomial regression
     polynomial_degree: int = 3
     # Create list of times
-    obstacle_times: list[float] = [
-        point.time for point in obstacle_positions if point.time is not None
-    ]
-
-    # Should hopefully never fail, otherwise I will have a mental breakdown
-    assert len(obstacle_times) == len(obstacle_positions)
+    obstacle_times: list[float] = [point.time for point in obstacle_positions]
 
     # Get weights for polynomial regression
     # The most recent point should have the highest weight
