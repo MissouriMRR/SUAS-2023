@@ -54,8 +54,8 @@ async def move_to(
                 drone_alt: float = position.relative_altitude_m
 
                 #roughly checks if location is reached and moves on if so
-                if ((round(drone_lat,5)==round(latitude,5)) and 
-                    (round(drone_long,5)==round(longitude,5)) and 
+                if ((round(drone_lat,5)==round(latitude,5)) and
+                    (round(drone_long,5)==round(longitude,5)) and
                     (round(drone_alt,1)==round(altitude,1))):
                     location_reached=True
                     logging.info("arrived")
@@ -73,8 +73,8 @@ async def move_to(
                 drone_alt = position.relative_altitude_m
 
                 #accurately checks if location is reached and moves on if so
-                if ((round(drone_lat,6)==round(latitude,6)) and 
-                    (round(drone_long,6)==round(longitude,6)) and 
+                if ((round(drone_lat,6)==round(latitude,6)) and
+                    (round(drone_long,6)==round(longitude,6)) and
                     (round(drone_alt,1)==round(altitude,1))):
                     location_reached=True
                     logging.info("arrived")
