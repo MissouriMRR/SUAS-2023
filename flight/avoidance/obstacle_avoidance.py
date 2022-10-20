@@ -157,6 +157,9 @@ async def calculate_avoidance_path(
         The avoidance path, consisting of a list of waypoints
     """
 
+    # Convert obstacle data to list of Point
+    obstacle_positions: list[Point] = [Point.from_dict(in_point) for in_point in obstacle_data]
+
     # Get position of drone
     raw_drone_position: mavsdk.telemetry.Position
     async for position in drone.telemetry.position():
@@ -165,9 +168,6 @@ async def calculate_avoidance_path(
 
     # Convert drone position to UTM Point
     drone_position: Point = Point.from_mavsdk_position(raw_drone_position)
-
-    # Convert obstacle data to list of Point
-    obstacle_positions: list[Point] = [Point.from_dict(in_point) for in_point in obstacle_data]
 
     # TODO: Make the function work if UTM zones differ
     # Check if all positions are in the same UTM zone
@@ -191,6 +191,8 @@ async def calculate_avoidance_path(
     # Units don't change, only the type of the object
     drone_velocity: Velocity = Velocity.from_mavsdk_velocityned(raw_drone_velocity)
 
+    obstacle_positions.sort(key=lambda p: p.time or 0.0)
+
     # Degree of polynomial used in polynomial regression
     polynomial_degree: int = 3
     # Create list of times
@@ -201,18 +203,37 @@ async def calculate_avoidance_path(
     # Should hopefully never fail, otherwise I will have a mental breakdown
     assert len(obstacle_times) == len(obstacle_positions)
 
+    # Get weights for polynomial regression
+    # The most recent point should have the highest weight
+    weights: range = range(
+        1, len(obstacle_times) + 1
+    )  # For some reason range objects can be reused
+
     # TODO: Research better models for predicting the obstacle's path
     # Use polynomial regression to model the obstacle's path
     # The polynomial is arr[0] * t**n + arr[1] * t**(n - 1) + ... + arr[n - 1] * t + arr[n]
     x_polynomial: list[float] = list(
-        np.polyfit([point.utm_x for point in obstacle_positions], obstacle_times, polynomial_degree)
+        np.polyfit(
+            [point.utm_x for point in obstacle_positions],
+            obstacle_times,
+            polynomial_degree,
+            w=weights,
+        )
     )
     y_polynomial: list[float] = list(
-        np.polyfit([point.utm_y for point in obstacle_positions], obstacle_times, polynomial_degree)
+        np.polyfit(
+            [point.utm_y for point in obstacle_positions],
+            obstacle_times,
+            polynomial_degree,
+            w=weights,
+        )
     )
     altitude_polynomial: list[float] = list(
         np.polyfit(
-            [point.altitude for point in obstacle_positions], obstacle_times, polynomial_degree
+            [point.altitude for point in obstacle_positions],
+            obstacle_times,
+            polynomial_degree,
+            w=weights,
         )
     )
 
