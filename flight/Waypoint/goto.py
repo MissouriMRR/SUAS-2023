@@ -5,6 +5,7 @@ for moving the drone to a certain waypoint
 
 import asyncio
 from mavsdk import System
+import logging
 
 async def move_to(drone: System, latitude: float, longitude: float, altitude: float, fast_mode: bool) -> None:
     """
@@ -43,7 +44,7 @@ async def move_to(drone: System, latitude: float, longitude: float, altitude: fl
     #Then loops until the waypoint is reached
     if (fast_mode==True):
         while(not location_reached):
-            #print("Going to waypoint")
+            logging.info("Going to waypoint")
             async for position in drone.telemetry.position():
                 #continuously checks current latitude, longitude and altitude of the drone
                 drone_lat: float=position.latitude_deg
@@ -55,14 +56,14 @@ async def move_to(drone: System, latitude: float, longitude: float, altitude: fl
                     (round(drone_long,5)==round(longitude,5)) and 
                     (round(drone_alt,1)==round(altitude,1))):
                     location_reached=True
-                    #print("arrived")
+                    logging.info("arrived")
                     break
 
             #tell machine to sleep to prevent contstant polling, preventing battery drain
             await asyncio.sleep(1)
     else:
         while(not location_reached):
-            #print("Going to waypoint")
+            logging.info("Going to waypoint")
             async for position in drone.telemetry.position():
                 #continuously checks current latitude, longitude and altitude of the drone
                 drone_lat = position.latitude_deg
@@ -74,7 +75,7 @@ async def move_to(drone: System, latitude: float, longitude: float, altitude: fl
                     (round(drone_long,6)==round(longitude,6)) and 
                     (round(drone_alt,1)==round(altitude,1))):
                     location_reached=True
-                    #print("arrived")
+                    logging.info("arrived")
                     break
 
             #tell machine to sleep to prevent contstant polling, preventing battery drain 

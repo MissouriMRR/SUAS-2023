@@ -11,22 +11,19 @@ import sys
 
 async def run() -> None:
     """
-    This function is just a driver to test the goto function and runs through the
-    entire waypoint section of the SUAS competition
+    This function is a driver to test the goto function and runs through the
+    given waypoints in the lats and longs lists at the altitude of 100.
+    Makes the drone move to each location in the lats and longs arrays at the altitude of 100 and
+    
+    Notes
+    -----
+    Currently has 3 values in each the Lats and Longs array and code is looped and will stay in that loop
+    until the drone has reached each of locations specified by the latitude and longitude and 
+    continues to run until forced disconnect
     """
     #Put all latitudes, longitudes and altitudes into seperate arrays
     lats: List[float]=[37.9008502,37.9008129,37.8964543]
     longs: List[float]=[-91.6615228,-91.6615335,-91.6570381]
-    altitudes: List[float]=[100,100,100]
-    #waypoints: List[Dict[str,float]] =json.load("numbers.json")
-    #for i in waypoints:
-        #for key,val in i.items():
-           # if(key=="latitude"):
-          #      lats.append(val)
-            #if(key=="longitude"):
-                #longs.append(val)
-            #if(key=="altitude"):
-             #   altitudes.append(val)
 
     #create a drone object
     drone: System = System()
@@ -60,7 +57,7 @@ async def run() -> None:
 
     #move to each waypoint in mission
     for point in range(len(lats)):
-        await goto.move_to(drone,lats[point],longs[point],altitudes[point],True)
+        await goto.move_to(drone,lats[point],longs[point],100,True)
 
     #return home
     logging.info("Last waypoint reached")
@@ -74,7 +71,10 @@ async def run() -> None:
 
 
 if __name__ == "__main__":
-    #Main driver of drone
+    '''
+    Runs through the code until it has looped through each element of 
+    the Lats and Longs array and the drone has arrived at each of them
+    '''
     try:
         loop = asyncio.get_event_loop()
         loop.run_until_complete(run())
