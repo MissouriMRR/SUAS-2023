@@ -14,6 +14,32 @@ from point import Point, InputPoint
 from velocity import Velocity
 
 
+def polynomial_evaluator(coefficients: list[float]) -> Callable[[float], float]:
+    """
+    Converts a list of polynomial coefficients into a function
+
+    Parameters
+    ----------
+    coefficients : list[float]
+        A list of coefficients for a polynomial - highest degree first
+
+    Returns
+    -------
+    evaluate : Callable[[float], float]
+        A function that evaluates the polynomial at any given value
+    """
+
+    def evaluate(val: float) -> float:
+        result: float = 0.0
+        coefficient: float
+        for coefficient in coefficients:
+            result *= val
+            result += coefficient
+        return result
+
+    return evaluate
+
+
 async def calculate_avoidance_path(
     drone: mavsdk.System,
     obstacle_data: list[InputPoint],
@@ -105,17 +131,6 @@ async def calculate_avoidance_path(
             w=range(1, len(obstacle_times) + 1),
         )
     )
-
-    def polynomial_evaluator(coefficients: list[float]) -> Callable[[float], float]:
-        def evaluate(val: float) -> float:
-            result: float = 0.0
-            coefficient: float
-            for coefficient in coefficients:
-                result *= val
-                result += coefficient
-            return result
-
-        return evaluate
 
     predict_x: Callable[[float], float] = polynomial_evaluator(x_polynomial)
     predict_y: Callable[[float], float] = polynomial_evaluator(y_polynomial)
