@@ -10,7 +10,7 @@ Output: will identify which contours are odlc shapes, and what types of odlc sha
 """
 from typing import Tuple, TypeAlias
 import numpy as np
-from nptyping import NDArray, Shape, Int, UInt8, IntC, Float64
+from nptyping import NDArray, Shape, Int, UInt8, IntC, Float64, Bool
 import cv2
 
 """
@@ -27,13 +27,15 @@ either will be circular or approxPolyDP will work well min area lost w/o erroneo
 
 
 contour_type: TypeAlias = NDArray[Shape["1, *, 2"], IntC]
-rectangle_type: TypeAlias = NDArray[Shape["1, 4, 2"], IntC]
+
+
+bound_box_type: TypeAlias = Tuple[int, int, int, int]
 
 hierarchy_type: TypeAlias = NDArray[Shape["1, *, 4"], IntC]
 
 image_type: TypeAlias = NDArray[Shape["*, *, 3"], UInt8]
 single_channel_image_type: TypeAlias = NDArray[Shape["*, *"], UInt8]
-mask_type: TypeAlias = NDArray[Shape["*, *"], bool]
+mask_type: TypeAlias = NDArray[Shape["*, *"], Bool]
 
 
 def test_heirarchy(hierarchy: hierarchy_type, contour_index: int) -> bool:
@@ -49,7 +51,7 @@ def test_min_area_box(contour: contour_type, test_box_ratio: int = 3) -> bool:
     """
     TODO: document code
     """
-    min_area_box: rectangle_type = cv2.boxPoints(cv2.minAreaRect(contour))
+    min_area_box: bound_box_type = cv2.boxPoints(cv2.minAreaRect(contour))
     aspect_ratio: float = (cv2.norm(min_area_box[0, 0] - min_area_box[0, 1])) / (
         cv2.norm(min_area_box[0, 2] - min_area_box[0, 3])
     )
@@ -64,10 +66,10 @@ def test_bounding_box(
     """
     TODO: document code
     """
-    bounding_box: rectangle_type = cv2.boundingRect(contour)
+    bounding_box: bound_box_type = cv2.boundingRect(contour)
 
-    box_area: float = abs(bounding_box[0, 0, 0] - bounding_box[0, 1, 0]) * abs(
-        bounding_box[0, 1, 1] - bounding_box[0, 2, 1]
+    box_area: float = abs(bounding_box[2] - bounding_box[0]) * abs(
+        bounding_box[3] - bounding_box[1]
     )
     img_area: float = dims[0] * dims[1]
 
@@ -87,9 +89,9 @@ def test_jaggedness(contour: contour_type) -> bool:
         ((moments["m01"] / moments["m00"]), (moments["m10"] / moments["m00"])), dtype=np.float64
     )
 
-    dists_calc = np.vectorize(lambda p: cv2.norm(p[0] - com))
-
-    dists_com: NDArray[Shape["*"], Float64] = dists_calc(contour)
+    dists_com: NDArray[Shape["*"], Float64] = np.ndarray(contour.shape[1], Float64)
+    for i in range(contour.shape[1]):
+        dists_com[i] = cv2.norm(contour[0, i] - com)
 
     dists_median: float = np.median(dists_com)
     dists_outlier_range: float = 1.5 * (np.quantile(dists_com, 0.75) - np.quantile(dists_com, 0.25))
@@ -99,28 +101,59 @@ def test_jaggedness(contour: contour_type) -> bool:
     return False
 
 
+def _min_common_bounding_box(contours: NDArray[Shape["*, 1, *, 2"], IntC]) -> bound_box_type:
+    """
+    takes a set of contours and returns the smallest bounding
+    box that encloses all of them
+    TODO: document code
+    """
+    
+    boxes: Tuple[bound_box_type, ...] = ()
+    for contour in contours:
+        boxes.append(cv2.boundingRect(contour))
+    
+    min_box: bound_box_type = np.array([[[np.min(boxes[:, 0]),
+                                          np.min(boxes[:, 1]),
+                                          np.max(boxes[:, 2]),
+                                          np.max(boxes[:, 3])]]])
+    return min_box    
+
+
+def _generate_mask(contour: contour_type, box: bound_box_type) -> mask_type:
+    """
+    returns
+    TODO: document code
+    """
+    dims: Tuple[int, int] = (box[2]-box[0], box[3]-box[1])
+    shifted_cnt: contour_type = contour - np.array((box[0], box[2]))
+
+    mask: mask_type = np.zeros(dims, shifted_cnt)
+    mask = cv2.drawContours(mask, [contour], -1, (True), cv2.FILLED)
+    return mask
+
+
 def test_polygonness(
-    contour: contour_type, approx: contour_type, dims: Tuple[int, int], test_ratio: float = 0.75
+    contour: contour_type, approx: contour_type, test_ratio: float = 0.75
 ) -> bool:
     """
     dims param should probably be bounding box dims not image dims
     TODO: document code
     """
-    contour_mask: mask_type = np.zeros(dims, dtype=UInt8)
-    contour_mask = cv2.drawContours(contour_mask, [contour], -1, (True), cv2.FILLED)
+    box: bound_box_type = _min_common_bounding_box(np.array([contour, approx]))
 
-    approx_mask: mask_type = np.zeros(dims, dtype=UInt8)
-    approx_mask = cv2.drawContours(approx_mask, [approx], -1, (True), cv2.FILLED)
+    contour_mask: mask_type = _generate_mask(contour, box)
+    approx_mask: mask_type = _generate_mask(approx, box)
 
     non_overlap_mask: mask_type = np.where(contour_mask ^ approx_mask)
     # TODO: figure out how much non overlap is too much
 
 
-def test_circleness(contour: contour_type, bw_image: single_channel_image_type):
+def test_circleness(contour: contour_type):
     """
     TODO: document code
     TODO: actually write the code
     """
+
 
 
 def filter_contour(
@@ -128,9 +161,25 @@ def filter_contour(
 ) -> bool:
     """
     TODO: document code
+    NOTE:
     """
     # test hierarchy, bounding_box, and jaggedness
     # then calculate approxPolyDP if above all pass (maybe change depending on test results)
 
     # (vertical len, horizontal len)
     image_dims: Tuple[int, int] = image.shape[:2]
+
+
+if __name__ == '__main__':
+    img = np.zeros([500, 500, 3], dtype=UInt8)
+    img = cv2.circle(img, (200, 250), 150, (255, 255, 255), -1)
+    img = cv2.circle(img, (200, 250), 75, (0, 0, 255), -1)
+    cv2.imshow("pic", img)
+    cv2.waitKey(0)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    cnts, hier = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    print(type(cnts[0]))
+    print(cnts[0])
+    rect = cv2.boxPoints(cv2.minAreaRect(cnts[0]))
+    print(type(rect))
+    print(rect)
