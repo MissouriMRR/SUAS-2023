@@ -49,8 +49,6 @@ def pixel_intersect(
         Returns None if there is no intersect.
     """
 
-    a = 1
-
     # Create the normalized vector representing the direction of the given pixel
     vector: Vector = pixel_vector(pixel, image_shape, focal_length)
 
