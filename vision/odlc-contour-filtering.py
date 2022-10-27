@@ -156,7 +156,6 @@ def test_circleness(contour: contour_type):
     """
 
 
-
 def filter_contour(
     contour: contour_type, hierarchy: hierarchy_type, contour_index: int, image: image_type
 ) -> bool:
