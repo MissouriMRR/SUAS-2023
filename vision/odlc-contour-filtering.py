@@ -10,7 +10,7 @@ Output: will identify which contours are odlc shapes, and what types of odlc sha
 """
 from typing import Tuple, TypeAlias
 import numpy as np
-from nptyping import NDArray, Shape, Int, UInt8, IntC, Float64, Bool
+from nptyping import NDArray, Shape, Int, UInt8, IntC, Float32, Bool
 import cv2
 
 """
@@ -27,11 +27,12 @@ either will be circular or approxPolyDP will work well min area lost w/o erroneo
 
 
 contour_type: TypeAlias = NDArray[Shape["1, *, 2"], IntC]
-
-
-bound_box_type: TypeAlias = Tuple[int, int, int, int]
-
 hierarchy_type: TypeAlias = NDArray[Shape["1, *, 4"], IntC]
+
+# type for return value of cv2.boxpoints()
+min_area_box_type: TypeAlias = NDArray[Shape["4, 2"], Float32]
+# type for return value of cv2.boundingRect()
+bound_box_type: TypeAlias = Tuple[int, int, int, int]
 
 image_type: TypeAlias = NDArray[Shape["*, *, 3"], UInt8]
 single_channel_image_type: TypeAlias = NDArray[Shape["*, *"], UInt8]
@@ -51,9 +52,9 @@ def test_min_area_box(contour: contour_type, test_box_ratio: int = 3) -> bool:
     """
     TODO: document code
     """
-    min_area_box: bound_box_type = cv2.boxPoints(cv2.minAreaRect(contour))
-    aspect_ratio: float = (cv2.norm(min_area_box[0, 0] - min_area_box[0, 1])) / (
-        cv2.norm(min_area_box[0, 2] - min_area_box[0, 3])
+    min_area_box: min_area_box_type = cv2.boxPoints(cv2.minAreaRect(contour))
+    aspect_ratio: float = (cv2.norm(min_area_box[0] - min_area_box[1])) / (
+        cv2.norm(min_area_box[1] - min_area_box[2])
     )
     if aspect_ratio > test_box_ratio or aspect_ratio < 1 / test_box_ratio:
         return False
@@ -85,11 +86,11 @@ def test_jaggedness(contour: contour_type) -> bool:
     """
     moments = cv2.moments(contour)
     # com is Center of Mass, com = (y_coord, x_coord)
-    com: NDArray[Shape["2"], Float64] = np.array(
+    com: NDArray[Shape["2"], Float32] = np.array(
         ((moments["m01"] / moments["m00"]), (moments["m10"] / moments["m00"])), dtype=np.float64
     )
 
-    dists_com: NDArray[Shape["*"], Float64] = np.ndarray(contour.shape[1], Float64)
+    dists_com: NDArray[Shape["*"], Float32] = np.ndarray(contour.shape[1], Float32)
     for i in range(contour.shape[1]):
         dists_com[i] = cv2.norm(contour[0, i] - com)
 
@@ -182,4 +183,5 @@ if __name__ == '__main__':
     print(cnts[0])
     rect = cv2.boxPoints(cv2.minAreaRect(cnts[0]))
     print(type(rect))
+    print(type(rect[0, 0]))
     print(rect)
