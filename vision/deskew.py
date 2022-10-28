@@ -1,21 +1,26 @@
 """Distorts an image to generate an overhead view of the photo."""
 
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, TypeAlias
+from nptyping import NDArray, Shape, UInt8, Float64
+
+Image: TypeAlias = NDArray[Shape["1080, 1920, 3"], UInt8]
+Point: TypeAlias = NDArray[Shape["2"], Float64]
+Vector: TypeAlias = NDArray[Shape["3"], Float64]
 
 import cv2
 import numpy as np
 import numpy.typing as npt
 
-from vision.common.vector_utils import pixel_intersect
+from vector_utils import pixel_intersect
 
 
 def deskew(
-    image: npt.NDArray[np.uint8],
+    image: Image,
     focal_length: float,
     rotation_deg: List[float],
     scale: float = 1,
     interpolation: Optional[int] = cv2.INTER_LINEAR,
-) -> Tuple[Optional[npt.NDArray[np.uint8]], Optional[npt.NDArray[np.float64]]]:
+) -> Tuple[Optional[Image], Optional[NDArray[Shape["4, 2"], Float64]]]:
     """
     Distorts an image to generate an overhead view of the photo. Parts of the image will be
     completely black where the camera could not see.
@@ -69,12 +74,12 @@ def deskew(
     # 1--2
     # |  |
     # 4--3
-    src_pts: npt.NDArray[np.float32] = np.array(
+    src_pts: NDArray[Shape["4, 2"], Float64] = np.array(
         [[0, 0], [orig_width, 0], [orig_width, orig_height], [0, orig_height]], dtype=np.float32
     )
 
     # Numpy converts `None` to NaN
-    intersects: npt.NDArray[np.float32] = np.array(
+    intersects: NDArray[Shape["4, 2"], Float64] = np.array(
         [
             pixel_intersect(point, image.shape, focal_length, rotation_deg, 1)
             for point in np.flip(src_pts, axis=1)  # use np.flip to convert XY to YX
@@ -98,16 +103,16 @@ def deskew(
     # Scale the output so the area of the important pixels is about the same as the starting image
     target_area: float = float(image.shape[0]) * (float(image.shape[1]) * scale)
     intersect_scale: np.float64 = np.float64(np.sqrt(target_area / area))
-    dst_pts: npt.NDArray[np.float64] = intersects * intersect_scale
+    dst_pts: NDArray[Shape["4, 2"], Float64] = intersects * intersect_scale
 
     dst_pts = np.round(dst_pts)
 
-    matrix: npt.NDArray[np.float64] = cv2.getPerspectiveTransform(src_pts, dst_pts)
+    matrix: NDArray[Shape["3, 3"], Float64] = cv2.getPerspectiveTransform(src_pts, dst_pts)
 
     result_height: int = int(np.max(dst_pts[:, 1])) + 1
     result_width: int = int(np.max(dst_pts[:, 0])) + 1
 
-    result: npt.NDArray[np.uint8] = cv2.warpPerspective(
+    result: Image = cv2.warpPerspective(
         image,
         matrix,
         (result_width, result_height),
@@ -115,4 +120,7 @@ def deskew(
         borderMode=cv2.BORDER_TRANSPARENT,
     )
 
-    return result, dst_pts.astype(np.int32)
+    temp = dst_pts.astype(np.int32)
+    # print(temp.shape)
+
+    return result, temp

@@ -1,7 +1,7 @@
 """Functions that use vectors to calculate camera intersections with the ground"""
 
 from typing import List, Tuple, Optional, TypeAlias
-from nptyping import NDArray, Shape, Int, UInt8, Int16, Int32, String, Float32, Float64
+from nptyping import NDArray, Shape, UInt8, Float64
 import numpy as np
 from scipy.spatial.transform import Rotation
 
