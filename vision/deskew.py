@@ -9,7 +9,6 @@ Vector: TypeAlias = NDArray[Shape["3"], Float64]
 
 import cv2
 import numpy as np
-import numpy.typing as npt
 
 from vector_utils import pixel_intersect
 
@@ -46,21 +45,20 @@ def deskew(
     Returns
     -------
     (deskewed_image, corner_points) : Tuple[
-                                            Optional[npt.NDArray[np.uint8]],
-                                            Optional[npt.NDArray[np.float64]]
+                                            Optional[Image],
+                                            Optional[NDArray[Shape["4, 2"], Float64]]]
                                             ]
-        deskewed_image : npt.NDArray[np.uint8]
+        deskewed_image : Image
             The deskewed image - the image is flattened with black areas in the margins
 
             Returns None if no valid image could be generated.
 
-        corner_points : npt.NDArray[np.float64]]
+        corner_points : NDArray[Shape["4, 2"], Float64]]
             The corner points of the result in the image.
             Points are in order based on their location in the original image.
             Format is: (top left, top right, bottom right, bottom left), or
             1--2
             |  |
-
             4--3
 
             Returns None if no valid image could be generated.
