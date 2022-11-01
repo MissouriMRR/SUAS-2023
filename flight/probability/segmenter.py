@@ -1,11 +1,14 @@
-from typing import Iterable, List, Tuple
+"""
+Summary
+-------
+Defines the public 'segment' function that allows a polygon to be divided
+into uniform squares
+"""
+import math
+from typing import List, Tuple
 from helper import get_bounds
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
-import math
-"""
-Divides the ODLC search area into identical cells.
-"""
 
 CELL_SIZE = 0.00015
 CENTER_OFFSET = CELL_SIZE / 2
@@ -18,7 +21,7 @@ def segment(polygon: List[Tuple[float, float]]) -> List[List[Tuple[float, float]
     ----------
     polygon: List[Tuple[float, float]]
         A list of points defining the polygon
-    
+
     Returns
     -------
     segmented_area : List[List[Tuple[float, float], | str]]
@@ -35,18 +38,14 @@ def segment(polygon: List[Tuple[float, float]]) -> List[List[Tuple[float, float]
             #check if point is within polygon
             x_val = bounds['x'][0] + CENTER_OFFSET + (i * CELL_SIZE)
             y_val = bounds['y'][0] + CENTER_OFFSET + (j * CELL_SIZE)
-            p = Point(x_val, y_val)
-            if within_check.contains(p):
+            geo_point = Point(x_val, y_val)
+            if within_check.contains(geo_point):
                 row.append((x_val, y_val))
             else:
                 row.append('X')
         prob_map_points.append(row)
-    
+
     return prob_map_points
 
 if __name__ == "__main__":
     pass
-
-
-    
-

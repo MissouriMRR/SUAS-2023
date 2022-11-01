@@ -1,3 +1,9 @@
+"""
+Summary
+-------
+Defines the seeker class and contains basic tests
+"""
+
 from typing import Tuple, List
 from cell_map import CellMap
 from helper import calculate_dist
@@ -35,7 +41,7 @@ class Seeker:
         view_vectors : List[Tuple[int]]
             The displacement vectors in view of the drone
         """
-        
+
         view_list = []
 
         for i in range(view * 2 + 1):
@@ -86,7 +92,7 @@ class Seeker:
 
     def move(self, disp_vec: Tuple[int, int]) -> None:
         """
-        moves the drone on the cell_map 
+        moves the drone on the cell_map
 
         disp_vec : Tuple[int, int]
             The direction the drone should move
@@ -102,7 +108,7 @@ class Seeker:
             else:
                 pass
         except:
-            pass 
+            pass
 
 
 if __name__ == "__main__":

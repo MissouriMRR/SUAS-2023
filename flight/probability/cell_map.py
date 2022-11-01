@@ -1,6 +1,12 @@
+"""
+Summary
+-------
+Defines the CellMap class and has some basic tests at the bottom of the file.
+"""
+
 from typing import Any, List, Tuple
 from cell import Cell
-from helper import get_bounds
+from helper import get_bounds, TEST_AREA
 from segmenter import segment
 
 class CellMap:
@@ -14,10 +20,10 @@ class CellMap:
         a two-dimensional array of latitude and longitude points that defines
         the search area
     ODLCs : int
-        the number of ODLCs on the map. Used to calculate the initial 
+        the number of ODLCs on the map. Used to calculate the initial
         probabilities of each cell.
     """
-    
+
     def __get_valids(self, points: List[List[Tuple[float, float] | str]]) -> int:
         """
         returns the number of valid points in the points passed to the CellMap
@@ -39,9 +45,12 @@ class CellMap:
                 if points[i][j] != 'X': count += 1
         return count
 
-    def __init_map(self, points: List[List[Tuple[float, float] | str]], ODLCs: int) -> List[List[Cell]]:
+    def __init_map(self,
+                   points: List[List[Tuple[float, float] | str]],
+                   ODLCs: int
+                   ) -> List[List[Cell]]:
         """
-        This method creates the two-dimensional array filled with Cell 
+        This method creates the two-dimensional array filled with Cell
         objects used by the CellMap.
 
         Parameters
@@ -62,7 +71,12 @@ class CellMap:
             row: List[Cell] = []
             for j in range(len(points[0])):
                 if points[i][j] != 'X': #ensures it is not the only used string value
-                    row.append(Cell(ODLCs / self.n, False, points[i][j][0], points[i][j][1], True)) #type: ignore
+                    row.append(Cell(
+                                    ODLCs / self.num_valids,
+                                    False,
+                                    points[i][j][0], #type: ignore
+                                    points[i][j][1], #type: ignore
+                                    True))
                 else:
                     row.append(Cell(0, False, None, None, False))
             r_list.append(row)
@@ -113,7 +127,7 @@ class CellMap:
                 if poi[0] >= 0 and poi[1] >= 0 and poi not in seeker.current_view:
                     self[poi[0]][poi[1]].probability *= 1 - seeker.find_prob
                     self[poi[0]][poi[1]].seen = True
-                    
+
             except:
                 pass
 
@@ -126,7 +140,7 @@ class CellMap:
         ODLCs : int
             the number of ODLCs in the flight area
         """
-        self.n = self.__get_valids(points)
+        self.num_valids = self.__get_valids(points)
         self.data = self.__init_map(points, ODLCs)
 
         flat_list = []
@@ -138,21 +152,5 @@ class CellMap:
 
 
 if __name__ == "__main__":
-    test_cloud = [
-        (38.31722979755967,-76.5570186342245),
-        (38.3160801028265,-76.55731984244503),
-        (38.31600059675041,-76.5568902018946),
-        (38.31546739500083,-76.5537620127769),
-        (38.31470980862425,-76.5493636141453),
-        (38.31424154692598,-76.5466276164690),
-        (38.31369801280048,-76.5434238005822),
-        (38.3131406794544,-76.54011767488228),
-        (38.31508631356025,-76.5396286507867),
-        (38.31615083692682,-76.5449773879351),
-        (38.31734210679102,-76.5446085046679),
-        (38.31859044679581,-76.5519329158383),
-        (38.3164700703248,-76.55255360208943),
-        (38.31722979755967,-76.5570186342245)
-    ]
-    area = segment(test_cloud)
+    area = segment(TEST_AREA)
     cell_map = CellMap(area, 4)
