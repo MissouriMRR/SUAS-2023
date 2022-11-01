@@ -108,16 +108,13 @@ def _min_common_bounding_box(contours: NDArray[Shape["*, 1, *, 2"], IntC]) -> bo
     box that encloses all of them
     TODO: document code
     """
-    
+
     boxes: Tuple[bound_box_type, ...] = ()
     for contour in contours:
         boxes.append(cv2.boundingRect(contour))
-    
-    min_box: bound_box_type = np.array([[[np.min(boxes[:, 0]),
-                                          np.min(boxes[:, 1]),
-                                          np.max(boxes[:, 2]),
-                                          np.max(boxes[:, 3])]]])
-    return min_box    
+
+    min_box: bound_box_type = (np.min(boxes[:, 0]), np.min(boxes[:, 1]), np.max(boxes[:, 2]), np.max(boxes[:, 3]))
+    return min_box
 
 
 def _generate_mask(contour: contour_type, box: bound_box_type) -> mask_type:
@@ -125,7 +122,7 @@ def _generate_mask(contour: contour_type, box: bound_box_type) -> mask_type:
     returns
     TODO: document code
     """
-    dims: Tuple[int, int] = (box[2]-box[0], box[3]-box[1])
+    dims: Tuple[int, int] = (box[2] - box[0], box[3] - box[1])
     shifted_cnt: contour_type = contour - np.array((box[0], box[2]))
 
     mask: mask_type = np.zeros(dims, shifted_cnt)
@@ -133,9 +130,7 @@ def _generate_mask(contour: contour_type, box: bound_box_type) -> mask_type:
     return mask
 
 
-def test_polygonness(
-    contour: contour_type, approx: contour_type, test_ratio: float = 0.75
-) -> bool:
+def test_polygonness(contour: contour_type, approx: contour_type, test_ratio: float = 0.75) -> bool:
     """
     dims param should probably be bounding box dims not image dims
     TODO: document code
@@ -161,7 +156,6 @@ def filter_contour(
 ) -> bool:
     """
     TODO: document code
-    NOTE:
     """
     # test hierarchy, bounding_box, and jaggedness
     # then calculate approxPolyDP if above all pass (maybe change depending on test results)
@@ -170,7 +164,7 @@ def filter_contour(
     image_dims: Tuple[int, int] = image.shape[:2]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     img = np.zeros([500, 500, 3], dtype=UInt8)
     img = cv2.circle(img, (200, 250), 150, (255, 255, 255), -1)
     img = cv2.circle(img, (200, 250), 75, (0, 0, 255), -1)
