@@ -26,7 +26,7 @@ def get_bounds(points: List[Tuple[float, float]]) -> Dict[str, List[float]]:
 
     Parameters
     ----------
-    points: Collection[Iterable[float | int]]
+    points: List[Tuple[float | float]]
         the collection of points that define the given shape
 
     Returns
