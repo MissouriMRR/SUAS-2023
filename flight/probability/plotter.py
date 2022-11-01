@@ -23,6 +23,11 @@ def get_p_color(p: float) -> List[float]:
     ----------
     p : float
         the probability of a ODLC being found in the cell
+
+    Returns
+    -------
+    color : List[float]
+        The RGB value of the probability's color
     """
     color = []
     for i in range(3):
@@ -49,7 +54,21 @@ def draw_cell(x: float | None, y: float | None, p: float) -> None:
     )
 
 
-def get_normalized_prob(prob_map: CellMap) -> List[float]:
+def get_prob_range(prob_map: CellMap) -> Tuple[float, float]:
+    """
+    Given a cell map object, return the highest and lowest probabiltiies
+    recorded.
+
+    Parameters
+    ----------
+    prob_map : CellMap
+        the probability map to be examined
+
+    Returns
+    -------
+    probability_range : Tuple[float, float]
+        a float with the lowest and highest values
+    """
     low, high = float("inf"), float("-inf")
     for i in range(len(prob_map.data)):
         for j in range(len(prob_map[0])):
@@ -58,8 +77,27 @@ def get_normalized_prob(prob_map: CellMap) -> List[float]:
                 high = prob
             elif prob < low:
                 low = prob
-    return [low, high]
+    return (low, high)
 
+def get_normalized_prob(raw_prob: float, prob_range: Tuple[float, float]) -> float:
+    """
+    Given a raw probability value, returns a normalized probability
+    where p(1) = highest probability on the map while p(0) = lowest
+    probability on map.
+
+    Parameters
+    ----------
+    raw_prob : float
+        the raw probability value found on the map
+    prob_range : Tuple[float, float]
+        tuple containing the highest and lowest probability values
+    
+    Returns
+    -------
+    normalized_probability : float
+        the normalized version of the raw probability
+    """
+    return (raw_prob - prob_range[0]) / (prob_range[1] - prob_range[0])
 
 def plot_prob_map(prob_map: CellMap, seen_mode: bool = False) -> None:
     """
@@ -67,11 +105,14 @@ def plot_prob_map(prob_map: CellMap, seen_mode: bool = False) -> None:
 
     Parameters
     ----------
-    prob_map: object
+    prob_map: CellMap
         the position of each cell and its probability of containing a
         drop point.
+    seen_mode : bool
+        An optional parameter that determines whether the output only highlights cells
+        that have been seen
     """
-    prob_range = get_normalized_prob(prob_map)
+    prob_range = get_prob_range(prob_map)
     MARGIN = 0.001
     size = max(
         abs(prob_map.bounds["x"][0] - prob_map.bounds["x"][1]),
@@ -90,8 +131,7 @@ def plot_prob_map(prob_map: CellMap, seen_mode: bool = False) -> None:
                     draw_cell(
                         cell.x,
                         cell.y,
-                        (cell.probability - prob_range[0])
-                        / (prob_range[1] - prob_range[0]),
+                        get_normalized_prob(cell.probability, prob_range),
                     )
     plt.show()
 
