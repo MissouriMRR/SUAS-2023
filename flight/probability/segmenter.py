@@ -16,8 +16,15 @@ def segment(polygon: List[Tuple[float, float]]) -> List[List[Tuple[float, float]
 
     Parameters
     ----------
-    polygon: List[Tuple[int, int]]
+    polygon: List[Tuple[float, float]]
         A list of points defining the polygon
+    
+    Returns
+    -------
+    segmented_area : List[List[Tuple[float, float], | str]]
+        The new area divided into equally sized squares, with some
+        squares simply being 'X' to represent that they are out of
+        bounds
     """
     prob_map_points = []
     bounds = get_bounds(polygon)
