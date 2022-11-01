@@ -17,8 +17,8 @@ class Seeker:
         the radius of the cell view
     cell_map : CellMap
         the actual map being searched
-    current_view : set
-        the set of all points within range of the drone
+    current_view : List[Cell]
+        a list of all points within range of the drone
     """
     def __get_view_vecs(self, view: int) -> List[Tuple[int, int]]:
         """
@@ -88,7 +88,7 @@ class Seeker:
         """
         moves the drone on the cell_map 
 
-        disp_vec : Tuple[int]
+        disp_vec : Tuple[int, int]
             The direction the drone should move
             ex : [1, 0] moves the drone up.
         """
