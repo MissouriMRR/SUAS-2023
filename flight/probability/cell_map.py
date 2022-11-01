@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Tuple
 from cell import Cell
 from helper import get_bounds
 from segmenter import segment
@@ -10,7 +10,7 @@ class CellMap:
 
     Attributes
     ----------
-    points : Iterable[Iterable[Iterable[float]]]
+    points : List[List[Tuple[float, float] | str]]
         a two-dimensional array of latitude and longitude points that defines
         the search area
     ODLCs : int
@@ -24,7 +24,7 @@ class CellMap:
 
         Parameters
         ----------
-        points : List[List[List[float] | str]]
+        points : List[List[Tuple[float, float] | str]]
             the points that define the CellMap's data
 
         Returns
@@ -46,7 +46,7 @@ class CellMap:
 
         Parameters
         ----------
-        points : List[List[List[float] | str]]
+        points : List[List[Tuple[float, float] | str]]
             A two-dimensional array of latitude and longitude points that defines
             the search area
         ODLCs : int
@@ -54,7 +54,7 @@ class CellMap:
 
         Returns
         -------
-        final_map : Iterable[Iterable[Cell]]
+        final_map : List[List[Cell]]
             the map of cell objects
         """
         r_list: List[List[Cell]] = []
@@ -77,8 +77,8 @@ class CellMap:
 
         Parameters
         ----------
-        drone_pos : Tuple[int] | None
-            the drone's current index
+        drone_pos : Tuple[int, int] | None
+            optional parameter for the drone's current index
         """
         for i in range(len(self.data)):
             row_string = ""
@@ -92,6 +92,8 @@ class CellMap:
             print(row_string)
 
     #TODO: FINISH THIS METHOD!
+    #TODO: Fix the seeker type. Seeker module imports cell_map module, so
+          #create new type with typing?
     def update_probs(self, pos: Tuple[int, int], seeker: Any) -> None:
         """
         Given a drone at position pos[0], pos[1], this function updates the probabalities
@@ -99,7 +101,7 @@ class CellMap:
 
         Parameters
         ----------
-        pos : Tuple[int]
+        pos : Tuple[int, int]
             the index of the drone
         seeker : Seeker
             the seeker object, including its find_prob and other attributes
@@ -119,12 +121,11 @@ class CellMap:
         """
         Parameters
         ----------
-        points : List[List[List[float] | str]]
+        points : List[List[Tuple[float, float] | str]]
             a collection of latitude, longitude coordinates to define the map
         ODLCs : int
             the number of ODLCs in the flight area
         """
-        print(points)
         self.n = self.__get_valids(points)
         self.data = self.__init_map(points, ODLCs)
 
