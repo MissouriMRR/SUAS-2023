@@ -113,7 +113,12 @@ def _min_common_bounding_box(contours: NDArray[Shape["*, 1, *, 2"], IntC]) -> bo
     for contour in contours:
         boxes.append(cv2.boundingRect(contour))
 
-    min_box: bound_box_type = (np.min(boxes[:, 0]), np.min(boxes[:, 1]), np.max(boxes[:, 2]), np.max(boxes[:, 3]))
+    min_box: bound_box_type = (
+        np.min(boxes[:, 0]),
+        np.min(boxes[:, 1]),
+        np.max(boxes[:, 2]),
+        np.max(boxes[:, 3]),
+    )
     return min_box
 
 
