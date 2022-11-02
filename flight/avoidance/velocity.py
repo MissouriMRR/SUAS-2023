@@ -4,6 +4,7 @@ Defines and implements the Velocity class used in obstacle_avoidance.py
 
 import math
 from dataclasses import dataclass
+from typing import Union
 
 import mavsdk.telemetry
 
@@ -58,7 +59,7 @@ class Velocity:
             self.down_vel - rhs.down_vel,
         )
 
-    def __mul__(self, rhs: "Velocity" | float) -> "Velocity":
+    def __mul__(self, rhs: Union["Velocity", float]) -> "Velocity":
         if isinstance(rhs, float):
             rhs = Velocity(rhs, rhs, rhs)
 
@@ -71,7 +72,7 @@ class Velocity:
     def __rmul__(self, lhs: float) -> "Velocity":
         return self.__mul__(lhs)
 
-    def __truediv__(self, rhs: "Velocity" | float) -> "Velocity":
+    def __truediv__(self, rhs: Union["Velocity", float]) -> "Velocity":
         if isinstance(rhs, float):
             rhs = Velocity(rhs, rhs, rhs)
 
