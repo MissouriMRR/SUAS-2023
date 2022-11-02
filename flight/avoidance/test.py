@@ -1,25 +1,34 @@
-#!/usr/bin/env python3
+"""
+Test code for our drone in obstacle avoidance
+"""
 
 import asyncio
-from mavsdk import System
+
+import mavsdk.core
+import mavsdk.telemetry
 
 
-async def run():
+async def run() -> None:
+    """
+    Runs test code
+    """
 
-    drone = System()
+    drone: mavsdk.System = mavsdk.System()
     print("Will connect")
     await drone.connect(system_address="udp://:14540")
     print("Connected")
 
-    status_text_task = asyncio.ensure_future(print_status_text(drone))
+    status_text_task: asyncio.Task[None] = asyncio.ensure_future(print_status_text(drone))
 
     print("Waiting for drone to connect...")
+    state: mavsdk.core.ConnectionState
     async for state in drone.core.connection_state():
         if state.is_connected:
-            print(f"-- Connected to drone!")
+            print("-- Connected to drone!")
             break
 
     print("Waiting for drone to have a global position estimate...")
+    health: mavsdk.telemetry.Health
     async for health in drone.telemetry.health():
         if health.is_global_position_ok and health.is_home_position_ok:
             print("-- Global position estimate OK")
@@ -39,9 +48,13 @@ async def run():
     status_text_task.cancel()
 
 
+async def print_status_text(drone: mavsdk.System) -> None:
+    """
+    Prints status text
+    """
 
-async def print_status_text(drone):
     try:
+        status_text: mavsdk.telemetry.RcStatus
         async for status_text in drone.telemetry.status_text():
             print(f"Status: {status_text.type}: {status_text.text}")
     except asyncio.CancelledError:
@@ -49,6 +62,7 @@ async def print_status_text(drone):
 
 
 if __name__ == "__main__":
+    loop: asyncio.AbstractEventLoop
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
