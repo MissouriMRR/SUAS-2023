@@ -2,12 +2,13 @@
 Defines and implements the Velocity class used in obstacle_avoidance.py
 """
 
+import math
 from dataclasses import dataclass
 
 import mavsdk.telemetry
 
 
-@dataclass
+@dataclass(frozen=True)
 class Velocity:
     """
     A velocity in 3D space
@@ -42,3 +43,62 @@ class Velocity:
         """
 
         return cls(velocity.north_m_s, velocity.east_m_s, velocity.down_m_s)
+
+    def __add__(self, rhs: "Velocity") -> "Velocity":
+        return Velocity(
+            self.north_vel + rhs.north_vel,
+            self.east_vel + rhs.east_vel,
+            self.down_vel + rhs.down_vel,
+        )
+
+    def __sub__(self, rhs: "Velocity") -> "Velocity":
+        return Velocity(
+            self.north_vel - rhs.north_vel,
+            self.east_vel - rhs.east_vel,
+            self.down_vel - rhs.down_vel,
+        )
+
+    def __mul__(self, rhs: "Velocity" | float) -> "Velocity":
+        if isinstance(rhs, float):
+            rhs = Velocity(rhs, rhs, rhs)
+
+        return Velocity(
+            self.north_vel * rhs.north_vel,
+            self.east_vel * rhs.east_vel,
+            self.down_vel * rhs.down_vel,
+        )
+
+    def __rmul__(self, lhs: float) -> "Velocity":
+        return self.__mul__(lhs)
+
+    def __truediv__(self, rhs: "Velocity" | float) -> "Velocity":
+        if isinstance(rhs, float):
+            rhs = Velocity(rhs, rhs, rhs)
+
+        return Velocity(
+            self.north_vel / rhs.north_vel,
+            self.east_vel / rhs.east_vel,
+            self.down_vel / rhs.down_vel,
+        )
+
+    def speed(self) -> float:
+        """
+        Converts a Velocity object to a speed value
+
+        Returns
+        -------
+        The length of this velocity vector
+        """
+
+        return math.hypot(self.north_vel, self.east_vel, self.down_vel)
+
+    def normalized(self) -> "Velocity":
+        """
+        Normalizes a Velocity object
+
+        Returns
+        -------
+        A new Velocity object with speed 1 pointing in the same direction
+        """
+
+        return self / self.speed()
