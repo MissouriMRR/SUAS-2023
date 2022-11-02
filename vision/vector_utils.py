@@ -1,17 +1,18 @@
 """Functions that use vectors to calculate camera intersections with the ground"""
 
-from typing import List, Tuple, Optional, TypeAlias
+from typing import TypeAlias
 from nptyping import NDArray, Shape, UInt8, Float64
 import numpy as np
 from scipy.spatial.transform import Rotation
+
+Image: TypeAlias = NDArray[Shape["1080, 1920, 3"], UInt8]
+Point: TypeAlias = NDArray[Shape["2"], Float64]
+Vector: TypeAlias = NDArray[Shape["3"], Float64]
 
 # Sony RX100 VII sensor size
 SENSOR_WIDTH = 13.2
 SENSOR_HEIGHT = 8.8
 
-Image: TypeAlias = NDArray[Shape["1080, 1920, 3"], UInt8]
-Point: TypeAlias = NDArray[Shape["2"], Float64]
-Vector: TypeAlias = NDArray[Shape["3"], Float64]
 
 # The rotation offset of the camera to the drone. The offset is applied in pixel_intersect
 # Set to [0.0, -90.0, 0.0] when the camera is facing directly downwards
@@ -19,32 +20,32 @@ ROTATION_OFFSET = [0.0, 0.0, 0.0]
 
 
 def pixel_intersect(
-    pixel: Tuple[int, int],
-    image_shape: Tuple[int, ...],
+    pixel: tuple[int, int],
+    image_shape: tuple[int, ...],
     focal_length: float,
-    rotation_deg: List[float],
+    rotation_deg: list[float],
     height: float,
-) -> Optional[Point]:
+) -> Point | None:
     """
     Finds the intersection [X,Y] of a given pixel with the ground relative to the camera.
     A camera with no rotation points in the +X direction and is centered at [0, 0, height].
 
     Parameters
     ----------
-    pixel : Tuple[int, int]
+    pixel : tuple[int, int]
         The coordinates of the pixel in [Y, X] form
-    image_shape : Tuple[int, int, int]
+    image_shape : tuple[int, int, int]
         The shape of the image (returned by image.shape when image is a numpy image array)
     focal_length : float
         The camera's focal length
-    rotation_deg : List[float]
+    rotation_deg : list[float]
         The [roll, pitch, yaw] rotation in degrees
     height : float
         The height that the image was taken at. The units of the output will be the units of the
         input.
     Returns
     -------
-    intersect : Optional[npt.NDArray[np.float64]]
+    intersect : Point | None
         The coordinates [X,Y] where the pixel's vector intersects with the ground.
         Returns None if there is no intersect.
     """
@@ -59,26 +60,26 @@ def pixel_intersect(
     # Apply the constant rotation offset
     vector = euler_rotate(vector, ROTATION_OFFSET)
 
-    intersect: Optional[Point] = plane_collision(vector, height)
+    intersect: Point | None = plane_collision(vector, height)
 
     return intersect
 
 
-def plane_collision(ray_direction: Vector, height: float) -> Optional[Point]:
+def plane_collision(ray_direction: Vector, height: float) -> Point | None:
     """
     Returns the point where a ray intersects the XY plane
     Returns None if there is no intersect.
 
     Parameters
     ----------
-    ray_direction : npt.NDArray[np.float64]
+    ray_direction : Vector
         XYZ coordinates that represent the direction a ray faces from (0, 0, 0)
     height : float
         The Z coordinate for the starting height of the ray; can be any units
 
     Returns
     -------
-    intersect : Optional[npt.NDArray[np.float64]]
+    intersect : Point | None
         The ray's intersection with the plane in [X,Y] format
         Returns None if there is no intersect.
 
@@ -87,7 +88,9 @@ def plane_collision(ray_direction: Vector, height: float) -> Optional[Point]:
     # Line is defined as ray_direction * time + origin.
     # Origin is the point at X, Y, Z = (0, 0, height)
 
-    intersect: Optional[Point] = None
+    intersect: Point | None
+
+    intersect = None
 
     time: np.float64 = -height / ray_direction[2]
 
@@ -101,7 +104,7 @@ def plane_collision(ray_direction: Vector, height: float) -> Optional[Point]:
 
 
 def pixel_vector(
-    pixel: Tuple[int, int], image_shape: Tuple[int, ...], focal_length: float
+    pixel: tuple[int, int], image_shape: tuple[int, ...], focal_length: float
 ) -> Vector:
     """
     Generates a vector representing the given pixel.
@@ -109,9 +112,9 @@ def pixel_vector(
 
     Parameters
     ----------
-    pixel : Tuple[int, int]
+    pixel : tuple[int, int]
         The coordinates of the pixel in [Y, X] form
-    image_shape : Tuple[int, int, int]
+    image_shape : tuple[int, int, int]
         The shape of the image (returned by image.shape when image is a numpy image array)
     focal_length : float
         The camera's focal length - used to generate the camera's fields of view
@@ -157,7 +160,7 @@ def pixel_angle(fov: float, ratio: float) -> float:
     return np.arctan(np.tan(fov / 2) * (1 - 2 * ratio))
 
 
-def focal_length_to_fovs(focal_length: float) -> Tuple[float, float]:
+def focal_length_to_fovs(focal_length: float) -> tuple[float, float]:
     """
     Converts a given focal length to the horizontal and vertical fields of view in radians
 
@@ -170,7 +173,7 @@ def focal_length_to_fovs(focal_length: float) -> Tuple[float, float]:
         The focal length of the camera in millimeters
     Returns
     -------
-    fields_of_view : Tuple[float, float]
+    fields_of_view : tuple[float, float]
         The fields of view in radians
         Format is [horizontal, vertical]
     """
@@ -212,7 +215,7 @@ def camera_vector(h_angle: float, v_angle: float) -> Vector:
         The angle in radians to rotate vertically
     Returns
     -------
-    camera_vector : npt.NDArray[np.float64]
+    camera_vector : Vector
         The vector which represents a given location in an image
     """
 
@@ -245,7 +248,7 @@ def edge_angle(v_angle: float, h_angle: float) -> float:
     return np.arctan(np.tan(v_angle) * np.cos(h_angle))
 
 
-def euler_rotate(vector: Vector, rotation_deg: List[float]) -> Vector:
+def euler_rotate(vector: Vector, rotation_deg: list[float]) -> Vector:
     """
     Rotates a vector based on a given roll, pitch, and yaw.
 
@@ -254,13 +257,13 @@ def euler_rotate(vector: Vector, rotation_deg: List[float]) -> Vector:
 
     Parameters
     ----------
-    vector: npt.NDArray[np.float64]
+    vector: Vector
         A vector represented by an XYZ coordinate that will be rotated
-    rotation_deg: List[float]
+    rotation_deg: list[float]
         The [roll, pitch, yaw] rotation in radians
     Returns
     -------
-    rotated_vector : npt.NDArray[np.float64]
+    rotated_vector : Vector
         The vector which has been rotated
     """
 

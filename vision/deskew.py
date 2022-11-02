@@ -1,25 +1,24 @@
 """Distorts an image to generate an overhead view of the photo."""
 
-from typing import List, Tuple, Optional, TypeAlias
-from nptyping import NDArray, Shape, UInt8, Float64
-
-Image: TypeAlias = NDArray[Shape["1080, 1920, 3"], UInt8]
-Point: TypeAlias = NDArray[Shape["2"], Float64]
-Vector: TypeAlias = NDArray[Shape["3"], Float64]
+from typing import TypeAlias
+from nptyping import NDArray, Shape, Float64
 
 import cv2
 import numpy as np
 
 from vector_utils import pixel_intersect
+from vector_utils import Image
+
+Corners: TypeAlias = NDArray[Shape["4, 2"], Float64]
 
 
 def deskew(
     image: Image,
     focal_length: float,
-    rotation_deg: List[float],
+    rotation_deg: list[float],
     scale: float = 1,
-    interpolation: Optional[int] = cv2.INTER_LINEAR,
-) -> Tuple[Optional[Image], Optional[NDArray[Shape["4, 2"], Float64]]]:
+    interpolation: int | None = cv2.INTER_LINEAR,
+) -> tuple[Image, Corners] | tuple[None, None]:
     """
     Distorts an image to generate an overhead view of the photo. Parts of the image will be
     completely black where the camera could not see.
@@ -31,29 +30,26 @@ def deskew(
 
     Parameters
     ----------
-    image : npt.NDArray[np.uint8]
+    image : Image
         The input image to deskew. Aspect ratio should match the camera sensor
     focal_length : float
         The camera's focal length - used to generate the camera's fields of view
-    rotation_deg : List[float]
+    rotation_deg : list[float]
         The [roll, pitch, yaw] rotation in degrees
-    scale: Optional[float]
+    scale: float | None
         Scales the resolution of the output. A value of 1 makes the area inside the camera view
         equal to the original image. Defaults to 1.
-    interpolation: Optional[int]
+    interpolation: int | None
         The cv2 interpolation type to be used when deskewing.
     Returns
     -------
-    (deskewed_image, corner_points) : Tuple[
-                                            Optional[Image],
-                                            Optional[NDArray[Shape["4, 2"], Float64]]]
-                                            ]
+    (deskewed_image, corner_points) : Tuple[Image, Corners] | Tuple[None, None]
         deskewed_image : Image
             The deskewed image - the image is flattened with black areas in the margins
 
             Returns None if no valid image could be generated.
 
-        corner_points : NDArray[Shape["4, 2"], Float64]]
+        corner_points : Corners
             The corner points of the result in the image.
             Points are in order based on their location in the original image.
             Format is: (top left, top right, bottom right, bottom left), or
@@ -72,12 +68,12 @@ def deskew(
     # 1--2
     # |  |
     # 4--3
-    src_pts: NDArray[Shape["4, 2"], Float64] = np.array(
+    src_pts: Corners = np.array(
         [[0, 0], [orig_width, 0], [orig_width, orig_height], [0, orig_height]], dtype=np.float32
     )
 
     # Numpy converts `None` to NaN
-    intersects: NDArray[Shape["4, 2"], Float64] = np.array(
+    intersects: Corners = np.array(
         [
             pixel_intersect(point, image.shape, focal_length, rotation_deg, 1)
             for point in np.flip(src_pts, axis=1)  # use np.flip to convert XY to YX
@@ -85,7 +81,7 @@ def deskew(
         dtype=np.float32,
     )
 
-    # Return (None, None) if any elements are NaN
+    # Return (None, None) if any elements are NaN - camera vectors don't intersect the ground
     if np.any(np.isnan(intersects)):
         return None, None
 
@@ -99,9 +95,9 @@ def deskew(
     area: float = cv2.contourArea(intersects)
 
     # Scale the output so the area of the important pixels is about the same as the starting image
-    target_area: float = float(image.shape[0]) * (float(image.shape[1]) * scale)
+    target_area: float = float(image.shape[0]) * float(float(image.shape[1]) * scale)
     intersect_scale: np.float64 = np.float64(np.sqrt(target_area / area))
-    dst_pts: NDArray[Shape["4, 2"], Float64] = intersects * intersect_scale
+    dst_pts: Corners = intersects * intersect_scale
 
     dst_pts = np.round(dst_pts)
 
@@ -119,6 +115,5 @@ def deskew(
     )
 
     temp = dst_pts.astype(np.int32)
-    # print(temp.shape)
 
     return result, temp

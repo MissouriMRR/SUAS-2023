@@ -1,43 +1,44 @@
 """Functions for calculating locations of objects in an image"""
 
-from typing import Tuple, List, Optional
+from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
 
-import coordinate_lengths, vector_utils
+import coordinate_lengths
+import vector_utils
 
 
 def get_coordinates(
-    pixel: Tuple[int, int],
-    image_shape: Tuple[int, int, int],
+    pixel: tuple[int, int],
+    image_shape: tuple[int, int, int],
     focal_length: float,
-    rotation_deg: List[float],
-    drone_coordinates: List[float],
+    rotation_deg: list[float],
+    drone_coordinates: list[float],
     altitude_m: float,
-) -> Optional[Tuple[float, float]]:
+) -> Optional[tuple[float, float]]:
     """
     Calculates the coordinates of the given pixel.
     Returns None if there is no valid intersect.
 
     Parameters
     ----------
-    pixel: Tuple[int, int]
+    pixel: tuple[int, int]
         The coordinates of the pixel in [Y, X] form
-    image_shape : Tuple[int, int, int]
+    image_shape : tuple[int, int, int]
         The shape of the image (returned by `image.shape` when image is a numpy image array)
     focal_length : float
         The camera's focal length
-    rotation_deg: List[float]
+    rotation_deg: list[float]
         The rotation of the drone/camera. The ROTATION_OFFSET in vector_utils.py will be applied
         after.
-    drone_coordinates: List[float]
+    drone_coordinates: list[float]
         The coordinates of the drone in degrees of (latitude, longitude)
     altitude_m: float
         The altitude of the drone in meters
     Returns
     -------
-    pixel_coordinates : Optional[Tuple[float, float]]
+    pixel_coordinates : Optional[tuple[float, float]]
         The (latitude, longitude) coordinates of the pixel in degrees.
 
         Equal to None if there is no valid intersect.
@@ -65,11 +66,11 @@ def get_coordinates(
 
 
 def calculate_distance(
-    pixel1: Tuple[int, int],
-    pixel2: Tuple[int, int],
-    image_shape: Tuple[int, int, int],
+    pixel1: tuple[int, int],
+    pixel2: tuple[int, int],
+    image_shape: tuple[int, int, int],
     focal_length: float,
-    rotation_deg: List[float],
+    rotation_deg: list[float],
     altitude: float,
 ) -> Optional[float]:
     """
@@ -78,13 +79,13 @@ def calculate_distance(
 
     Parameters
     ----------
-    pixel1, pixel2: Tuple[int, int]
+    pixel1, pixel2: tuple[int, int]
         The two input pixel locations in [Y,X] form. The distance between them will be calculated
-    image_shape : Tuple[int, int, int]
+    image_shape : tuple[int, int, int]
         The shape of the image (returned by `image.shape` when image is a numpy image array)
     focal_length : float
         The camera's focal length
-    rotation_deg : List[float]
+    rotation_deg : list[float]
         The [roll, pitch, yaw] rotation in degrees
     altitude: float
         The altitude of the drone in any units. If an altitude is given, the units of the output
