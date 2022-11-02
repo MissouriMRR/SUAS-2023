@@ -4,49 +4,24 @@ Contains a moving obstacle avoidance function
 
 # pylint: disable=fixme
 
-from typing import Callable
+import math
 
 import mavsdk
 import mavsdk.telemetry
-import numpy as np
 
 from point import Point, InputPoint
 from velocity import Velocity
 
 
-def polynomial_evaluator(coefficients: list[float]) -> Callable[[float], float]:
-    """
-    Converts a list of polynomial coefficients into a function
-
-    Parameters
-    ----------
-    coefficients : list[float]
-        A list of coefficients for a polynomial - highest degree first
-
-    Returns
-    -------
-    evaluate : Callable[[float], float]
-        A function that evaluates the polynomial at any given value
-    """
-
-    def evaluate(val: float) -> float:
-        result: float = 0.0
-        coefficient: float
-        for coefficient in coefficients:
-            result *= val
-            result += coefficient
-        return result
-
-    return evaluate
-
-
-async def calculate_avoidance_path(
+async def calculate_avoidance_velocity(
     drone: mavsdk.System,
     obstacle_data: list[InputPoint],
     avoidance_radius: float = 10.0,
-) -> list[Point]:
+    avoidance_speed: float = 5.0,
+) -> Velocity | None:
     """
-    Given a drone and a moving obstacle, calculates a path avoiding the obstacle
+    Given a drone and a moving obstacle, calculates a velocity at which the
+    drone should move to avoid the obstacle
 
     Parameters
     ----------
@@ -55,15 +30,25 @@ async def calculate_avoidance_path(
     obstacle_data : list[InputPoint]
         Positions at previous times of the obstacle (probably another drone)
     avoidance_radius : float
-        The radius around the predicted center of the obstacle the drone should avoid
+        The distance between the drone and obstacle, in meters, at which
+        obstacle avoidance will active
+    avoidance_speed : float
+        The speed, in m/s, at which we should move away from the obstacle
 
     Returns
     -------
-    avoidance_path : list[dict]
-        The avoidance path, consisting of a list of waypoints
+    avoidance_velocity : Velocity | None
+        The velocity the drone should move at to avoid the obstacle
+        if obstacle avoidance should activate, otherwise None
     """
 
-    # Convert obstacle data to list of Point
+    if len(obstacle_data) < 2:
+        raise ValueError(
+            "Expected obstacle_data to have length of at least 2; "
+            f"got a length of {len(obstacle_data)}"
+        )
+
+    # Convert obstacle data to list of Point objects
     obstacle_positions: list[Point] = [Point.from_dict(in_point) for in_point in obstacle_data]
 
     # Get position of drone
@@ -72,7 +57,7 @@ async def calculate_avoidance_path(
         drone_position = position
         break
 
-    # Convert drone position to UTM Point
+    # Convert drone position to Point object
     drone_position: Point = Point.from_mavsdk_position(drone_position)  # type: ignore
 
     # TODO: Make the function work if UTM zones differ
@@ -87,64 +72,59 @@ async def calculate_avoidance_path(
                 "Points are in different UTM zones (Note: tell obstacle avoidance team to fix this)"
             )
 
+    # Sort obstacle positions with respect to time
+    obstacle_positions.sort(key=lambda p: p.time)
+
+    # Check if inside avoidance radius, and return None if not
+    if (
+        math.hypot(
+            drone_position.utm_x - obstacle_positions[-1].utm_x,
+            drone_position.utm_y - obstacle_positions[-1].utm_y,
+            drone_position.altitude - obstacle_positions[-1].altitude,
+        )
+        > avoidance_radius
+    ):
+        return None
+
     # Get velocity of drone
     drone_velocity: mavsdk.telemetry.VelocityNed
     async for velocity in drone.telemetry.velocity_ned():
         drone_velocity = velocity
         break
 
-    # Convert drone position to Velocity object
+    # Convert drone velocity to Velocity object
     # Units don't change, only the type of the object
     drone_velocity: Velocity = Velocity.from_mavsdk_velocityned(drone_velocity)  # type: ignore
 
-    obstacle_positions.sort(key=lambda p: p.time)
+    # Estimate obstacle velocity
+    obstacle_velocity: Velocity = Velocity(
+        obstacle_positions[-1].utm_y - obstacle_positions[-2].utm_y,
+        obstacle_positions[-1].utm_x - obstacle_positions[-2].utm_x,
+        obstacle_positions[-2].altitude - obstacle_positions[-1].altitude
+        # Altitudes reversed because we want downward velocity
+    ) / (obstacle_positions[-1].time - obstacle_positions[-2].time)
 
-    # Degree of polynomial used in polynomial regression
-    polynomial_degree: int = 3
-    # Create list of times
-    obstacle_times: list[float] = [point.time for point in obstacle_positions]
+    # Get velocity of our drone relative to the obstacle
+    relative_velocity: Velocity = drone_velocity - obstacle_velocity
 
-    # TODO: Research better models for predicting the obstacle's path
-    # Use polynomial regression to model the obstacle's path
-    # The polynomial is arr[0] * t**n + arr[1] * t**(n - 1) + ... + arr[n - 1] * t + arr[n]
-    x_polynomial: list[float] = list(
-        np.polyfit(
-            [point.utm_x for point in obstacle_positions],
-            obstacle_times,
-            polynomial_degree,
-            w=range(1, len(obstacle_times) + 1),
-        )
-    )
-    y_polynomial: list[float] = list(
-        np.polyfit(
-            [point.utm_y for point in obstacle_positions],
-            obstacle_times,
-            polynomial_degree,
-            w=range(1, len(obstacle_times) + 1),
-        )
-    )
-    altitude_polynomial: list[float] = list(
-        np.polyfit(
-            [point.altitude for point in obstacle_positions],
-            obstacle_times,
-            polynomial_degree,
-            w=range(1, len(obstacle_times) + 1),
-        )
+    # Get the relative velocity we want
+    desired_relative_velocity = (
+        avoidance_speed
+        * Velocity(
+            drone_position.utm_y - obstacle_positions[-1].utm_y,
+            drone_position.utm_x - obstacle_positions[-1].utm_x,
+            obstacle_positions[-1].altitude - drone_position.altitude
+            # Altitudes reversed because we want downward velocity
+        ).normalized()
     )
 
-    predict_x: Callable[[float], float] = polynomial_evaluator(x_polynomial)
-    predict_y: Callable[[float], float] = polynomial_evaluator(y_polynomial)
-    predict_altitude: Callable[[float], float] = polynomial_evaluator(altitude_polynomial)
+    # Get the amount by which we should correct the drone's velocity
+    correction_velocity: Velocity = desired_relative_velocity - relative_velocity
 
-    # TODO: Do something useful with these variables
-    print(x_polynomial, y_polynomial, altitude_polynomial, drone_velocity, avoidance_radius)
-    print(
-        predict_x(drone_position.time),
-        predict_y(drone_position.time),
-        predict_altitude(drone_position.time),
-    )
+    # Get the velocity at which the drone should move to avoid the obstacle
+    avoidance_velocity: Velocity = drone_velocity + correction_velocity
 
-    raise NotImplementedError
+    return avoidance_velocity
 
 
 def main() -> None:
