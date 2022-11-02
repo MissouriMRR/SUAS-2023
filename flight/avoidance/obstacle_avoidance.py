@@ -129,9 +129,19 @@ async def calculate_avoidance_velocity(
 
 def main() -> None:
     """
-    Will do something in the future
+    Tells the user how to test this module
     """
-    raise NotImplementedError
+
+    # TODO: Change if we add another test Python script for the second drone
+    print("Run")
+    print()
+    print("\t./opensitl_multiple_drones.sh")
+    print()
+    print("and")
+    print()
+    print("\tpython3 ./test.py")
+    print()
+    print("to test this module.")
 
 
 if __name__ == "__main__":
