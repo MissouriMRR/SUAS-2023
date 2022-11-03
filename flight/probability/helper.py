@@ -1,3 +1,9 @@
+"""
+Summary
+-------
+Several useful functions repeatedly used in other files
+"""
+
 from typing import Dict, List, Tuple
 from math import sqrt
 
@@ -18,15 +24,15 @@ TEST_AREA = [
     (38.31722979755967,-76.5570186342245)
 ]
 
-def calculate_dist(p1: Tuple[int, int], p2: Tuple[int, int]) -> float:
+def calculate_dist(p_1: Tuple[int, int], p_2: Tuple[int, int]) -> float:
     """
     calculates the Euclidian distance between two points
 
     Parameters
     ----------
-    p1: Tuple[int, int]
+    p_1: Tuple[int, int]
         the first point
-    p2: Tuple[int, int]
+    p_2: Tuple[int, int]
         The second point
 
     Returns
@@ -34,7 +40,7 @@ def calculate_dist(p1: Tuple[int, int], p2: Tuple[int, int]) -> float:
     distance: float
         The Euclidian distance between these two points
     """
-    return sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+    return sqrt((p_1[0] - p_2[0])**2 + (p_1[1] - p_2[1])**2)
 
 def get_bounds(points: List[Tuple[float, float]]) -> Dict[str, List[float]]:
     """
@@ -54,26 +60,15 @@ def get_bounds(points: List[Tuple[float, float]]) -> Dict[str, List[float]]:
     x_bounds = [float("inf"), float("-inf")]
     y_bounds = [float("inf"), float("-inf")]
 
-    for i in range(len(points)):
+    for i, _ in enumerate(points):
         for dim in ((0, x_bounds), (1, y_bounds)):
-            try:
-                if points[i][dim[0]] < dim[1][0]: #smallest x | y
-                    dim[1][0] = points[i][dim[0]]
+            if points[i][dim[0]] < dim[1][0]: #smallest x | y
+                dim[1][0] = points[i][dim[0]]
 
-                elif points[i][dim[0]] > dim[1][1]: #biggest x | y
-                    dim[1][1] = points[i][dim[0]]
-            except:
-                pass
+            elif points[i][dim[0]] > dim[1][1]: #biggest x | y
+                dim[1][1] = points[i][dim[0]]
 
     return {'x': x_bounds, 'y': y_bounds}
-
-#TODO: FINISH THIS FUNCTION
-def m_to_lat(m: float) -> float:
-    """
-    Given a length of m meters, convert that to a fraction of a latitude.
-    """
-    pass
-    
 
 if __name__ == "__main__":
     x = get_bounds(TEST_AREA)
