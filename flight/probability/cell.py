@@ -1,6 +1,7 @@
 """
-Summary:
-    defines the Cell dataclass
+Summary
+-------
+defines the Cell dataclass
 """
 
 from dataclasses import dataclass
