@@ -16,8 +16,9 @@ def deskew(
     image: Image,
     focal_length: float,
     rotation_deg: list[float],
+    *,  # The following are keyword-only
     scale: float = 1,
-    interpolation: int | None = cv2.INTER_LINEAR,
+    interpolation: int = cv2.INTER_LINEAR,
 ) -> tuple[Image, Corners] | tuple[None, None]:
     """
     Distorts an image to generate an overhead view of the photo. Parts of the image will be
