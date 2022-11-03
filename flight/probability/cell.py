@@ -1,3 +1,8 @@
+"""
+Summary:
+    defines the Cell dataclass
+"""
+
 from dataclasses import dataclass
 
 
@@ -22,6 +27,6 @@ class Cell:
     """
     probability: float
     seen: bool
-    x: float | None
-    y: float | None
+    lat: float | None
+    lon: float | None
     is_valid: bool

@@ -146,8 +146,8 @@ class CellMap:
         flat_list = []
         for sub_list in self.data:
             for item in sub_list:
-                if item.x is not None and item.y is not None:
-                    flat_list.append((item.x, item.y))
+                if item.lat is not None and item.lon is not None:
+                    flat_list.append((item.lat, item.lon))
         self.bounds = get_bounds(flat_list)
 
 

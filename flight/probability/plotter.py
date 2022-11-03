@@ -126,11 +126,11 @@ def plot_prob_map(prob_map: CellMap, seen_mode: bool = False) -> None:
             cell = prob_map[i][j]
             if cell.is_valid:
                 if seen_mode:
-                    draw_cell(cell.x, cell.y, 1 if cell.seen else 0)
+                    draw_cell(cell.lat, cell.lon, 1 if cell.seen else 0)
                 else:
                     draw_cell(
-                        cell.x,
-                        cell.y,
+                        cell.lat,
+                        cell.lon,
                         get_normalized_prob(cell.probability, prob_range),
                     )
     plt.show()
