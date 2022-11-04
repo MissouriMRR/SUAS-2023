@@ -2,19 +2,19 @@
 Provides plotting functionality for visaulizing coordinate data
 """
 
+import copy
 from typing import List, Dict, Tuple
 from cell_map import CellMap
 from segmenter import segment
 from helper import TEST_AREA
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import copy
+from matplotlib import patches
 
 P_1_COLOR = (246, 229, 37)
 P_0_COLOR = (38, 7, 144)
 
 
-def get_p_color(p: float) -> List[float]:
+def get_p_color(prob: float) -> List[float]:
     """
     Given a probability [0, 1], return the color
     of the cell.
@@ -31,26 +31,24 @@ def get_p_color(p: float) -> List[float]:
     """
     color = []
     for i in range(3):
-        color.append((P_0_COLOR[i] + ((P_1_COLOR[i] - P_0_COLOR[i]) * p)) / 255)
+        color.append((P_0_COLOR[i] + ((P_1_COLOR[i] - P_0_COLOR[i]) * prob)) / 255)
     return color
 
 
-def draw_cell(x: float | None, y: float | None, p: float) -> None:
+def draw_cell(pos: Tuple(float, float) | None, prob: float) -> None:
     """
     draws a cell on the plot
 
     Parameters
     ----------
-    x : float | None
-        the x-coordinate of the cell. Cancels the function call if none
-    y : float | None
-        the y-coordinate of the cell. Cancels the function call if none
-    p : float
+    pos : Tuple(float, float) | None
+        the position of the cell
+    prob : float
         The probability of the cell containing a ODLC
     """
-    if x == None or y == None: return
+    if pos[0] is None or pos[0] is  None: return
     plt.gca().add_patch(
-        patches.Rectangle((x, y), 0.00015, 0.00015, fill=True, color=get_p_color(p))
+        patches.Rectangle((pos[0], pos[1]), 0.00015, 0.00015, fill=True, color=get_p_color(prob))
     )
 
 
@@ -91,7 +89,7 @@ def get_normalized_prob(raw_prob: float, prob_range: Tuple[float, float]) -> flo
         the raw probability value found on the map
     prob_range : Tuple[float, float]
         tuple containing the highest and lowest probability values
-    
+
     Returns
     -------
     normalized_probability : float
@@ -113,13 +111,13 @@ def plot_prob_map(prob_map: CellMap, seen_mode: bool = False) -> None:
         that have been seen
     """
     prob_range = get_prob_range(prob_map)
-    MARGIN = 0.001
+    margin = 0.001
     size = max(
         abs(prob_map.bounds["x"][0] - prob_map.bounds["x"][1]),
         abs(prob_map.bounds["y"][0] - prob_map.bounds["y"][1]),
     )
-    plt.xlim(prob_map.bounds["x"][0] - MARGIN, prob_map.bounds["x"][0] + size + MARGIN)
-    plt.ylim(prob_map.bounds["y"][0] - MARGIN, prob_map.bounds["y"][0] + size + MARGIN)
+    plt.xlim(prob_map.bounds["x"][0] - margin, prob_map.bounds["x"][0] + size + margin)
+    plt.ylim(prob_map.bounds["y"][0] - margin, prob_map.bounds["y"][0] + size + margin)
 
     for i in range(len(prob_map.data)):
         for j in range(len(prob_map[0])):
