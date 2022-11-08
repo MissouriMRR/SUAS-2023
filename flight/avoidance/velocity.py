@@ -9,7 +9,7 @@ from typing import Union
 import mavsdk.telemetry
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Velocity:
     """
     A velocity in 3D space
