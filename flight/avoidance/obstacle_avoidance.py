@@ -31,7 +31,7 @@ async def calculate_avoidance_velocity(
         Positions at previous times of the obstacle (probably another drone)
     avoidance_radius : float
         The distance between the drone and obstacle, in meters, at which
-        obstacle avoidance will active
+        obstacle avoidance will activate
     avoidance_speed : float
         The speed, in m/s, at which we should move away from the obstacle
 
