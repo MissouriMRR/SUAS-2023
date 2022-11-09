@@ -1,27 +1,22 @@
 """Functions that use vectors to calculate camera intersections with the ground"""
 
 from typing import TypeAlias
-from nptyping import NDArray, Shape, UInt8, Float64
+from nptyping import NDArray, Shape, Float64
 import numpy as np
 from scipy.spatial.transform import Rotation
 
-Image: TypeAlias = NDArray[Shape["1080, 1920, 3"], UInt8]
-Point: TypeAlias = NDArray[Shape["2"], Float64]
 Vector: TypeAlias = NDArray[Shape["3"], Float64]
-
-# Sony RX100 VII sensor size
-SENSOR_WIDTH = 13.2
-SENSOR_HEIGHT = 8.8
+from constants import Point, SENSOR_WIDTH, SENSOR_HEIGHT, ROTATION_OFFSET
 
 
-# The rotation offset of the camera to the drone. The offset is applied in pixel_intersect
-# Set to [0.0, -90.0, 0.0] when the camera is facing directly downwards
-ROTATION_OFFSET = [0.0, 0.0, 0.0]
+# Vector pointing toward the +X axis, represents the camera's forward direction when the rotation
+#   on all axes is 0
+IHAT: Vector = np.array([1, 0, 0], dtype=np.float64)
 
 
 def pixel_intersect(
     pixel: tuple[int, int],
-    image_shape: tuple[int, ...],
+    image_shape: tuple[int, int, int] | tuple[int, int],
     focal_length: float,
     rotation_deg: list[float],
     height: float,
@@ -34,7 +29,7 @@ def pixel_intersect(
     ----------
     pixel : tuple[int, int]
         The coordinates of the pixel in [Y, X] form
-    image_shape : tuple[int, int, int]
+    image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by image.shape when image is a numpy image array)
     focal_length : float
         The camera's focal length
@@ -43,6 +38,7 @@ def pixel_intersect(
     height : float
         The height that the image was taken at. The units of the output will be the units of the
         input.
+
     Returns
     -------
     intersect : Point | None
@@ -104,7 +100,7 @@ def plane_collision(ray_direction: Vector, height: float) -> Point | None:
 
 
 def pixel_vector(
-    pixel: tuple[int, int], image_shape: tuple[int, ...], focal_length: float
+    pixel: tuple[int, int], image_shape: tuple[int, int, int] | tuple[int, int], focal_length: float
 ) -> Vector:
     """
     Generates a vector representing the given pixel.
@@ -114,14 +110,14 @@ def pixel_vector(
     ----------
     pixel : tuple[int, int]
         The coordinates of the pixel in [Y, X] form
-    image_shape : tuple[int, int, int]
+    image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by image.shape when image is a numpy image array)
     focal_length : float
         The camera's focal length - used to generate the camera's fields of view
 
     Returns
     -------
-    pixel_vector : npt.NDArray[np.float64]
+    pixel_vector : Vector
         The vector that represents the direction of the given pixel
     """
 
@@ -164,13 +160,13 @@ def focal_length_to_fovs(focal_length: float) -> tuple[float, float]:
     """
     Converts a given focal length to the horizontal and vertical fields of view in radians
 
-    Uses SENSOR_WIDTH and SENSOR_HEIGHT, which are set to 13.2 and 8.8 respectively, the size of
-    the sensor in the Sony RX100 vii
+    Uses SENSOR_WIDTH and SENSOR_HEIGHT
 
     Parameters
     ----------
     focal_length: float
         The focal length of the camera in millimeters
+
     Returns
     -------
     fields_of_view : tuple[float, float]
@@ -213,6 +209,7 @@ def camera_vector(h_angle: float, v_angle: float) -> Vector:
         The angle in radians to rotate horizontally
     v_angle : float
         The angle in radians to rotate vertically
+
     Returns
     -------
     camera_vector : Vector
@@ -222,8 +219,7 @@ def camera_vector(h_angle: float, v_angle: float) -> Vector:
     # Calculate the vertical rotation needed for the final vector to have the desired direction
     edge: float = edge_angle(v_angle, h_angle)
 
-    vector: Vector = np.array([1, 0, 0], dtype=np.float64)
-    return euler_rotate(vector, [0, edge, -h_angle])
+    return euler_rotate(IHAT, [0, edge, -h_angle])
 
 
 def edge_angle(v_angle: float, h_angle: float) -> float:
@@ -239,6 +235,7 @@ def edge_angle(v_angle: float, h_angle: float) -> float:
         The vertical angle
     h_angle : float
         The horizontal angle
+
     Returns
     -------
     edge_angle : float
@@ -261,6 +258,7 @@ def euler_rotate(vector: Vector, rotation_deg: list[float]) -> Vector:
         A vector represented by an XYZ coordinate that will be rotated
     rotation_deg: list[float]
         The [roll, pitch, yaw] rotation in radians
+
     Returns
     -------
     rotated_vector : Vector

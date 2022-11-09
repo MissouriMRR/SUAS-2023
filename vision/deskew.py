@@ -1,15 +1,62 @@
-"""Distorts an image to generate an overhead view of the photo."""
+"""Distorts an image to generate an overhead view of flat terrain."""
 
-from typing import TypeAlias
 from nptyping import NDArray, Shape, Float64
 
 import cv2
 import numpy as np
 
 from vector_utils import pixel_intersect
-from vector_utils import Image
+from constants import Image, Corners
 
-Corners: TypeAlias = NDArray[Shape["4, 2"], Float64]
+
+def perspective_matrix(
+    image_shape: tuple[int, int, int] | tuple[int, int],
+    focal_length: float,
+    rotation_deg: list[float],
+    *,  # The following are keyword-only
+    scale: float = 1,
+):
+    orig_height: int = image_shape[0]
+    orig_width: int = image_shape[1]
+
+    # Generate points in the format
+    # 1--2
+    # |  |
+    # 4--3
+    src_pts: Corners = np.array(
+        [[0, 0], [orig_width, 0], [orig_width, orig_height], [0, orig_height]], dtype=np.float32
+    )
+
+    # Numpy converts `None` to NaN
+    intersects: Corners = np.array(
+        [
+            pixel_intersect(point, image_shape, focal_length, rotation_deg, 1)
+            for point in np.flip(src_pts, axis=1)  # use np.flip to convert XY to YX
+        ],
+        dtype=np.float32,
+    )
+
+    # Return (None, None) if any elements are NaN - camera vectors don't intersect the ground
+    if np.any(np.isnan(intersects)):
+        return None, None
+
+    # Flip the endpoints over the X axis (top left is 0,0 for images)
+    intersects[:, 1] *= -1
+
+    # Subtract the minimum on both axes so the minimum values on each axis are 0
+    intersects -= np.min(intersects, axis=0)
+
+    # Find the area using cv2 contour tools
+    area: float = cv2.contourArea(intersects)
+
+    # Scale the output so the area of the important pixels is about the same as the starting image
+    target_area: float = orig_height * orig_width * scale
+    intersect_scale: np.float64 = np.float64(np.sqrt(target_area / area))
+    dst_pts: Corners = intersects * intersect_scale
+
+    matrix: NDArray[Shape["3, 3"], Float64] = cv2.getPerspectiveTransform(src_pts, dst_pts)
+
+    return matrix, dst_pts
 
 
 def deskew(
@@ -42,9 +89,10 @@ def deskew(
         equal to the original image. Defaults to 1.
     interpolation: int | None
         The cv2 interpolation type to be used when deskewing.
+
     Returns
     -------
-    (deskewed_image, corner_points) : Tuple[Image, Corners] | Tuple[None, None]
+    (deskewed_image, corner_points) : tuple[Image, Corners] | tuple[None, None]
         deskewed_image : Image
             The deskewed image - the image is flattened with black areas in the margins
 
@@ -61,48 +109,8 @@ def deskew(
             Returns None if no valid image could be generated.
 
     """
-    orig_height: int
-    orig_width: int
-    orig_height, orig_width, _ = image.shape
 
-    # Generate points in the format
-    # 1--2
-    # |  |
-    # 4--3
-    src_pts: Corners = np.array(
-        [[0, 0], [orig_width, 0], [orig_width, orig_height], [0, orig_height]], dtype=np.float32
-    )
-
-    # Numpy converts `None` to NaN
-    intersects: Corners = np.array(
-        [
-            pixel_intersect(point, image.shape, focal_length, rotation_deg, 1)
-            for point in np.flip(src_pts, axis=1)  # use np.flip to convert XY to YX
-        ],
-        dtype=np.float32,
-    )
-
-    # Return (None, None) if any elements are NaN - camera vectors don't intersect the ground
-    if np.any(np.isnan(intersects)):
-        return None, None
-
-    # Flip the endpoints over the X axis (top left is 0,0 for images)
-    intersects[:, 1] *= -1
-
-    # Subtract the minimum on both axes so the minimum values on each axis are 0
-    intersects -= np.min(intersects, axis=0)
-
-    # Find the area using cv2 contour tools
-    area: float = cv2.contourArea(intersects)
-
-    # Scale the output so the area of the important pixels is about the same as the starting image
-    target_area: float = float(image.shape[0]) * float(float(image.shape[1]) * scale)
-    intersect_scale: np.float64 = np.float64(np.sqrt(target_area / area))
-    dst_pts: Corners = intersects * intersect_scale
-
-    dst_pts = np.round(dst_pts)
-
-    matrix: NDArray[Shape["3, 3"], Float64] = cv2.getPerspectiveTransform(src_pts, dst_pts)
+    matrix, dst_pts = perspective_matrix(image.shape, focal_length, rotation_deg, scale)
 
     result_height: int = int(np.max(dst_pts[:, 1])) + 1
     result_width: int = int(np.max(dst_pts[:, 0])) + 1
