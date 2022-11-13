@@ -103,7 +103,7 @@ def sim(seeker : Seeker, cell_map : CellMap, path: List[List[Tuple[int, int]]]) 
         seeker.move(move)
     return cell_map
 
-def get_valid_moves(area : ndarray, pos: Tuple[int, int]) -> List[Tuple[int, int]]:
+def get_valid_pos(area : ndarray, pos: Tuple[int, int]) -> List[Tuple[int, int]]:
     """
     Given some position on the compressed map, return all possible moves
 
@@ -126,11 +126,38 @@ def get_valid_moves(area : ndarray, pos: Tuple[int, int]) -> List[Tuple[int, int
                 0 <= pos[1] + move[1] < len(area[0]) and
                 area[pos[0] + move[0]][pos[1] + move[1]] != 0
             ):
-            moves.append(move)
+            moves.append((pos[0] + move[0], pos[1] + move[1]))
     return moves
 
+def contains_all(compressed_map : ndarray, candidate: List[Tuple[int, int]]) -> bool:
+    """
+    Checks if the candidate list contains all valid coordinates of the compressed map
+
+    Parameters
+    ----------
+    compressed_map : ndarray
+        The area being checked
+    candidate : List[Tuple[int, int]]
+        The list of coordinates
+    
+    Returns
+    -------
+    contains_all : bool
+        Whether all coordinates are in the candidates list
+    """
+
+    cand_set = set(candidate) #O(1) lookup times
+
+    for i in range(len(compressed_map)):
+        for j in range(len(compressed_map[0])):
+            if compressed_map[i][j] != 0 and (i, j) not in cand_set:
+                return False
+    return True
+
 def touch_all(compressed_map : ndarray, start : Tuple[int, int], seen : list[Tuple[int, int]] = deepcopy([])) -> List[Tuple[int, int]]:
-    pass
+    
+    moves = list(filter(lambda x : x not in seen, get_valid_pos(compressed_map, start)))
+
 
 def get_circum_square_r(r: int) -> int:
     """
@@ -230,8 +257,17 @@ if __name__ == "__main__":
     seeker = Seeker((4, 108), 1, 4, cell_map)
 
     c = compress_area(8, get_seen_map(cell_map))
+    SMALL_TEST = [
+        [1, 1, 1],
+        [1, 1, 1],
+        [1, 1, 1]
+    ]
+    all_coords = []
+    for i in range(2):
+        for j in range(3):
+            all_coords.append((i, j))
+    print(contains_all(SMALL_TEST, all_coords))
 
-    print(get_valid_moves(c, (1, 9)))
     # TEST = [
     #     [1, 1, 1, 1, 0, 0, 0, 0],
     #     [1, 1, 1, 1, 0, 0, 0, 0],
