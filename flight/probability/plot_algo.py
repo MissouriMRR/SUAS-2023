@@ -1,6 +1,6 @@
 from math import floor, sqrt
 from copy import deepcopy
-from numpy import zeros, ndarray, int8
+from numpy import zeros, ndarray, int8, ones
 from seeker import Seeker
 from cell_map import CellMap
 from typing import List, Tuple
@@ -154,10 +154,44 @@ def contains_all(compressed_map : ndarray, candidate: List[Tuple[int, int]]) -> 
                 return False
     return True
 
-def touch_all(compressed_map : ndarray, start : Tuple[int, int], seen : list[Tuple[int, int]] = deepcopy([])) -> List[Tuple[int, int]]:
-    
-    moves = list(filter(lambda x : x not in seen, get_valid_pos(compressed_map, start)))
+def touch_all(compressed_map : ndarray, history : List[Tuple[int, int]], step=[float("inf")]) -> List[Tuple[int, int]]:
+    """
+    A recursive algorithm to find the shortest route through the compressed
+    map, touching all cells as the drone goes through.
 
+    Parameters
+    ----------
+    Compressed_map : ndarray
+        The map being searched through
+    history : List[Tuple[int, int]]
+        All moves taken so far in this branch
+    step : List[float]
+        Due to function calls creating shallow copies of lists,
+        allows the shortest path found so far to be shared across
+        all function calls
+
+    Returns
+    -------
+    shortest_path : List[Tuple[int, int]]
+    """
+    if contains_all(compressed_map, history) and len(history) < step[0]:
+        step[0] = len(history)
+        return history
+    elif len(history) > step[0]:
+        return None
+
+    moves = []
+    for move in list(filter(lambda x : x not in history, get_valid_pos(compressed_map, history[-1]))):
+        new_history = deepcopy(history)
+        new_history.append(move)
+        moves.append(touch_all(compressed_map, new_history, step))
+
+    for move_set in moves:
+        if move_set != None:
+            if len(move_set) == step[0]:
+                return move_set
+
+    Exception("Something went wrong in 'touch_all'!")
 
 def get_circum_square_r(r: int) -> int:
     """
@@ -255,18 +289,10 @@ if __name__ == "__main__":
     area = segment(TEST_AREA)
     cell_map = CellMap(area, 30)
     seeker = Seeker((4, 108), 1, 4, cell_map)
-
     c = compress_area(8, get_seen_map(cell_map))
-    SMALL_TEST = [
-        [1, 1, 1],
-        [1, 1, 1],
-        [1, 1, 1]
-    ]
-    all_coords = []
-    for i in range(2):
-        for j in range(3):
-            all_coords.append((i, j))
-    print(contains_all(SMALL_TEST, all_coords))
+
+    print(c)
+    print(touch_all(c, [(2, 0)]))
 
     # TEST = [
     #     [1, 1, 1, 1, 0, 0, 0, 0],
