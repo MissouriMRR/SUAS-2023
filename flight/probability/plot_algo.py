@@ -1,5 +1,6 @@
 from math import floor, sqrt
 from copy import deepcopy
+from numpy import zeros, ndarray, int8
 from seeker import Seeker
 from cell_map import CellMap
 from typing import List, Tuple
@@ -102,6 +103,35 @@ def sim(seeker : Seeker, cell_map : CellMap, path: List[List[Tuple[int, int]]]) 
         seeker.move(move)
     return cell_map
 
+def get_valid_moves(area : ndarray, pos: Tuple[int, int]) -> List[Tuple[int, int]]:
+    """
+    Given some position on the compressed map, return all possible moves
+
+    Parameters
+    ----------
+    area : ndarray
+        The area being searched
+    pos : Tuple[int, int]
+        The current i, j position
+
+    Returns
+    -------
+    moves : List[Tuple[int, int]]
+        A list of possible moves
+    """
+    moves = []
+    for move in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+        if (
+                0 <= pos[0] + move[0] < len(area) and
+                0 <= pos[1] + move[1] < len(area[0]) and
+                area[pos[0] + move[0]][pos[1] + move[1]] != 0
+            ):
+            moves.append(move)
+    return moves
+
+def touch_all(compressed_map : ndarray, start : Tuple[int, int], seen : list[Tuple[int, int]] = deepcopy([])) -> List[Tuple[int, int]]:
+    pass
+
 def get_circum_square_r(r: int) -> int:
     """
     Given the view radius of the seeker, return the radius of the 
@@ -126,14 +156,7 @@ def init_compressed_grid(cell_size : int, uncompressed : List[List[bool]]) -> Li
     """
     cols = floor(len(uncompressed[0]) / cell_size)
     rows = floor(len(uncompressed) / cell_size)
-    return_val = []
-
-    for _ in range(rows):
-        row = []
-        for _ in range(cols):
-            row.append(None)
-        return_val.append(row)
-    return return_val
+    return zeros((rows, cols), dtype=int8)
 
 def analyze_cell(i: int, j: int, s: int, uncompresed: List[List[bool]]) -> int:
     """
@@ -206,7 +229,9 @@ if __name__ == "__main__":
     cell_map = CellMap(area, 30)
     seeker = Seeker((4, 108), 1, 4, cell_map)
 
-    print(compress_area(8, get_seen_map(cell_map)))
+    c = compress_area(8, get_seen_map(cell_map))
+
+    print(get_valid_moves(c, (1, 9)))
     # TEST = [
     #     [1, 1, 1, 1, 0, 0, 0, 0],
     #     [1, 1, 1, 1, 0, 0, 0, 0],
