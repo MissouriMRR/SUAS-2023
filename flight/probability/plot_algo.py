@@ -9,101 +9,93 @@ from typing import List, Tuple
 from helper import TEST_AREA
 from segmenter import segment
 
-# TODO: IMPLEMENT THE SEARACH ALGORITHM
-def probability_catcher(seeker: Seeker, cell_map: CellMap, n: int = 10) -> None:
-    """
-    looks n moves into the future and tries to find a path with the largest
-    probability per point.
+class Compressor:
 
-    Parameters
-    ----------
-    seeker : Seeker
-        the seeker object
-    cell_map : CellMap
-        the actual map being searched
-    n : int
-        the number of steps to look ahead
-    """
-    pass
+    @staticmethod
+    def analyze_cell(i: int, j: int, s: int, cell_map: CellMap) -> int:
+        """
+        Given the compressed index, returns the value of the cell
+        """
+        score = 0
+        row_start = s * i
+        row_end = min((s * (i + 1) - 1), len(cell_map.data) - 1)
+        col_start = s * j
+        col_end = min((s * (j + 1) - 1), len(cell_map[0]) - 1)
 
+        for row in range(row_start, row_end + 1):
+            for col in range(col_start, col_end + 1):
+                try:
+                    if cell_map[row][col].is_valid:
+                        score += 1
+                except: pass
 
-def see_all_eval(seen_area : List[List[bool]]) -> int:
-    """
-    given a state represented by a grid of boolean values, returns the
-    number of values that have been seen.
+        return score
 
-    Parameters
-    ----------
-    seen_area : List[List[bool]]
-        the grid of the search area where seen cells are True and 
-        unseen cells are False 
-    """
-    count = 0
-    for row in seen_area:
-        for cell in row:
-            count += 1
-    return count
+    @staticmethod
+    def get_circum_square_r(r: int) -> int:
+        """
+        Given the view radius of the seeker, return the radius of the 
+        circumscribed square that lies within it
 
-def get_seen_map(cell_map : CellMap) -> List[List[int]]:
-    """
-    Given the cell map, returns a grid of boolean values representing
-    whether the cell has been seen or not.
+        Parameters
+        ----------
+        r : int
+            Radius of the circle
 
-    Parameters
-    ----------
-    cell_map : CellMap
-        The cell map object
+        Returns
+        -------
+        s : int
+            side length of the square
+        """
+
+        return max(floor(sqrt(2) * r), 1)
+
+    @staticmethod
+    def __init_compressed_grid(cell_size : int, cell_map : CellMap) -> List[List[Tuple[bool, int, int]]]:
+        """
+        Returns an empty grid for the compressed map
+        """
+        cols = floor(len(cell_map[0]) / cell_size)
+        rows = floor(len(cell_map.data) / cell_size)
+        return zeros((rows, cols), dtype=int8)
+
+    @staticmethod
+    def compress(radius: int, cell_map: CellMap) -> List[List[Tuple[bool, int, int]]]:
+        """
+        Given a view radius, r, compress the binary map of the search area
+        into cells with size r' and weight equal to their valid cell area.
+
+        Parameters
+        ----------
+        radius : int
+            The view radius of the drone
+        seen_area : List[List[bool]]
+            The uncompressed map
+        
+        Returns
+        -------
+        compressed_map : List[List[Tuple[bool, int, int]]]
+            A compressed map with cells of the form
+            bool -> seen
+            int -> value
+            int -> dist
+        """
+        s = Compressor.get_circum_square_r(radius)
+        new_grid = Compressor.__init_compressed_grid(s, cell_map)
+        for i in range(len(new_grid)):
+            for j in range(len(new_grid[0])):
+                new_grid[i][j] = Compressor.analyze_cell(i, j, s, cell_map)
+        return new_grid
+
+class Searcher:
+    def __init__(self, cell_map : CellMap, view_radius : int):
+        self.compressed = Compressor.compress(view_radius, cell_map)
+        self.view_radius = view_radius
+        self.a_star = AStarFinder()
+        self.a_star_grid = Grid(matrix=self.compressed)
+
     
-    Returns
-    -------
-    seen_map : List[List[bool]]
-        The binary map of seen cells.
-    """
-    final_map = []
-    for i in range(len(cell_map.data)):
-        row = []
-        for j in range(len(cell_map[i])):
-            if cell_map[i][j].is_valid:
-                row.append(1 if cell_map[i][j].seen else -1)
-            else:
-                row.append(0)
-        final_map.append(row)
-    return final_map
 
-def get_move_permutations(n: int = 10, moves: List[Tuple[int, int]] = [(1,0), (-1,0), (0,1), (0,-1)]) -> List[List[List[int]]]:
-    """
-    Returns all possible paths that can be taken
-
-    Parameters
-    ----------
-    n : int
-        The number of steps taken in each path
-    
-    Returns
-    paths : List[List[List[int]]]
-        A list of all possible permutations
-    -------
-
-    """
-    perm1 = [[x] for x in moves]
-    for _ in range(n - 1):
-        perm2 = []
-        for permutation in perm1:
-            for vector in moves:
-                p_mod = deepcopy(permutation)
-                p_mod.append(vector)
-                perm2.append(p_mod)
-        perm1 = perm2
-    
-    return perm1
-
-def sim(seeker : Seeker, cell_map : CellMap, path: List[List[Tuple[int, int]]]) -> CellMap:
-    seeker = deepcopy(seeker)
-    cell_map = deepcopy(cell_map)
-
-    for move in path:
-        seeker.move(move)
-    return cell_map
 
 def get_valid_pos(area : ndarray, pos: Tuple[int, int]) -> List[Tuple[int, int]]:
     """
@@ -232,103 +224,11 @@ def touch_all(compressed_map : ndarray, history : List[Tuple[int, int]], step=[f
 
     Exception("Something went wrong in 'touch_all'!")
 
-def get_circum_square_r(r: int) -> int:
-    """
-    Given the view radius of the seeker, return the radius of the 
-    circumscribed square that lies within it
-
-    Parameters
-    ----------
-    r : int
-        Radius of the circle
-
-    Returns
-    -------
-    s : int
-        side length of the square
-    """
-
-    return max(floor(sqrt(2) * r), 1)
-
-def init_compressed_grid(cell_size : int, uncompressed : List[List[bool]]) -> List[List[Tuple[bool, int, int]]]:
-    """
-    Returns an empty grid for the compressed map
-    """
-    cols = floor(len(uncompressed[0]) / cell_size)
-    rows = floor(len(uncompressed) / cell_size)
-    return zeros((rows, cols), dtype=int8)
-
-def analyze_cell(i: int, j: int, s: int, uncompresed: List[List[bool]]) -> int:
-    """
-    Given the compressed index, returns the value of the cell
-    """
-    score = 0
-    row_start = s * i
-    row_end = min((s * (i + 1) - 1), len(uncompresed) - 1)
-    col_start = s * j
-    col_end = min((s * (j + 1) - 1), len(uncompresed[0]) - 1)
-
-    for row in range(row_start, row_end + 1):
-        for col in range(col_start, col_end + 1):
-            try:
-                if uncompresed[row][col] == -1:
-                    score += 1
-            except: pass
-
-    return score
-
-def compress_area(radius: int, seen_area : List[List[bool]]) -> List[List[Tuple[bool, int, int]]]:
-    """
-    Given a view radius, r, compress the binary map of the search area
-    into cells with size r' and weight equal to their valid cell area.
-
-    Parameters
-    ----------
-    radius : int
-        The view radius of the drone
-    seen_area : List[List[bool]]
-        The uncompressed map
-    
-    Returns
-    -------
-    compressed_map : List[List[Tuple[bool, int, int]]]
-        A compressed map with cells of the form
-        bool -> seen
-        int -> value
-        int -> dist
-    """
-
-    s = get_circum_square_r(radius)
-    new_grid = init_compressed_grid(s, seen_area)
-    for i in range(len(new_grid)):
-        for j in range(len(new_grid[0])):
-            new_grid[i][j] = analyze_cell(i, j, s, seen_area)
-    return new_grid
-    
-
-
-def seen_search(seeker: Seeker, cell_map: CellMap, n: int = 5) -> None:
-    permutations = get_move_permutations(n)
-    counter = 1
-
-    highest = float("-inf")
-    best_perm = None
-    for perm in permutations:
-        counter += 1
-        if counter % 100 == 0:
-            print(f"{counter} / {len(permutations)}")
-        outcome = see_all_eval(sim(seeker, cell_map, perm))
-        if outcome > highest:
-            highest = outcome
-            best_perm = perm
-    return best_perm
-
-
 if __name__ == "__main__":
     area = segment(TEST_AREA)
     cell_map = CellMap(area, 30)
     seeker = Seeker((4, 108), 1, 4, cell_map)
-    c = compress_area(6, get_seen_map(cell_map))
+    c = Compressor.compress(8, cell_map)
 
     print(c)
     print(touch_all(c, [(2, 0)]))
