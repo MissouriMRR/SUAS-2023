@@ -88,151 +88,125 @@ class Compressor:
         return new_grid
 
 class Searcher:
+    def get_num_valids(self):
+        num = 0
+        for i in range(len(self.compressed)):
+            for j in range(len(self.compressed[0])):
+                if self.compressed[i][j] != 0:
+                    num += 1
+        return num
+
     def __init__(self, cell_map : CellMap, view_radius : int):
         self.compressed = Compressor.compress(view_radius, cell_map)
+        self.n = self.get_num_valids()
         self.view_radius = view_radius
         self.a_star = AStarFinder()
         self.a_star_grid = Grid(matrix=self.compressed)
+        self.move_list = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        self.shortest_path = float("inf")
 
-    
+    def get_valid_positions(self,history: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """
+        Given some position on the compressed map, return all possible moves
 
+        Parameters
+        ----------
+        pos : Tuple[int, int]
+            The current i, j position
 
-def get_valid_pos(area : ndarray, pos: Tuple[int, int]) -> List[Tuple[int, int]]:
-    """
-    Given some position on the compressed map, return all possible moves
+        Returns
+        -------
+        moves : List[Tuple[int, int]]
+            A list of possible moves
+        """
+        pos = history[-1]
+        hist_set = set(history)
+        moves = []
+        for move in self.move_list:
+            if (
+                    0 <= pos[0] + move[0] < len(self.compressed) and
+                    0 <= pos[1] + move[1] < len(self.compressed[0]) and
+                    self.compressed[pos[0] + move[0]][pos[1] + move[1]] != 0 and
+                    (pos[0] + move[0], pos[1] + move[1]) not in hist_set
+                ):
+                moves.append((pos[0] + move[0], pos[1] + move[1]))
+        return moves
 
-    Parameters
-    ----------
-    area : ndarray
-        The area being searched
-    pos : Tuple[int, int]
-        The current i, j position
+    def valid_solution(self, solution: List[Tuple[int, int]]) -> bool:
+        """
+        Checks if the candidate list contains all valid coordinates of the compressed map
 
-    Returns
-    -------
-    moves : List[Tuple[int, int]]
-        A list of possible moves
-    """
-    moves = []
-    for move in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-        if (
-                0 <= pos[0] + move[0] < len(area) and
-                0 <= pos[1] + move[1] < len(area[0]) and
-                area[pos[0] + move[0]][pos[1] + move[1]] != 0
-            ):
-            moves.append((pos[0] + move[0], pos[1] + move[1]))
-    return moves
+        Parameters
+        ----------
+        solution : List[Tuple[int, int]]
+            The path being examined
+        
+        Returns
+        -------
+        contains_all : bool
+            Whether all coordinates are in the candidates list
+        """
 
-def contains_all(compressed_map : ndarray, candidate: List[Tuple[int, int]]) -> bool:
-    """
-    Checks if the candidate list contains all valid coordinates of the compressed map
+        cand_set = set(solution) #O(1) lookup times
 
-    Parameters
-    ----------
-    compressed_map : ndarray
-        The area being checked
-    candidate : List[Tuple[int, int]]
-        The list of coordinates
-    
-    Returns
-    -------
-    contains_all : bool
-        Whether all coordinates are in the candidates list
-    """
+        for i in range(len(self.compressed)):
+            for j in range(len(self.compressed[0])):
+                if self.compressed[i][j] != 0 and (i, j) not in cand_set:
+                    return False
+        return True
 
-    cand_set = set(candidate) #O(1) lookup times
+    def find_unseens(self, history : List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        history_set = set(history) # O(1) lookup time
+        return_list = []
+        for i in range(len(self.compressed)):
+            for j in range(len(self.compressed[0])):
+                if (i, j) not in history_set:
+                    return_list.append((i, j))
+        return return_list
 
-    for i in range(len(compressed_map)):
-        for j in range(len(compressed_map[0])):
-            if compressed_map[i][j] != 0 and (i, j) not in cand_set:
-                return False
-    return True
+    def in_corner(self, pos: Tuple[int, int], history: list[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        shortest_len, shortest_path = float("inf"), [0, 0]
 
+        start = self.a_star_grid.node(pos[1], pos[0])
+        for unseen in list(filter(lambda x: self.compressed[x[0]][x[1]] != 0, self.find_unseens(history))):
+            self.a_star_grid.cleanup()
+            end = self.a_star_grid.node(unseen[1], unseen[0])
+            path, _ = self.a_star.find_path(start, end, self.a_star_grid)
+            if len(path) < shortest_len:
+                shortest_len = len(path)
+                shortest_path = path
 
-def find_unseens(area : ndarray, history : List[Tuple[int, int]]) -> List[Tuple[int, int]]:
-    history_set = set(history) # O(1) lookup time
-    return_list = []
-    for i in range(len(area)):
-        for j in range(len(area[0])):
-            if (i, j) not in history_set:
-                return_list.append((i, j))
-    return return_list
+        return [(x[1], x[0]) for x in shortest_path[1:]]
 
+    def breadth_search(self, start: Tuple[int, int]) -> List[Tuple[int, int]]:
+        histories = [[start]]
+        while len(histories) != 0:
+            history = histories.pop(0)
+            if len(history) >= self.n:
+                if self.valid_solution(history):
+                    return history
 
-def in_corner(area : ndarray, pos: Tuple[int, int], history: list[Tuple[int, int]]) -> List[Tuple[int, int]]:
-    a_star_grid = Grid(matrix=area)
-    finder = AStarFinder()
-    shortest_len, shortest_path = float("inf"), [0, 0]
+            possible_moves = self.get_valid_positions(history)
+            if len(possible_moves) == 0:
+                history += self.in_corner(history[-1], history)
+                possible_moves = self.get_valid_positions(history)
 
-    start = a_star_grid.node(pos[1], pos[0])
-    for unseen in list(filter(lambda x: area[x[0]][x[1]] != 0, find_unseens(area, history))):
-        a_star_grid.cleanup()
-        end = a_star_grid.node(unseen[1], unseen[0])
-        path, _ = finder.find_path(start, end, a_star_grid)
-        if len(path) < shortest_len:
-            shortest_len = len(path)
-            shortest_path = path
-
-    return [(x[1], x[0]) for x in shortest_path[1:]]
-
-
-
-def touch_all(compressed_map : ndarray, history : List[Tuple[int, int]], step=[float("inf")]) -> List[Tuple[int, int]]:
-    """
-    A recursive algorithm to find the shortest route through the compressed
-    map, touching all cells as the drone goes through.
-
-    Parameters
-    ----------
-    Compressed_map : ndarray
-        The map being searched through
-    history : List[Tuple[int, int]]
-        All moves taken so far in this branch
-    step : List[float]
-        Due to function calls creating shallow copies of lists,
-        allows the shortest path found so far to be shared across
-        all function calls
-
-    Returns
-    -------
-    shortest_path : List[Tuple[int, int]]
-    """
-    if contains_all(compressed_map, history):
-        if len(history) < step[0]:
-            step[0] = len(history)
-            return history
-        return None
-    elif len(history) > step[0]:
-        return None
-
-    moves = []
-    valid_positions = get_valid_pos(compressed_map, history[-1])
-    candidate_moves = list(filter(lambda x : x not in history, valid_positions))
-    if len(candidate_moves) == 0:
-        history += in_corner(compressed_map, history[-1], history)
-        valid_positions = get_valid_pos(compressed_map, history[-1])
-        candidate_moves = list(filter(lambda x : x not in history, valid_positions))
-    for move in candidate_moves:
-        new_history = deepcopy(history)
-        new_history.append(move)
-        moves.append(touch_all(compressed_map, new_history, step))
-
-    for move_set in moves:
-        if move_set != None:
-            if len(move_set) == step[0]:
-                return move_set
-
-    Exception("Something went wrong in 'touch_all'!")
-
+            for move in possible_moves:
+                new_history = list(history)
+                new_history.append(move)
+                histories.append(new_history)
+            
 if __name__ == "__main__":
     area = segment(TEST_AREA)
     cell_map = CellMap(area, 30)
     seeker = Seeker((4, 108), 1, 4, cell_map)
     c = Compressor.compress(8, cell_map)
+    s = Searcher(cell_map, 8)
 
-    print(c)
-    print(touch_all(c, [(2, 0)]))
+    #print(s.breadth_search((1, 4)))
 
+    import cProfile
+    cProfile.run('s.breadth_search((1, 4))')
     # TEST = [
     #     [1, 1, 1, 1, 0, 0, 0, 0],
     #     [1, 1, 1, 1, 0, 0, 0, 0],
