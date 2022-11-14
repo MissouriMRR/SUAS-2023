@@ -207,7 +207,7 @@ if __name__ == "__main__":
     area = segment(TEST_AREA)
     cell_map = CellMap(area, 30)
     seeker = Seeker((4, 108), 1, 4, cell_map)
-    c = Compressor.compress(8, cell_map)
+    c = Compressor.compress(6, cell_map)
     print(c)
     s = Searcher(cell_map, 8)
 
