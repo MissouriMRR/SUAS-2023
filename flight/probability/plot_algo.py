@@ -163,20 +163,27 @@ class Searcher:
                 if (i, j) not in history_set:
                     return_list.append((i, j))
         return return_list
+    
+    def find_closest(self, points: List[Tuple[int, int]], px: Tuple[int, int]) -> Tuple[int, int]:
+        closest = None
+        closest_dist = float("inf")
+        for point in points:
+            dist = abs(point[0] - px[0]) + abs(point[1] - px[1])
+            if dist < closest_dist:
+                closest_dist = dist
+                closest = point
+        return closest
+
 
     def in_corner(self, pos: Tuple[int, int], history: list[Tuple[int, int]]) -> List[Tuple[int, int]]:
-        shortest_len, shortest_path = float("inf"), [0, 0]
 
+        approx_nearest = self.find_closest(self.find_unseens(history), pos)
         start = self.a_star_grid.node(pos[1], pos[0])
-        for unseen in list(filter(lambda x: self.compressed[x[0]][x[1]] != 0, self.find_unseens(history))):
-            self.a_star_grid.cleanup()
-            end = self.a_star_grid.node(unseen[1], unseen[0])
-            path, _ = self.a_star.find_path(start, end, self.a_star_grid)
-            if len(path) < shortest_len:
-                shortest_len = len(path)
-                shortest_path = path
+        end = self.a_star_grid.node(approx_nearest[1], approx_nearest[0])
+        self.a_star_grid.cleanup()
+        path, _ = self.a_star.find_path(start, end, self.a_star_grid)
 
-        return [(x[1], x[0]) for x in shortest_path[1:]]
+        return [(x[1], x[0]) for x in path[1:]]
 
     def breadth_search(self, start: Tuple[int, int]) -> List[Tuple[int, int]]:
         histories = [[start]]
@@ -201,12 +208,13 @@ if __name__ == "__main__":
     cell_map = CellMap(area, 30)
     seeker = Seeker((4, 108), 1, 4, cell_map)
     c = Compressor.compress(8, cell_map)
+    print(c)
     s = Searcher(cell_map, 8)
 
-    #print(s.breadth_search((1, 4)))
+    print(s.breadth_search((1, 4)))
 
-    import cProfile
-    cProfile.run('s.breadth_search((1, 4))')
+    #import cProfile
+    #cProfile.run('s.breadth_search((1, 4))')
     # TEST = [
     #     [1, 1, 1, 1, 0, 0, 0, 0],
     #     [1, 1, 1, 1, 0, 0, 0, 0],
