@@ -1,5 +1,5 @@
 from math import floor, sqrt
-from copy import deepcopy
+from bisect import insort
 from pathfinding.finder.a_star import AStarFinder
 from pathfinding.core.grid import Grid
 from numpy import zeros, ndarray, int8, ones
@@ -201,7 +201,7 @@ class Searcher:
             for move in possible_moves:
                 new_history = list(history)
                 new_history.append(move)
-                histories.append(new_history)
+                insort(histories, new_history, key=lambda x: len(x))
             
 if __name__ == "__main__":
     area = segment(TEST_AREA)
