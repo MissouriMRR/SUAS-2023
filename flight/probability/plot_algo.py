@@ -1,5 +1,7 @@
 from math import floor, sqrt
 from copy import deepcopy
+from pathfinding.finder.a_star import AStarFinder
+from pathfinding.core.grid import Grid
 from numpy import zeros, ndarray, int8, ones
 from seeker import Seeker
 from cell_map import CellMap
@@ -154,6 +156,35 @@ def contains_all(compressed_map : ndarray, candidate: List[Tuple[int, int]]) -> 
                 return False
     return True
 
+
+def find_unseens(area : ndarray, history : List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    history_set = set(history) # O(1) lookup time
+    return_list = []
+    for i in range(len(area)):
+        for j in range(len(area[0])):
+            if (i, j) not in history_set:
+                return_list.append((i, j))
+    return return_list
+
+
+def in_corner(area : ndarray, pos: Tuple[int, int], history: list[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    a_star_grid = Grid(matrix=area)
+    finder = AStarFinder()
+    shortest_len, shortest_path = float("inf"), [0, 0]
+
+    start = a_star_grid.node(pos[1], pos[0])
+    for unseen in list(filter(lambda x: area[x[0]][x[1]] != 0, find_unseens(area, history))):
+        a_star_grid.cleanup()
+        end = a_star_grid.node(unseen[1], unseen[0])
+        path, _ = finder.find_path(start, end, a_star_grid)
+        if len(path) < shortest_len:
+            shortest_len = len(path)
+            shortest_path = path
+
+    return [(x[1], x[0]) for x in shortest_path[1:]]
+
+
+
 def touch_all(compressed_map : ndarray, history : List[Tuple[int, int]], step=[float("inf")]) -> List[Tuple[int, int]]:
     """
     A recursive algorithm to find the shortest route through the compressed
@@ -174,14 +205,22 @@ def touch_all(compressed_map : ndarray, history : List[Tuple[int, int]], step=[f
     -------
     shortest_path : List[Tuple[int, int]]
     """
-    if contains_all(compressed_map, history) and len(history) < step[0]:
-        step[0] = len(history)
-        return history
+    if contains_all(compressed_map, history):
+        if len(history) < step[0]:
+            step[0] = len(history)
+            return history
+        return None
     elif len(history) > step[0]:
         return None
 
     moves = []
-    for move in list(filter(lambda x : x not in history, get_valid_pos(compressed_map, history[-1]))):
+    valid_positions = get_valid_pos(compressed_map, history[-1])
+    candidate_moves = list(filter(lambda x : x not in history, valid_positions))
+    if len(candidate_moves) == 0:
+        history += in_corner(compressed_map, history[-1], history)
+        valid_positions = get_valid_pos(compressed_map, history[-1])
+        candidate_moves = list(filter(lambda x : x not in history, valid_positions))
+    for move in candidate_moves:
         new_history = deepcopy(history)
         new_history.append(move)
         moves.append(touch_all(compressed_map, new_history, step))
@@ -289,7 +328,7 @@ if __name__ == "__main__":
     area = segment(TEST_AREA)
     cell_map = CellMap(area, 30)
     seeker = Seeker((4, 108), 1, 4, cell_map)
-    c = compress_area(8, get_seen_map(cell_map))
+    c = compress_area(6, get_seen_map(cell_map))
 
     print(c)
     print(touch_all(c, [(2, 0)]))
