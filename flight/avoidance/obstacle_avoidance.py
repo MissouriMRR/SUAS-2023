@@ -30,10 +30,10 @@ async def calculate_avoidance_velocity(
         The drone for which the path will be calculated for
     obstacle_data : list[InputPoint]
         Positions at previous times of the obstacle (probably another drone)
-    avoidance_radius : float
+    avoidance_radius : float = 10.0
         The distance between the drone and obstacle, in meters, at which
         obstacle avoidance will activate
-    avoidance_speed : float
+    avoidance_speed : float = 5.0
         The speed, in m/s, at which we should move away from the obstacle
 
     Returns
@@ -49,9 +49,6 @@ async def calculate_avoidance_velocity(
             f"got a length of {len(obstacle_data)}"
         )
 
-    # Convert obstacle data to list of Point objects
-    obstacle_positions: list[Point] = [Point.from_dict(in_point) for in_point in obstacle_data]
-
     # Get position of drone
     drone_position: mavsdk.telemetry.Position
     async for position in drone.telemetry.position():
@@ -61,8 +58,18 @@ async def calculate_avoidance_velocity(
     # Convert drone position to Point object
     drone_position: Point = Point.from_mavsdk_position(drone_position)  # type: ignore
 
-    # TODO: Make the function work if UTM zones differ
+    # Convert obstacle data to list of Point objects
+    obstacle_positions: list[Point] = [
+        Point.from_dict(
+            in_point,
+            force_zone_number=drone_position.utm_zone_number,
+            force_zone_letter=drone_position.utm_zone_letter,
+        )
+        for in_point in obstacle_data
+    ]
+
     # Check if all positions are in the same UTM zone
+    # Should only error if the utm module isn't working properly
     point: Point
     for point in obstacle_positions:
         if (
@@ -70,7 +77,8 @@ async def calculate_avoidance_velocity(
             or point.utm_zone_number != drone_position.utm_zone_number
         ):
             raise ValueError(
-                "Points are in different UTM zones (Note: tell obstacle avoidance team to fix this)"
+                "Points are in different UTM zones\n"
+                "Note: this error should not occur. The utm module should have prevented this."
             )
 
     # Sort obstacle positions with respect to time

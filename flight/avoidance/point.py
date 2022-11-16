@@ -43,7 +43,12 @@ class Point:
     time: float
 
     @classmethod
-    def from_dict(cls, position_data: InputPoint) -> "Point":
+    def from_dict(
+        cls,
+        position_data: InputPoint,
+        force_zone_number: int | None = None,
+        force_zone_letter: str | None = None,
+    ) -> "Point":
         """
         Factory method accepting a dict with position data
 
@@ -52,17 +57,32 @@ class Point:
         position_data : dict[str, Union[float, int, str]]
             A dict containing at least the following keys:
             'utm_x', 'utm_y', 'utm_zone_number', 'utm_zone_letter'
+        force_zone_letter : int | None = None
+            Forces the UTM zone letter of the resulting Point to a certain value
+        force_zone_number : int | None = None
+            Forces the UTM zone number of the resulting Point to a certain value
 
         Returns
         -------
         A new Point object
         """
 
+        utm_x: float = float(position_data["utm_x"])
+        utm_y: float = float(position_data["utm_y"])
+        utm_zone_number: int = int(position_data["utm_zone_number"])
+        utm_zone_letter: str = str(position_data["utm_zone_letter"])
+        if force_zone_number is not None or force_zone_letter is not None:
+            utm_x, utm_y, utm_zone_number, utm_zone_letter = utm.from_latlon(
+                *utm.to_latlon(utm_x, utm_y, utm_zone_number, utm_zone_letter),
+                force_zone_number=force_zone_number,
+                force_zone_letter=force_zone_letter
+            )
+
         return cls(
-            float(position_data["utm_x"]),
-            float(position_data["utm_y"]),
-            int(position_data["utm_zone_number"]),
-            str(position_data["utm_zone_letter"]),
+            utm_x,
+            utm_y,
+            utm_zone_number,
+            utm_zone_letter,
             float(position_data["altitude"]),
             float(position_data["time"]),
         )
