@@ -5,6 +5,7 @@ Contains a moving obstacle avoidance function
 # pylint: disable=fixme
 
 import math
+import time
 
 import mavsdk
 import mavsdk.telemetry
@@ -107,13 +108,25 @@ async def calculate_avoidance_velocity(
     # Get velocity of our drone relative to the obstacle
     relative_velocity: Velocity = drone_velocity - obstacle_velocity
 
+    # Extrapolate current obstacle position based on last known position and estimated velocity
+    current_time: float = time.time()
+    elapsed_time: float = current_time - obstacle_positions[-1].time
+    estimated_obstacle_position: Point = Point(
+        utm_x=obstacle_positions[-1].utm_x + elapsed_time * drone_velocity.east_vel,
+        utm_y=obstacle_positions[-1].utm_y + elapsed_time * drone_velocity.north_vel,
+        utm_zone_number=obstacle_positions[-1].utm_zone_number,
+        utm_zone_letter=obstacle_positions[-1].utm_zone_letter,
+        altitude=obstacle_positions[-1].altitude - elapsed_time * drone_velocity.down_vel,
+        time=current_time,
+    )
+
     # Get the relative velocity we want
     desired_relative_velocity = (
         avoidance_speed
         * Velocity(
-            drone_position.utm_y - obstacle_positions[-1].utm_y,
-            drone_position.utm_x - obstacle_positions[-1].utm_x,
-            obstacle_positions[-1].altitude - drone_position.altitude
+            drone_position.utm_y - estimated_obstacle_position.utm_y,
+            drone_position.utm_x - estimated_obstacle_position.utm_x,
+            estimated_obstacle_position.altitude - drone_position.altitude
             # Altitudes reversed because we want downward velocity
         ).normalized()
     )
