@@ -174,7 +174,6 @@ class Searcher:
                 closest = point
         return closest
 
-
     def in_corner(self, pos: Tuple[int, int], history: list[Tuple[int, int]]) -> List[Tuple[int, int]]:
 
         approx_nearest = self.find_closest(self.find_unseens(history), pos)
@@ -202,16 +201,82 @@ class Searcher:
                 new_history = list(history)
                 new_history.append(move)
                 insort(histories, new_history, key=lambda x: len(x))
+
+class Decompressor:
+
+    @staticmethod
+    def __prep_grid(cell_map: CellMap):
+        new_grid = zeros((len(cell_map.data), len(cell_map[0])))
+        for i in range(len(cell_map.data)):
+            for j in range(len(cell_map[0])):
+                if cell_map[i][j].is_valid:
+                    new_grid[i][j] = 1
+        return new_grid
+
+    @staticmethod
+    def get_valid_point(point, cell_map, cell_size):
+        point = (point[0] * cell_size, point[1] * cell_size)
+        middle = cell_size // 2
+        closest = float("inf")
+        closest_point = (point[0] + middle, point[1] + middle)
+        for i in range(cell_size):
+            for j in range(cell_size):
+                try:
+                    if cell_map[point[0] + i][point[1] + j].is_valid:
+                        dist = sqrt((middle - i)**2 + (middle - j)**2)
+                        closest = dist if dist < closest else closest
+                        closest_point = (point[0] + i, point[1] + j)
+                except:
+                    pass
+        return closest_point
+
+    @staticmethod
+    def __decompress_point(point: Tuple[int, int], cell_map: CellMap, cell_size: int):
+        new_x = point[1] * cell_size + (cell_size // 2)
+        new_y = point[0] * cell_size + (cell_size // 2)
+
+        if cell_map[new_y][new_x].is_valid:
+            return (new_y, new_x)
+        else:
+            return Decompressor.get_valid_point(point, cell_map, cell_size)
+    
+    @staticmethod
+    def decompress_route(route: List[Tuple[int, int]], cell_map: CellMap, cell_size: int):
+        prepped_grid = Decompressor.__prep_grid(cell_map)
+        search_grid = Grid(matrix=prepped_grid)
+        finder = AStarFinder()
+        for i in range(len(route)):
+            route[i] = Decompressor.__decompress_point(route[i], cell_map, cell_size)
+        new_path = []
+        for i in range(len(route) - 1):
+            search_grid.cleanup()
+            A = search_grid.node(route[i][1], route[i][0])
+            B = search_grid.node(route[i+1][1], route[i+1][0])
+            A_to_B, _ = finder.find_path(A, B, search_grid)
             
+            if i == len(route) - 2:
+                new_path += A_to_B[:-1]
+            else:
+                new_path += A_to_B
+        
+        return new_path
+
+
+
+
+
 if __name__ == "__main__":
     area = segment(TEST_AREA)
     cell_map = CellMap(area, 30)
     seeker = Seeker((4, 108), 1, 4, cell_map)
-    c = Compressor.compress(6, cell_map)
+    c = Compressor.compress(8, cell_map)
     print(c)
     s = Searcher(cell_map, 8)
 
-    print(s.breadth_search((1, 4)))
+    path = s.breadth_search((1, 4))
+    print(path)
+    d = Decompressor.decompress_route(path, cell_map, 8)
+    print(d)
 
     #import cProfile
     #cProfile.run('s.breadth_search((1, 4))')
