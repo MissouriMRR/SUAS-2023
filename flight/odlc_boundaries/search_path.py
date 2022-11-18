@@ -103,7 +103,7 @@ async def run() -> None:
     entire waypoint section of the SUAS competition
     """
 
-    Waypoint: dict[list[float], list[float], float] = {"lats": [37.94919790623559, 37.94862722088389], "longs": [-91.78473191296871, -91.78302701112852], "Altitude": 75}
+    Waypoint: dict[list[float], list[float], float] = {"lats": [37.94919790623559, 37.94862722088389, 37.94949210234766], "longs": [-91.78473191296871, -91.78302701112852, -91.78461752885457], "Altitude": 85}
 
 
     #create a drone object
@@ -137,14 +137,14 @@ async def run() -> None:
     await asyncio.sleep(10)
 
     #move to each waypoint in mission
-    for point in range(2):
-        await move_to(drone,Waypoint["lats"][point],Waypoint["longs"][point],75,True)
+    for point in range(3):
+        await move_to(drone,Waypoint["lats"][point],Waypoint["longs"][point],85,True)
 
     #return home
-    logging.info("Last waypoint reached")
-    logging.info("Returning to home")
-    await drone.action.return_to_launch()
-    print("Staying connected, press Ctrl-C to exit")
+    # logging.info("Last waypoint reached")
+    # logging.info("Returning to home")
+    # await drone.action.return_to_launch()
+    # print("Staying connected, press Ctrl-C to exit")
 
     #infinite loop till forced disconnect
     while True:
