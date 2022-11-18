@@ -3,8 +3,8 @@
 import numpy as np
 from vision.constants import Point
 
-from vision import coordinate_lengths
-from vision import vector_utils
+from vision.deskew import coordinate_lengths
+from vision.deskew import vector_utils
 
 
 def get_coordinates(

@@ -5,7 +5,7 @@ from nptyping import NDArray, Shape, Float64
 import cv2
 import numpy as np
 
-from vision.vector_utils import pixel_intersect
+from vision.deskew.vector_utils import pixel_intersect
 from vision.constants import Image, Corners
 
 
