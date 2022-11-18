@@ -5,8 +5,8 @@ from nptyping import NDArray, Shape, Float64
 import cv2
 import numpy as np
 
-from vector_utils import pixel_intersect
-from constants import Image, Corners
+from vision.vector_utils import pixel_intersect
+from vision.constants import Image, Corners
 
 
 def perspective_matrix(
@@ -15,7 +15,48 @@ def perspective_matrix(
     rotation_deg: list[float],
     *,  # The following are keyword-only
     scale: float = 1,
-):
+) -> NDArray[Shape["3, 3"], Float64]:
+    """
+    Generates a perspective transform matrix for deskewing an image
+
+    Image is assumed to be the same aspect ratio as the drone camera.
+
+    Returns (None, None) if the rotation and focal_length information does not generate a valid
+    ending location.
+
+    Parameters
+    ----------
+    image_shape: tuple[int, int, int] | tuple[int, int],
+        The shape of the image to deskew. Aspect ratio should match the camera sensor
+    focal_length : float
+        The camera's focal length - used to generate the camera's fields of view
+    rotation_deg : list[float]
+        The [roll, pitch, yaw] rotation in degrees
+    scale: float | None
+        Scales the resolution of the output. A value of 1 makes the area inside the camera view
+        equal to the original image. Defaults to 1.
+    interpolation: int | None
+        The cv2 interpolation type to be used when deskewing.
+
+    Returns
+    -------
+    (deskewed_image, corner_points) : tuple[Image, Corners] | tuple[None, None]
+        deskewed_image : Image
+            The deskewed image - the image is flattened with black areas in the margins
+
+            Returns None if no valid image could be generated.
+
+        corner_points : Corners
+            The corner points of the result in the image.
+            Points are in order based on their location in the original image.
+            Format is: (top left, top right, bottom right, bottom left), or
+            1--2
+            |  |
+            4--3
+
+            Returns None if no valid image could be generated.
+    """
+
     orig_height: int = image_shape[0]
     orig_width: int = image_shape[1]
 
@@ -110,7 +151,7 @@ def deskew(
 
     """
 
-    matrix, dst_pts = perspective_matrix(image.shape, focal_length, rotation_deg, scale)
+    matrix, dst_pts = perspective_matrix(image.shape, focal_length, rotation_deg, scale=scale)
 
     result_height: int = int(np.max(dst_pts[:, 1])) + 1
     result_width: int = int(np.max(dst_pts[:, 0])) + 1
@@ -123,6 +164,4 @@ def deskew(
         borderMode=cv2.BORDER_TRANSPARENT,
     )
 
-    temp = dst_pts.astype(np.int32)
-
-    return result, temp
+    return result, dst_pts.astype(np.int32)

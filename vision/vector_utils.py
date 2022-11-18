@@ -6,7 +6,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 Vector: TypeAlias = NDArray[Shape["3"], Float64]
-from constants import Point, SENSOR_WIDTH, SENSOR_HEIGHT, ROTATION_OFFSET
+from vision.constants import Point, SENSOR_WIDTH, SENSOR_HEIGHT, ROTATION_OFFSET
 
 
 # Vector pointing toward the +X axis, represents the camera's forward direction when the rotation

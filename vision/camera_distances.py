@@ -1,10 +1,10 @@
 """Functions for calculating locations of objects in an image"""
 
 import numpy as np
-from constants import Point
+from vision.constants import Point
 
-import coordinate_lengths
-import vector_utils
+from vision import coordinate_lengths
+from vision import vector_utils
 
 
 def get_coordinates(
