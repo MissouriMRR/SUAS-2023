@@ -103,7 +103,7 @@ async def run() -> None:
     entire waypoint section of the SUAS competition
     """
 
-    Waypoint: dict[list[float], list[float], float] = {"lats": [37.94919790623559, 37.94862722088389, 37.94949210234766], "longs": [-91.78473191296871, -91.78302701112852, -91.78461752885457], "Altitude": 85}
+    Waypoint: dict[list[float], list[float], float] = {"lats": [38.31451966813249, 38.31430872867596, 38.31461622313521], "longs": [-76.54519982319357, -76.54397320409971, -76.54516993186949], "Altitude": 85}
 
 
     #create a drone object
@@ -151,25 +151,27 @@ async def run() -> None:
         await asyncio.sleep(1)
 
 if __name__ == "__main__":
-   # data_search_area_boundary: List[Dict[str, float]] = [
-    #    {"latitude": 38.31442311312976, "longitude": -76.54522971451763},
-    #    {"latitude": 38.31421041772561, "longitude": -76.54400246436776},
-    #    {"latitude": 38.3144070396263, "longitude": -76.54394394383165},
-    #    {"latitude": 38.31461622313521,"longitude": -76.54516993186949},
-    #    {"latitude": 38.31442311312976, "longitude": -76.54522971451763},
-    # ]
+    data_search_area_boundary: List[Dict[str, float]] = [
+        {"latitude": 38.3144070396263, "longitude": -76.54394394383165}, # Top Right Corner
+        {"latitude": 38.31430872867596,"longitude": -76.54397320409971}, # Right Midpoint
+        {"latitude": 38.31421041772561,"longitude": -76.54400246436776}, # Bottom Right Corner
+        {"latitude": 38.31461622313521,"longitude": -76.54516993186949}, # Top Left Corner
+        {"latitude": 38.31451966813249,"longitude": -76.54519982319357}, # Left Midpoint
+        {"latitude": 38.31442311312976,"longitude": -76.54522971451763}, # Bottom Left Corner
+    ]
 
  
+    # Test Coordinates at the Golf Course
 
-    data_search_area_boundary: List[Dict[str, float]] = [
-        {"latitude": 37.94949210234766, "longitude": -91.78461752885457,}, # Top Left Corner
-        {"latitude": 37.94890371012351, "longitude": -91.78484629708285,}, # Bottom Left Corner
-        {"latitude": 37.94824920904741, "longitude": -91.78307727392504,}, # Bottom Right Corner
-        {"latitude": 37.94900523272037, "longitude": -91.782976748332,}, # Top Right Corner
-        {"latitude": 37.94949210234766, "longitude": -91.78461752885457,}, # Top Left Corner
-        {"latitude": 37.94919790623559, "longitude": -91.78473191296871}, # Left Midpoint
-        {"latitude": 37.94862722088389, "longitude": -91.78302701112852}, # Right Midpoint
-    ]
+     # data_search_area_boundary: List[Dict[str, float]] = [
+     #   {"latitude": 37.94949210234766, "longitude": -91.78461752885457,}, # Top Left Corner
+     #   {"latitude": 37.94890371012351, "longitude": -91.78484629708285,}, # Bottom Left Corner
+     #   {"latitude": 37.94824920904741, "longitude": -91.78307727392504,}, # Bottom Right Corner
+     #   {"latitude": 37.94900523272037, "longitude": -91.782976748332,}, # Top Right Corner
+     #   {"latitude": 37.94949210234766, "longitude": -91.78461752885457,}, # Top Left Corner
+     #   {"latitude": 37.94919790623559, "longitude": -91.78473191296871}, # Left Midpoint
+     #   {"latitude": 37.94862722088389, "longitude": -91.78302701112852}, # Right Midpoint
+     # ]
 
     drone: System = System()
 
