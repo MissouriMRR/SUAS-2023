@@ -9,6 +9,8 @@ from cell_map import CellMap
 from helper import calculate_dist
 from cell import Cell
 
+
+#TODO: replace view radius attribute with height and view angle
 class Seeker:
     """
     The simulated drone used in the search algorithm

@@ -6,8 +6,8 @@ Defines the CellMap class and has some basic tests at the bottom of the file.
 
 from typing import Any, List, Tuple
 from cell import Cell
-from helper import get_bounds, TEST_AREA
-from segmenter import segment
+from helper import get_bounds, AIR_DROP_AREA
+from segmenter import segment, rotate_shape, SUAS_2023_THETA
 
 class CellMap:
     """
@@ -152,5 +152,6 @@ class CellMap:
 
 
 if __name__ == "__main__":
-    area = segment(TEST_AREA)
+    area = segment(rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]))
     cell_map = CellMap(area, 4)
+    cell_map.display()
