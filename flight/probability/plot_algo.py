@@ -1,20 +1,43 @@
+"""
+The actual algorithm powering the drone's navigation
+"""
+
 from math import floor, sqrt
 from bisect import insort
 from pathfinding.finder.a_star import AStarFinder
 from pathfinding.core.grid import Grid
-from numpy import zeros, ndarray, int8, ones
+from numpy import zeros, int8
 from seeker import Seeker
 from cell_map import CellMap
 from typing import List, Tuple
-from helper import TEST_AREA
-from segmenter import segment
+from helper import AIR_DROP_AREA
+from segmenter import segment, rotate_shape, SUAS_2023_THETA
 
 class Compressor:
+    """
+    Compresses the search area into a low resolution graph based on the drone's
+    search area, exponentially reducing the time the algorithm takes
+    """
 
     @staticmethod
     def analyze_cell(i: int, j: int, s: int, cell_map: CellMap) -> int:
         """
-        Given the compressed index, returns the value of the cell
+        Given the compressed index, returns the number of valid locations 
+        within the cell
+
+        Parameters
+        ----------
+        i : int
+            the row of the compressed cell
+        j : int
+            the column of the compressed cell
+        cell_map : CellMap
+            the map being compressed
+        
+        Returns
+        -------
+        value : int
+            the number of valid cells within the compressed cell
         """
         score = 0
         row_start = s * i
@@ -48,12 +71,23 @@ class Compressor:
             side length of the square
         """
 
-        return max(floor(sqrt(2) * r), 1)
+        return r# max(floor(sqrt(r/2)), 1)
 
     @staticmethod
-    def __init_compressed_grid(cell_size : int, cell_map : CellMap) -> List[List[Tuple[bool, int, int]]]:
+    def __init_compressed_grid(cell_size : int, cell_map : CellMap) -> List[List[int]]:
         """
         Returns an empty grid for the compressed map
+
+        Parameters
+        ----------
+        cell_size : int
+            the side length of each square cell
+        cell_map : CellMap
+            the map being compressed
+        
+        Returns
+        empty_grid : List[List[int]]
+            an empty grid of three points repres
         """
         cols = floor(len(cell_map[0]) / cell_size)
         rows = floor(len(cell_map.data) / cell_size)
@@ -88,7 +122,13 @@ class Compressor:
         return new_grid
 
 class Searcher:
+    """
+    Performs a breath-first search looking for paths that stop by all cells
+    """
     def get_num_valids(self):
+        """
+        Retuns the number of valid compressed cells
+        """
         num = 0
         for i in range(len(self.compressed)):
             for j in range(len(self.compressed[0])):
@@ -102,17 +142,18 @@ class Searcher:
         self.view_radius = view_radius
         self.a_star = AStarFinder()
         self.a_star_grid = Grid(matrix=self.compressed)
-        self.move_list = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        self.move_list = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1)]
         self.shortest_path = float("inf")
 
-    def get_valid_positions(self,history: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    def get_valid_positions(self, history: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         """
-        Given some position on the compressed map, return all possible moves
+        Given a list of moves already made on the compressed map, 
+        return all possible immediate moves.
 
         Parameters
         ----------
-        pos : Tuple[int, int]
-            The current i, j position
+        history : List[Tuple[int, int]]
+            List of i, j positions visited thus far
 
         Returns
         -------
@@ -156,6 +197,19 @@ class Searcher:
         return True
 
     def find_unseens(self, history : List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """
+        finds all unvisited compressed cells
+
+        Parameters
+        ----------
+        history : List[Tuple[int, int]]
+            the list of all cells visited thus far
+
+        Returns
+        -------
+        unseen_points : List[Tuple[int, int]]
+            list of all unseen cells
+        """
         history_set = set(history) # O(1) lookup time
         return_list = []
         for i in range(len(self.compressed)):
@@ -165,6 +219,21 @@ class Searcher:
         return return_list
     
     def find_closest(self, points: List[Tuple[int, int]], px: Tuple[int, int]) -> Tuple[int, int]:
+        """
+        Finds the closest point in terms of Euclidean distance
+
+        Parameters
+        ----------
+        points : List[Tuple[int, int]]
+            the points to be pruned
+        px : Tuple[int, int]
+            the point the distances are relative to
+    
+        Returns
+        -------
+        closest_point : Tuple[int, int]
+            The coordinates of the closest point
+        """
         closest = None
         closest_dist = float("inf")
         for point in points:
@@ -175,6 +244,22 @@ class Searcher:
         return closest
 
     def in_corner(self, pos: Tuple[int, int], history: list[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """
+        function to get the searcher out of a corner to the closest
+        undiscovered cell
+
+        Parameters
+        ----------
+        pos : Tuple[int, int]
+            the current position
+        history : List[Tuple[int, int]]
+            list of all visited points
+        
+        Returns
+        -------
+        escape_path : List[Tuple[int, int]]
+            the path to reach the nearest unexplored cell
+        """
 
         approx_nearest = self.find_closest(self.find_unseens(history), pos)
         start = self.a_star_grid.node(pos[1], pos[0])
@@ -185,6 +270,21 @@ class Searcher:
         return [(x[1], x[0]) for x in path[1:]]
 
     def breadth_search(self, start: Tuple[int, int]) -> List[Tuple[int, int]]:
+        """
+        A breadth based search algorithm to find the shortest path 
+        to visit all cells
+
+        Parameters
+        ----------
+        start: Tuple[int, int]
+            the starting position, in terms of the compressed cell
+        
+        Returns
+        -------
+        shortest_path : List[Tuple[int, int]]
+            A list of points that defines the shortest continous path
+            that visits all points in the compressed grid.
+        """
         histories = [[start]]
         while len(histories) != 0:
             history = histories.pop(0)
@@ -215,6 +315,7 @@ class Decompressor:
 
     @staticmethod
     def get_valid_point(point, cell_map, cell_size):
+        cell_map.display()
         point = (point[0] * cell_size, point[1] * cell_size)
         middle = cell_size // 2
         closest = float("inf")
@@ -224,8 +325,9 @@ class Decompressor:
                 try:
                     if cell_map[point[0] + i][point[1] + j].is_valid:
                         dist = sqrt((middle - i)**2 + (middle - j)**2)
-                        closest = dist if dist < closest else closest
-                        closest_point = (point[0] + i, point[1] + j)
+                        if dist < closest:
+                            closest = dist
+                            closest_point = (point[0] + i, point[1] + j)
                 except:
                     pass
         return closest_point
@@ -242,6 +344,24 @@ class Decompressor:
     
     @staticmethod
     def decompress_route(route: List[Tuple[int, int]], cell_map: CellMap, cell_size: int):
+        """
+        Takes the path generated using the compressed map and decompresses it
+        to the original resolution of the CellMap.
+
+        Parameters
+        ----------
+        route : List[Tuple[int, int]]
+            the compressed route
+        cell_map : CellMap
+            the original, uncompressed cell map
+        cell_size : int
+            the side length of the compressed cell
+        
+        Returns
+        -------
+        uncompressed_route : List[Tuple[int, int]]
+            the uncompressed route
+        """
         prepped_grid = Decompressor.__prep_grid(cell_map)
         search_grid = Grid(matrix=prepped_grid)
         finder = AStarFinder()
@@ -258,25 +378,30 @@ class Decompressor:
                 new_path += A_to_B[:-1]
             else:
                 new_path += A_to_B
-        
+
         return new_path
 
+def get_plot():
+    """
+    Gets the coordinates list for SUAS 2023
+    """
+    area = segment(rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]), 0.000025)
+    
+    cell_map = CellMap(area, 5)
+    cell_map.display()
+    s = Searcher(cell_map, 8)
 
+    path = Decompressor.decompress_route(s.breadth_search((0, 0)), cell_map, 8)   
+    coordinate_list = []
+    for point in path:
+        cell_map_point = cell_map[point[1]][point[0]]
+        coordinate_list.append((cell_map_point.lat, cell_map_point.lon))
+    return coordinate_list
 
 
 
 if __name__ == "__main__":
-    area = segment(TEST_AREA)
-    cell_map = CellMap(area, 30)
-    seeker = Seeker((4, 108), 1, 4, cell_map)
-    c = Compressor.compress(8, cell_map)
-    print(c)
-    s = Searcher(cell_map, 8)
-
-    path = s.breadth_search((1, 4))
-    print(path)
-    d = Decompressor.decompress_route(path, cell_map, 8)
-    print(d)
+    print(get_plot())
 
     #import cProfile
     #cProfile.run('s.breadth_search((1, 4))')
