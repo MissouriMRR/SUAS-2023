@@ -7,7 +7,7 @@ def latitude_length(latitude_deg: float) -> float:
     """
     Returns the distance in meters of one degree of latitude at a particular longitude
 
-    Parameter
+    Parameters
     ---------
     latitude_deg : float
         The latitude in degrees
@@ -23,7 +23,7 @@ def latitude_length(latitude_deg: float) -> float:
     """
 
     # Convert to radians for trig functions
-    latitude_rad = np.deg2rad(latitude_deg)
+    latitude_rad: float = np.deg2rad(latitude_deg)
 
     # Formula is adapted from the referenced Wikipedia page
     distance: float = (
@@ -40,7 +40,7 @@ def longitude_length(latitude_deg: float) -> float:
     """
     Calculates the distance in meters of one degree of longitude at that longitude
 
-    Parameter
+    Parameters
     ---------
     latitude_deg : float
         The latitude in degrees

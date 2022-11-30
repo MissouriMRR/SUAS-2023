@@ -1,12 +1,10 @@
 """Functions that use vectors to calculate camera intersections with the ground"""
 
-from typing import TypeAlias
-from nptyping import NDArray, Shape, Float64
 import numpy as np
 from scipy.spatial.transform import Rotation
+from nptyping import Float64
 
-Vector: TypeAlias = NDArray[Shape["3"], Float64]
-from vision.constants import Point, SENSOR_WIDTH, SENSOR_HEIGHT, ROTATION_OFFSET
+from vision.constants import Point, Vector, SENSOR_WIDTH, SENSOR_HEIGHT, ROTATION_OFFSET
 
 
 # Vector pointing toward the +X axis, represents the camera's forward direction when the rotation
@@ -49,9 +47,9 @@ def pixel_intersect(
     # Create the normalized vector representing the direction of the given pixel
     vector: Vector = pixel_vector(pixel, image_shape, focal_length)
 
-    rotation_deg = np.deg2rad(rotation_deg).tolist()
+    rotation_rad = np.deg2rad(rotation_deg).tolist()
 
-    vector = euler_rotate(vector, rotation_deg)
+    vector = euler_rotate(vector, rotation_rad)
 
     # Apply the constant rotation offset
     vector = euler_rotate(vector, ROTATION_OFFSET)
@@ -84,11 +82,9 @@ def plane_collision(ray_direction: Vector, height: float) -> Point | None:
     # Line is defined as ray_direction * time + origin.
     # Origin is the point at X, Y, Z = (0, 0, height)
 
-    intersect: Point | None
+    intersect: Point | None = None
 
-    intersect = None
-
-    time: np.float64 = -height / ray_direction[2]
+    time: Float64 = -height / ray_direction[2]
 
     # Checks if the ray intersects with the plane
     if np.isinf(time) or np.isnan(time) or time < 0:
@@ -245,7 +241,7 @@ def edge_angle(v_angle: float, h_angle: float) -> float:
     return np.arctan(np.tan(v_angle) * np.cos(h_angle))
 
 
-def euler_rotate(vector: Vector, rotation_deg: list[float]) -> Vector:
+def euler_rotate(vector: Vector, rotation_rad: list[float]) -> Vector:
     """
     Rotates a vector based on a given roll, pitch, and yaw.
 
@@ -266,9 +262,9 @@ def euler_rotate(vector: Vector, rotation_deg: list[float]) -> Vector:
     """
 
     # Reverse the Y and Z rotation to match MAVSDK convention
-    rotation_deg[1] *= -1
-    rotation_deg[2] *= -1
+    rotation_rad[1] *= -1
+    rotation_rad[2] *= -1
 
-    result: Vector = Rotation.from_euler("xyz", rotation_deg).apply(np.array(vector))
+    result: Vector = Rotation.from_euler("xyz", rotation_rad).apply(np.array(vector))
 
     return result
