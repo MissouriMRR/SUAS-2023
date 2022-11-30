@@ -43,7 +43,7 @@ def perspective_matrix(
     (matrix, corner_points) : tuple[Image, Corners] | tuple[None, None]
         matrix : NDArray[Shape["3, 3"], Float64]
             The perspective transformation matrix for the image
-            
+
             Returns None is no valid matrix could be generated
 
         dst_pts : Corners
@@ -150,9 +150,9 @@ def deskew(
             Returns None if no valid image could be generated.
 
     """
-    
-    matrix : NDArray[Shape["3, 3"], Float64]
-    dst_pts : Corners
+
+    matrix: NDArray[Shape["3, 3"], Float64]
+    dst_pts: Corners
     matrix, dst_pts = perspective_matrix(image.shape, focal_length, rotation_deg, scale=scale)
 
     if matrix is None or dst_pts is None:
