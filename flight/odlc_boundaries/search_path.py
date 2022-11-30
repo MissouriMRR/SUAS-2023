@@ -84,7 +84,7 @@ def generate_search_paths(
     ]
     boundary_shape: Polygon = Polygon(search_area_points)
 
-    generated_search_paths = [] #: List[List[Tuple[float, float]]
+    generated_search_paths = []  #: List[List[Tuple[float, float]]
 
     # shrink boundary by a fixed amount until the area it covers is 0
     # add the smaller boundary to our list of search paths on each iteration
@@ -97,24 +97,28 @@ def generate_search_paths(
 
     return generated_search_paths
 
+
 async def run() -> None:
     """
     This function is just a driver to test the goto function and runs through the
     entire waypoint section of the SUAS competition
     """
 
-    Waypoint: dict[list[float], list[float], float] = {"lats": [38.31451966813249, 38.31430872867596, 38.31461622313521], "longs": [-76.54519982319357, -76.54397320409971, -76.54516993186949], "Altitude": 85}
+    Waypoint: dict[list[float], list[float], float] = {
+        "lats": [38.31451966813249, 38.31430872867596, 38.31461622313521],
+        "longs": [-76.54519982319357, -76.54397320409971, -76.54516993186949],
+        "Altitude": 85,
+    }
 
-
-    #create a drone object
+    # create a drone object
     drone: System = System()
     await drone.connect(system_address="udp://:14540")
 
-    #initilize drone configurations
+    # initilize drone configurations
     await drone.action.set_takeoff_altitude(12)
     await drone.action.set_maximum_speed(20)
 
-    #connect to the drone
+    # connect to the drone
     logging.info("Waiting for drone to connect...")
     async for state in drone.core.connection_state():
         if state.is_connected:
@@ -133,48 +137,47 @@ async def run() -> None:
     logging.info("-- Taking off")
     await drone.action.takeoff()
 
-    #wait for drone to take off
+    # wait for drone to take off
     await asyncio.sleep(10)
 
-    #move to each waypoint in mission
+    # move to each waypoint in mission
     for point in range(3):
-        await move_to(drone,Waypoint["lats"][point],Waypoint["longs"][point],85,True)
+        await move_to(drone, Waypoint["lats"][point], Waypoint["longs"][point], 85, True)
 
-    #return home
+    # return home
     # logging.info("Last waypoint reached")
     # logging.info("Returning to home")
     # await drone.action.return_to_launch()
     # print("Staying connected, press Ctrl-C to exit")
 
-    #infinite loop till forced disconnect
+    # infinite loop till forced disconnect
     while True:
         await asyncio.sleep(1)
 
+
 if __name__ == "__main__":
     data_search_area_boundary: List[Dict[str, float]] = [
-        {"latitude": 38.3144070396263, "longitude": -76.54394394383165}, # Top Right Corner
-        {"latitude": 38.31430872867596,"longitude": -76.54397320409971}, # Right Midpoint
-        {"latitude": 38.31421041772561,"longitude": -76.54400246436776}, # Bottom Right Corner
-        {"latitude": 38.31461622313521,"longitude": -76.54516993186949}, # Top Left Corner
-        {"latitude": 38.31451966813249,"longitude": -76.54519982319357}, # Left Midpoint
-        {"latitude": 38.31442311312976,"longitude": -76.54522971451763}, # Bottom Left Corner
+        {"latitude": 38.3144070396263, "longitude": -76.54394394383165},  # Top Right Corner
+        {"latitude": 38.31430872867596, "longitude": -76.54397320409971},  # Right Midpoint
+        {"latitude": 38.31421041772561, "longitude": -76.54400246436776},  # Bottom Right Corner
+        {"latitude": 38.31461622313521, "longitude": -76.54516993186949},  # Top Left Corner
+        {"latitude": 38.31451966813249, "longitude": -76.54519982319357},  # Left Midpoint
+        {"latitude": 38.31442311312976, "longitude": -76.54522971451763},  # Bottom Left Corner
     ]
 
- 
     # Test Coordinates at the Golf Course
 
-     # data_search_area_boundary: List[Dict[str, float]] = [
-     #   {"latitude": 37.94949210234766, "longitude": -91.78461752885457,}, # Top Left Corner
-     #   {"latitude": 37.94890371012351, "longitude": -91.78484629708285,}, # Bottom Left Corner
-     #   {"latitude": 37.94824920904741, "longitude": -91.78307727392504,}, # Bottom Right Corner
-     #   {"latitude": 37.94900523272037, "longitude": -91.782976748332,}, # Top Right Corner
-     #   {"latitude": 37.94949210234766, "longitude": -91.78461752885457,}, # Top Left Corner
-     #   {"latitude": 37.94919790623559, "longitude": -91.78473191296871}, # Left Midpoint
-     #   {"latitude": 37.94862722088389, "longitude": -91.78302701112852}, # Right Midpoint
-     # ]
+    # data_search_area_boundary: List[Dict[str, float]] = [
+    #   {"latitude": 37.94949210234766, "longitude": -91.78461752885457,}, # Top Left Corner
+    #   {"latitude": 37.94890371012351, "longitude": -91.78484629708285,}, # Bottom Left Corner
+    #   {"latitude": 37.94824920904741, "longitude": -91.78307727392504,}, # Bottom Right Corner
+    #   {"latitude": 37.94900523272037, "longitude": -91.782976748332,}, # Top Right Corner
+    #   {"latitude": 37.94949210234766, "longitude": -91.78461752885457,}, # Top Left Corner
+    #   {"latitude": 37.94919790623559, "longitude": -91.78473191296871}, # Left Midpoint
+    #   {"latitude": 37.94862722088389, "longitude": -91.78302701112852}, # Right Midpoint
+    # ]
 
     drone: System = System()
-
 
     # algorithm
     # (2 coordinates for side 1) / 2 = starting point
@@ -185,14 +188,13 @@ if __name__ == "__main__":
     # fly between starting and ending coordinates, this should fly it length wise
     # run video camera the whole time recording data about odlc positions -- vision task?
 
-
     # Add utm coordinates to all
     data_search_area_boundary_utm: Dict[str, Union[float, int, str]] = all_latlon_to_utm(
         data_search_area_boundary
     )
 
     # Generate search path
-    BUFFER_DISTANCE: int = -40 # use height/2 of camera image area on ground as buffer distance
+    BUFFER_DISTANCE: int = -40  # use height/2 of camera image area on ground as buffer distance
     search_paths = generate_search_paths(data_search_area_boundary_utm, BUFFER_DISTANCE)
 
     print(search_paths)
