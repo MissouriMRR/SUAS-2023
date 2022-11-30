@@ -81,7 +81,7 @@ async def move_to(
                     and (round(drone_long, 6) == round(longitude, 6))
                     and (round(drone_alt, 1) == round(altitude, 1))
                 ):
-            
+
                     location_reached = True
                     logging.info("arrived")
                     asyncio.sleep(15)

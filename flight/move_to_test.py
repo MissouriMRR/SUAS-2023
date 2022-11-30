@@ -28,7 +28,7 @@ async def run() -> None:
     altitudes: List[float] = []
 
     waypoint_data = extract_gps.extract_gps("./data/waypoint_data.json")
-    waypoints = waypoint_data['waypoints']
+    waypoints = waypoint_data["waypoints"]
     for i in waypoints:
         lats.append(i.latitude)
         longs.append(i.longitude)
