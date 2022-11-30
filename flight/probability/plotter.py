@@ -5,10 +5,11 @@ Provides plotting functionality for visaulizing coordinate data
 import copy
 from typing import List, Dict, Tuple
 from cell_map import CellMap
-from segmenter import segment
-from helper import TEST_AREA
+from segmenter import segment, SUAS_2023_THETA, rotate_shape
+from helper import TEST_AREA, AIR_DROP_AREA
 import matplotlib.pyplot as plt
 from matplotlib import patches
+from plot_algo import get_plot
 
 P_1_COLOR = (246, 229, 37)
 P_0_COLOR = (38, 7, 144)
@@ -35,7 +36,7 @@ def get_p_color(prob: float) -> List[float]:
     return color
 
 
-def draw_cell(pos: Tuple(float, float) | None, prob: float) -> None:
+def draw_cell(pos: Tuple[float, float] | None, prob: float) -> None:
     """
     draws a cell on the plot
 
@@ -97,7 +98,7 @@ def get_normalized_prob(raw_prob: float, prob_range: Tuple[float, float]) -> flo
     """
     return (raw_prob - prob_range[0]) / (prob_range[1] - prob_range[0])
 
-def plot_prob_map(prob_map: CellMap, seen_mode: bool = False) -> None:
+def plot_prob_map(prob_map: CellMap, seen_mode: bool = False, path=[]) -> None:
     """
     creates a visual of the current probability map.
 
@@ -124,13 +125,19 @@ def plot_prob_map(prob_map: CellMap, seen_mode: bool = False) -> None:
             cell = prob_map[i][j]
             if cell.is_valid:
                 if seen_mode:
-                    draw_cell(cell.lat, cell.lon, 1 if cell.seen else 0)
+                    draw_cell((cell.lat, cell.lon), 1 if cell.seen else 0)
                 else:
                     draw_cell(
-                        cell.lat,
-                        cell.lon,
+                    (cell.lat, cell.lon),
                         get_normalized_prob(cell.probability, prob_range),
                     )
+
+    x, y = [], []
+    for point in path:
+        x.append(point[0])
+        y.append(point[1])
+    plt.plot(x, y, '-')
+
     plt.show()
 
 
@@ -191,4 +198,5 @@ def plot_data(
 
 
 if __name__ == "__main__":
-    plot_prob_map(CellMap(segment(TEST_AREA)))
+    plot_prob_map(CellMap(segment(rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]), 0.000025)), False, get_plot())
+
