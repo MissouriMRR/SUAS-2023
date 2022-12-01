@@ -4,7 +4,7 @@ Summary
 Defines the CellMap class and has some basic tests at the bottom of the file.
 """
 
-from typing import Any, List, Tuple
+from typing import Any
 from cell import Cell
 from helper import get_bounds, AIR_DROP_AREA
 from segmenter import segment, rotate_shape, SUAS_2023_THETA
@@ -16,7 +16,7 @@ class CellMap:
 
     Attributes
     ----------
-    points : List[List[Tuple[float, float] | str]]
+    points : list[list[tuple[float, float] | str]]
         a two-dimensional array of latitude and longitude points that defines
         the search area
     ODLCs : int
@@ -24,13 +24,13 @@ class CellMap:
         probabilities of each cell.
     """
 
-    def __get_valids(self, points: List[List[Tuple[float, float] | str]]) -> int:
+    def __get_valids(self, points: list[list[tuple[float, float] | str]]) -> int:
         """
         returns the number of valid points in the points passed to the CellMap
 
         Parameters
         ----------
-        points : List[List[Tuple[float, float] | str]]
+        points : list[list[tuple[float, float] | str]]
             the points that define the CellMap's data
 
         Returns
@@ -46,16 +46,16 @@ class CellMap:
         return count
 
     def __init_map(self,
-                   points: List[List[Tuple[float, float] | str]],
+                   points: list[list[tuple[float, float] | str]],
                    ODLCs: int
-                   ) -> List[List[Cell]]:
+                   ) -> list[list[Cell]]:
         """
         This method creates the two-dimensional array filled with Cell
         objects used by the CellMap.
 
         Parameters
         ----------
-        points : List[List[Tuple[float, float] | str]]
+        points : list[list[tuple[float, float] | str]]
             A two-dimensional array of latitude and longitude points that defines
             the search area
         ODLCs : int
@@ -63,12 +63,12 @@ class CellMap:
 
         Returns
         -------
-        final_map : List[List[Cell]]
+        final_map : list[list[Cell]]
             the map of cell objects
         """
-        r_list: List[List[Cell]] = []
+        r_list: list[list[Cell]] = []
         for i in range(len(points)):
-            row: List[Cell] = []
+            row: list[Cell] = []
             for j in range(len(points[0])):
                 if points[i][j] != 'X': #ensures it is not the only used string value
                     row.append(Cell(
@@ -82,16 +82,16 @@ class CellMap:
             r_list.append(row)
         return r_list
 
-    def __getitem__(self, index: int) -> List[Cell]:
+    def __getitem__(self, index: int) -> list[Cell]:
         return self.data[index]
 
-    def display(self, drone_pos: Tuple[int, int] | None = None) -> None:
+    def display(self, drone_pos: tuple[int, int] | None = None) -> None:
         """
         Prints out the current CellMap in the standard output.
 
         Parameters
         ----------
-        drone_pos : Tuple[int, int] | None
+        drone_pos : tuple[int, int] | None
             optional parameter for the drone's current index
         """
         for i in range(len(self.data)):
@@ -108,14 +108,14 @@ class CellMap:
     #TODO: FINISH THIS METHOD!
     #TODO: Fix the seeker type. Seeker module imports cell_map module, so
           #create new type with typing?
-    def update_probs(self, pos: Tuple[int, int], seeker: Any) -> None:
+    def update_probs(self, pos: tuple[int, int], seeker: Any) -> None:
         """
         Given a drone at position pos[0], pos[1], this function updates the probabalities
         of each cell to reflect that the seeker has observed them.
 
         Parameters
         ----------
-        pos : Tuple[int, int]
+        pos : tuple[int, int]
             the index of the drone
         seeker : Seeker
             the seeker object, including its find_prob and other attributes
@@ -131,11 +131,11 @@ class CellMap:
             except:
                 pass
 
-    def __init__(self, points: List[List[Tuple[float, float] | str]], ODLCs: int = 1) -> None:
+    def __init__(self, points: list[list[tuple[float, float] | str]], ODLCs: int = 1) -> None:
         """
         Parameters
         ----------
-        points : List[List[Tuple[float, float] | str]]
+        points : list[list[tuple[float, float] | str]]
             a collection of latitude, longitude coordinates to define the map
         ODLCs : int
             the number of ODLCs in the flight area
