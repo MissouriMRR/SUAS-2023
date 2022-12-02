@@ -7,8 +7,8 @@ from mavsdk import System
 import logging
 import sys
 
-import flight.extract_gps
-import flight.Waypoint.goto
+from flight import extract_gps
+from flight.Waypoint import goto
 
 
 async def run() -> None:
@@ -41,7 +41,7 @@ async def run() -> None:
     waypoint_data = extract_gps.extract_gps(PATH)
     waypoints = waypoint_data['waypoints']
 
-    waypoint: tuple
+    waypoint: tuple(float, float, float)
     for waypoint in waypoints:
         lats.append(waypoint.latitude)
         longs.append(waypoint.longitude)
