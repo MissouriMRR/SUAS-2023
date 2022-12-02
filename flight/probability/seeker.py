@@ -10,7 +10,7 @@ from helper import calculate_dist
 from cell import Cell
 
 
-#TODO: replace view radius attribute with height and view angle
+# TODO: replace view radius attribute with height and view angle
 class Seeker:
     """
     The simulated drone used in the search algorithm
@@ -28,6 +28,7 @@ class Seeker:
     current_view : List[Cell]
         a list of all points within range of the drone
     """
+
     def __get_view_vecs(self, view: int) -> List[Tuple[int, int]]:
         """
         returns a list of displacement vectors that can be seen from the drone
@@ -52,7 +53,9 @@ class Seeker:
                     view_list.append((i - view, j - view))
         return view_list
 
-    def __init__(self, start: Tuple[int, int], find_prob: float, view: int, cell_map: CellMap) -> None:
+    def __init__(
+        self, start: Tuple[int, int], find_prob: float, view: int, cell_map: CellMap
+    ) -> None:
         """
         Attributes
         ----------
@@ -66,10 +69,10 @@ class Seeker:
             The actual map being searched
         """
         self.pos = start
-        self.find_prob = find_prob #probability of finding object when cell is in view
+        self.find_prob = find_prob  # probability of finding object when cell is in view
         self.view = view
         self.view_vecs = self.__get_view_vecs(view)
-        self.current_view: List[Cell] = [] # a set of points that the drone is currently looking at
+        self.current_view: List[Cell] = []  # a set of points that the drone is currently looking at
         self.cell_map = cell_map
 
     def get_in_view(self) -> List[Cell]:
@@ -90,7 +93,6 @@ class Seeker:
                 pass
 
         return in_view
-
 
     def move(self, disp_vec: Tuple[int, int]) -> None:
         """
@@ -114,7 +116,7 @@ class Seeker:
 
 
 if __name__ == "__main__":
-    s = Seeker((0, 0), 0.9, 5, CellMap([[(0,0)]]))
+    s = Seeker((0, 0), 0.9, 5, CellMap([[(0, 0)]]))
     space = s.get_in_view()
     for cell in space:
         print(cell)

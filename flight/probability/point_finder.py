@@ -110,11 +110,7 @@ def find_closest_point(
 
     for obstacle in obstacles:
         # create obstacle as shapely shape
-        circle = (
-            Point(obstacle["utm_x"], obstacle["utm_y"])
-            .buffer(obstacle["radius"])
-            .boundary
-        )
+        circle = Point(obstacle["utm_x"], obstacle["utm_y"]).buffer(obstacle["radius"]).boundary
         obstacle_shape = Polygon(circle)
 
         # remove obstacle area from boundary polygon
@@ -138,14 +134,12 @@ def find_closest_point(
             "utm_y": closest_point.y,
             "utm_zone_number": zone_number,
             "utm_zone_letter": zone_letter,
-            "latitude": utm.to_latlon(
-                closest_point.x, closest_point.y, zone_number, zone_letter
-            )[0],
-            "longitude": utm.to_latlon(
-                closest_point.x, closest_point.y, zone_number, zone_letter
-            )[1],
+            "latitude": utm.to_latlon(closest_point.x, closest_point.y, zone_number, zone_letter)[
+                0
+            ],
+            "longitude": utm.to_latlon(closest_point.x, closest_point.y, zone_number, zone_letter)[
+                1
+            ],
         },
-        list(
-            zip(*boundary_shape.exterior.coords.xy)
-        ),  # pylint: disable=maybe-no-member
+        list(zip(*boundary_shape.exterior.coords.xy)),  # pylint: disable=maybe-no-member
     )

@@ -25,15 +25,6 @@ flyZones = [
     }
 ][0]
 
-obstacles = [
-    {
-        "latitude": 37.94922429469271,
-        "longitude": -91.7825514554602,
-        "radius": 0,
-        "height": 0,
-    },
-]
-
 odlc = {"latitude": 37.94873549190636, "longitude": -91.78086677968352}
 
 if __name__ == "__main__":
@@ -41,13 +32,13 @@ if __name__ == "__main__":
 
     # Add utm coordinates to all
     boundary_points = point_finder.all_latlon_to_utm(boundary_points)
-    obstacles = point_finder.all_latlon_to_utm(obstacles)
     odlc = point_finder.latlon_to_utm(odlc)
 
     # Find the closest point
     (closest_point, shrunk_boundary) = point_finder.find_closest_point(
-        odlc, boundary_points, obstacles
+        odlc,
+        boundary_points,
     )
 
     # Plot data
-    plotter.plot_data(odlc, closest_point, boundary_points, shrunk_boundary, obstacles)
+    plotter.plot_data(odlc, closest_point, boundary_points, shrunk_boundary)

@@ -26,6 +26,7 @@ class Cell:
     is_valid : bool
         Represents whether the cell is actually within the ODLC search area.
     """
+
     probability: float
     seen: bool
     lat: float | None
