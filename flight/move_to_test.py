@@ -42,13 +42,13 @@ async def run() -> None:
     waypoint_data = extract_gps.extract_gps(PATH)
     waypoints = waypoint_data['waypoints']
     #waypoint: tuple
-    
+
     waypoint: tuple
     for waypoint in waypoints:
         lats.append(waypoint.latitude)
         longs.append(waypoint.longitude)
         altitudes.append(waypoint.altitude)
-        
+
 =======
     waypoint_data = extract_gps.extract_gps("./data/waypoint_data.json")
     waypoints = waypoint_data["waypoints"]
