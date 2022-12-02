@@ -44,8 +44,7 @@ async def move_to(
     location_reached: bool = False
     # First determine if we need to move fast through waypoints or need to slow down at each one
     # Then loops until the waypoint is reached
-    if fast_mode == True:
-        while not location_reached:
+    while not location_reached:
             logging.info("Going to waypoint")
             async for position in drone.telemetry.position():
                 # continuously checks current latitude, longitude and altitude of the drone
@@ -63,8 +62,6 @@ async def move_to(
                     logging.info("arrived")
                     break
 
-            # tell machine to sleep to prevent contstant polling, preventing battery drain
-            await asyncio.sleep(1)
             # tell machine to sleep to prevent contstant polling, preventing battery drain
             await asyncio.sleep(1)
     return

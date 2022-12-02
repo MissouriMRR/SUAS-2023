@@ -51,7 +51,7 @@ def all_latlon_to_utm(
     list_of_coords : [dict[str, union[float, int, str]]]
         An updated list of dictionaries with added utm data
     """
-    coord: dict[str, float | int | str]
+    coord: int
     for coord, _ in enumerate(list_of_coords):
         list_of_coords[coord] = latlon_to_utm(list_of_coords[coord])
     return list_of_coords
@@ -85,7 +85,7 @@ def generate_search_paths(
     ]
     boundary_shape: Polygon = Polygon(search_area_points)
 
-    generated_search_paths: list[list[tuple[float, float]]]
+    generated_search_paths: list[tuple[float, float]]
 
     # shrink boundary by a fixed amount until the area it covers is 0
     # add the smaller boundary to our list of search paths on each iteration
@@ -105,7 +105,7 @@ async def run() -> None:
     entire waypoint section of the SUAS competition
     """
 
-    Waypoint: dict[list[float], list[float], float] = {
+    Waypoint: dict[str, list[float] | float] = {
         "lats": [38.31451966813249, 38.31430872867596, 38.31461622313521],
         "longs": [-76.54519982319357, -76.54397320409971, -76.54516993186949],
         "Altitude": 85,
@@ -186,14 +186,14 @@ if __name__ == "__main__":
     # run video camera the whole time recording data about odlc positions -- vision task?
 
     # Add utm coordinates to all
-    data_search_area_boundary_utm: dict[str, float | int | str] = all_latlon_to_utm(
+    data_search_area_boundary_utm: list[dict[str, float | int | str]] = all_latlon_to_utm(
         data_search_area_boundary
     )
 
     # Generate search path
     search_paths: dict[str, float | int | str]
     BUFFER_DISTANCE: int = -40  # use height/2 of camera image area on ground as buffer distance
-    search_paths = generate_search_paths(data_search_area_boundary_utm, BUFFER_DISTANCE)
+    search_paths: list[tuple[float, float]] = generate_search_paths(data_search_area_boundary_utm, BUFFER_DISTANCE)
 
     print(search_paths)
 
