@@ -85,7 +85,7 @@ def generate_search_paths(
     ]
     boundary_shape: Polygon = Polygon(search_area_points)
 
-    generated_search_paths : list[list[tuple[float, float]]]
+    generated_search_paths: list[list[tuple[float, float]]]
 
     # shrink boundary by a fixed amount until the area it covers is 0
     # add the smaller boundary to our list of search paths on each iteration
@@ -143,22 +143,23 @@ async def run() -> None:
 
     # move to each waypoint in mission
     for point in range(3):
-        await move_to(drone,Waypoint["lats"][point],Waypoint["longs"][point],85,True)
+        await move_to(drone, Waypoint["lats"][point], Waypoint["longs"][point], 85, True)
 
-    #infinite loop till forced disconnect
+    # infinite loop till forced disconnect
     while True:
         await asyncio.sleep(1)
 
     # Official Coordinates for Maryland
 
+
 if __name__ == "__main__":
     data_search_area_boundary: list[dict[str, float]] = [
-        {"latitude": 38.3144070396263, "longitude": -76.54394394383165}, # Top Right Corner
-        {"latitude": 38.31430872867596,"longitude": -76.54397320409971}, # Right Midpoint
-        {"latitude": 38.31421041772561,"longitude": -76.54400246436776}, # Bottom Right Corner
-        {"latitude": 38.31461622313521,"longitude": -76.54516993186949}, # Top Left Corner
-        {"latitude": 38.31451966813249,"longitude": -76.54519982319357}, # Left Midpoint
-        {"latitude": 38.31442311312976,"longitude": -76.54522971451763}, # Bottom Left Corner
+        {"latitude": 38.3144070396263, "longitude": -76.54394394383165},  # Top Right Corner
+        {"latitude": 38.31430872867596, "longitude": -76.54397320409971},  # Right Midpoint
+        {"latitude": 38.31421041772561, "longitude": -76.54400246436776},  # Bottom Right Corner
+        {"latitude": 38.31461622313521, "longitude": -76.54516993186949},  # Top Left Corner
+        {"latitude": 38.31451966813249, "longitude": -76.54519982319357},  # Left Midpoint
+        {"latitude": 38.31442311312976, "longitude": -76.54522971451763},  # Bottom Left Corner
     ]
 
     # Test Coordinates at the Golf Course
@@ -191,7 +192,7 @@ if __name__ == "__main__":
 
     # Generate search path
     search_paths: dict[str, float | int | str]
-    BUFFER_DISTANCE: int = -40 # use height/2 of camera image area on ground as buffer distance
+    BUFFER_DISTANCE: int = -40  # use height/2 of camera image area on ground as buffer distance
     search_paths = generate_search_paths(data_search_area_boundary_utm, BUFFER_DISTANCE)
 
     print(search_paths)
