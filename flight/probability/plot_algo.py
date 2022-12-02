@@ -6,7 +6,7 @@ from math import floor, sqrt
 from bisect import insort
 from pathfinding.finder.a_star import AStarFinder
 from pathfinding.core.grid import Grid, Node
-from numpy import zeros, int8
+from numpy import zeros, int8, ndarray
 from cell_map import CellMap
 from helper import AIR_DROP_AREA
 from segmenter import segment, rotate_shape, SUAS_2023_THETA
@@ -348,9 +348,41 @@ class Searcher:
 
 
 class Decompressor:
+    """
+    Takes the path calculated for a compressed grid and uncompresses it
+    to return the actual coordinates.
+
+    Methods
+    -------
+    __prep_grid(cell_map: CellMap) -> ndarray
+        turns the CellMap into a numpy array
+
+    get_valid_point(point: tuple[int, int], cell_map: CellMap, cell_size: int) -> tuple[int, int]
+        given coordinates outside the bounded area, find the nearest point inside the area
+    
+    __decompress_point(point: tuple[int, int], cell_map: CellMap, cell_size: int) -> tuple[int, int]
+        given the coordinates of a compressed point, return the uncompressed coordinates in the
+        center of that point
+    
+    decompress_route(route: list[tuple[int, int]], cell_map: CellMap, cell_size: int) -> list[tuple[int, int]]
+        given a compressed path, return the uncompressed path
+    """
     @staticmethod
-    def __prep_grid(cell_map: CellMap):
-        new_grid = zeros((len(cell_map.data), len(cell_map[0])))
+    def __prep_grid(cell_map: CellMap) -> ndarray:
+        """
+        Creates a numpy array of the given CellMap for faster computation
+
+        Parameters
+        ----------
+        cell_map: CellMap
+            the CellMap to turn into a numpy array
+        
+        Returns
+        -------
+        numpy_grid: ndarray
+            the numpy version of the uncompressed CellMap
+        """
+        new_grid: ndarray = zeros((len(cell_map.data), len(cell_map[0])))
         for i in range(len(cell_map.data)):
             for j in range(len(cell_map[0])):
                 if cell_map[i][j].is_valid:
@@ -358,7 +390,24 @@ class Decompressor:
         return new_grid
 
     @staticmethod
-    def get_valid_point(point, cell_map, cell_size):
+    def get_valid_point(point: tuple[int, int], cell_map: CellMap, cell_size: int) -> tuple[int, int]:
+        """
+        given coordinates outside the bounded area, find the nearest point inside the area
+
+        Parameters
+        ----------
+        point: tuple[int, int]
+            the point lying outside the bounded area
+        cell_map: CellMap
+            the CellMap being searched
+        cell_size: int
+            the size of the compressed cells
+
+        Returns
+        -------
+        nearest_point: tuple[int, int]
+            the nearest point within the bounded area
+        """
         cell_map.display()
         point = (point[0] * cell_size, point[1] * cell_size)
         middle = cell_size // 2
@@ -377,7 +426,25 @@ class Decompressor:
         return closest_point
 
     @staticmethod
-    def __decompress_point(point: tuple[int, int], cell_map: CellMap, cell_size: int):
+    def __decompress_point(point: tuple[int, int], cell_map: CellMap, cell_size: int) -> tuple[int, int]:
+        """
+        Given the coordinates of a compressed cell, return the uncompressed point directly
+        in its middle
+
+        Parameters
+        ----------
+        point: tuple[int, int]
+            the compressed point coordinates
+        cell_map: CellMap
+            the map being searched
+        cell_size: int
+            the size of an compressed point relative to an uncompressed one
+        
+        Returns
+        -------
+        uncompressed_point: tuple[int, int]
+            the coordinates of the uncompressed point
+        """
         new_x = point[1] * cell_size + (cell_size // 2)
         new_y = point[0] * cell_size + (cell_size // 2)
 
@@ -387,7 +454,7 @@ class Decompressor:
             return Decompressor.get_valid_point(point, cell_map, cell_size)
 
     @staticmethod
-    def decompress_route(route: list[tuple[int, int]], cell_map: CellMap, cell_size: int):
+    def decompress_route(route: list[tuple[int, int]], cell_map: CellMap, cell_size: int) -> list[tuple[int, int]]:
         """
         Takes the path generated using the compressed map and decompresses it
         to the original resolution of the CellMap.
