@@ -80,7 +80,7 @@ async def run() -> None:
     # move to each waypoint in mission
     point: int
     for point in range(len(lats)):
-        await goto.move_to(drone, lats[point], longs[point], 100, FAST_PARAM)
+        await move_to(drone, lats[point], longs[point], 100, FAST_PARAM)
 
     # return home
     logging.info("Last waypoint reached")
