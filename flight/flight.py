@@ -7,6 +7,7 @@ from multiprocessing import Queue
 
 import logger
 from communication import Communication as Communication
+from flight import config
 from flight.states import STATES, State
 from flight.state_settings import StateSettings
 
@@ -123,7 +124,7 @@ async def init_drone(sim: bool) -> System:
         await asyncio.wait_for(wait_for_connect(drone), timeout=5)
     except asyncio.TimeoutError:
         raise DroneNotFoundError()
-    # await config
+    await config.config_params(drone)
     return drone
 
 
@@ -154,12 +155,12 @@ async def start_flight(comm: Communication, drone: System, state_settings: State
             await drone.offboard.set_velocity_ned(mavsdk.offboard.VelocityNedYaw(0, 0, 0, 0))
             await drone.offboard.set_velocity_body(mavsdk.offboard.VelocityBodyYawspeed(0, 0, 0, 0))
             # Have the drone pause
-            await asyncio.sleep(2)
+            await asyncio.sleep(config.WAIT)
             try:
                 await drone.offboard.stop()
             except mavsdk.offboard.OffboardError as error:
                 logging.exception("Stopping offboard mode failed with error code: %s", str(error))
-            await asyncio.sleep(2)
+            await asyncio.sleep(config.WAIT)
             logging.info("Landing the drone")
             await drone.action.land()
         except:
@@ -212,4 +213,4 @@ def flight(comm: Communication, sim: bool, log_queue: Queue, state_settings: Sta
     """
     logger.worker_configurer(log_queue)
     logging.debug("Flight process started")
-    asyncio.get_event_loop().run_until_complete(init_and_begin(comm, sim, state_settings))
+    asyncio.run(init_and_begin(comm, sim, state_settings))
