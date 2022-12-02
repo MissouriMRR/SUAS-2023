@@ -5,7 +5,7 @@ The actual algorithm powering the drone's navigation
 from math import floor, sqrt
 from bisect import insort
 from pathfinding.finder.a_star import AStarFinder
-from pathfinding.core.grid import Grid
+from pathfinding.core.grid import Grid, Node
 from numpy import zeros, int8
 from cell_map import CellMap
 from helper import AIR_DROP_AREA
@@ -60,7 +60,8 @@ class Compressor:
                 try:
                     if cell_map[row][col].is_valid:
                         score += 1
-                except: pass
+                except:
+                    pass
 
         return score
 
@@ -132,22 +133,52 @@ class Compressor:
                 new_grid[i][j] = Compressor.analyze_cell(i, j, s, cell_map)
         return new_grid
 
+
 class Searcher:
     """
     Performs a breath-first search looking for paths that stop by all cells
+
+    Methods
+    -------
+
+    get_num_valids() -> int
+        returns number of non-empty cells
+
+    get_valid_moves(history: list[tuple[int, int]]) -> list[tuple[int, int]]
+        returns all possible moves based on the current position
+
+    valid_solution(solution: list[tuple[int, int]]) -> bool
+        determines if a given path touches all cells
+
+    find_unseens(history: list[tuple[int, int]]) -> list[tuple[int, int]]
+        finds all cells not visited in the given path
+
+    find_closest(points: list[tuple[int, int]], px: tuple[int, int]) -> tuple[int, int]
+        finds the closest point to px
+
+    in_corner(pos: tuple[int, int], history[list[tuple[int, int]]])
+        returns the path to escape the given corner
+
+    breadth_search(start: tuple[int, int]) -> list[tuple[int, int]]
+        returns the shrotest circuit route through all cells.
     """
-    def get_num_valids(self):
+    def get_num_valids(self) -> int:
         """
         Retuns the number of valid compressed cells
+
+        Returns
+        -------
+        num_valids: int
+            The number of valid compressed cells
         """
-        num = 0
+        num: int = 0
         for i in range(len(self.compressed)):
             for j in range(len(self.compressed[0])):
                 if self.compressed[i][j] != 0:
                     num += 1
         return num
 
-    def __init__(self, cell_map : CellMap, view_radius : int):
+    def __init__(self, cell_map: CellMap, view_radius: int) -> None:
         self.compressed = Compressor.compress(view_radius, cell_map)
         self.n = self.get_num_valids()
         self.view_radius = view_radius
@@ -156,7 +187,7 @@ class Searcher:
         self.move_list = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1)]
         self.shortest_path = float("inf")
 
-    def get_valid_positions(self, history: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    def get_valid_moves(self, history: list[tuple[int, int]]) -> list[tuple[int, int]]:
         """
         Given a list of moves already made on the compressed map,
         return all possible immediate moves.
@@ -176,11 +207,11 @@ class Searcher:
         moves = []
         for move in self.move_list:
             if (
-                    0 <= pos[0] + move[0] < len(self.compressed) and
-                    0 <= pos[1] + move[1] < len(self.compressed[0]) and
-                    self.compressed[pos[0] + move[0]][pos[1] + move[1]] != 0 and
-                    (pos[0] + move[0], pos[1] + move[1]) not in hist_set
-                ):
+                0 <= pos[0] + move[0] < len(self.compressed)
+                and 0 <= pos[1] + move[1] < len(self.compressed[0])
+                and self.compressed[pos[0] + move[0]][pos[1] + move[1]] != 0
+                and (pos[0] + move[0], pos[1] + move[1]) not in hist_set
+            ):
                 moves.append((pos[0] + move[0], pos[1] + move[1]))
         return moves
 
@@ -199,7 +230,7 @@ class Searcher:
             Whether all coordinates are in the candidates list
         """
 
-        cand_set = set(solution) #O(1) lookup times
+        cand_set: set = set(solution)  # O(1) lookup times
 
         for i in range(len(self.compressed)):
             for j in range(len(self.compressed[0])):
@@ -207,7 +238,7 @@ class Searcher:
                     return False
         return True
 
-    def find_unseens(self, history : list[tuple[int, int]]) -> list[tuple[int, int]]:
+    def find_unseens(self, history: list[tuple[int, int]]) -> list[tuple[int, int]]:
         """
         finds all unvisited compressed cells
 
@@ -221,8 +252,8 @@ class Searcher:
         unseen_points : list[tuple[int, int]]
             list of all unseen cells
         """
-        history_set = set(history) # O(1) lookup time
-        return_list = []
+        history_set: set = set(history)  # O(1) lookup time
+        return_list: list = []
         for i in range(len(self.compressed)):
             for j in range(len(self.compressed[0])):
                 if (i, j) not in history_set:
@@ -245,8 +276,8 @@ class Searcher:
         closest_point : tuple[int, int]
             The coordinates of the closest point
         """
-        closest = None
-        closest_dist = float("inf")
+        closest: tuple[float, float] = (-1.0, -1.0)
+        closest_dist: float = float("inf")
         for point in points:
             dist = abs(point[0] - px[0]) + abs(point[1] - px[1])
             if dist < closest_dist:
@@ -254,7 +285,9 @@ class Searcher:
                 closest = point
         return closest
 
-    def in_corner(self, pos: tuple[int,int], history: list[tuple[int,int]])->list[tuple[int, int]]:
+    def in_corner(
+        self, pos: tuple[int,int], history: list[tuple[int,int]]
+    )->list[tuple[int, int]]:
         """
         function to get the searcher out of a corner to the closest
         undiscovered cell
@@ -272,9 +305,9 @@ class Searcher:
             the path to reach the nearest unexplored cell
         """
 
-        approx_nearest = self.find_closest(self.find_unseens(history), pos)
-        start = self.a_star_grid.node(pos[1], pos[0])
-        end = self.a_star_grid.node(approx_nearest[1], approx_nearest[0])
+        approx_nearest: tuple[int, int] = self.find_closest(self.find_unseens(history), pos)
+        start: Node = self.a_star_grid.node(pos[1], pos[0])
+        end: Node = self.a_star_grid.node(approx_nearest[1], approx_nearest[0])
         self.a_star_grid.cleanup()
         path, _ = self.a_star.find_path(start, end, self.a_star_grid)
 
@@ -303,18 +336,18 @@ class Searcher:
                 if self.valid_solution(history):
                     return history
 
-            possible_moves = self.get_valid_positions(history)
+            possible_moves = self.get_valid_moves(history)
             if len(possible_moves) == 0:
                 history += self.in_corner(history[-1], history)
-                possible_moves = self.get_valid_positions(history)
+                possible_moves = self.get_valid_moves(history)
 
             for move in possible_moves:
                 new_history = list(history)
                 new_history.append(move)
                 insort(histories, new_history, key=lambda x: len(x))
 
-class Decompressor:
 
+class Decompressor:
     @staticmethod
     def __prep_grid(cell_map: CellMap):
         new_grid = zeros((len(cell_map.data), len(cell_map[0])))
@@ -335,7 +368,7 @@ class Decompressor:
             for j in range(cell_size):
                 try:
                     if cell_map[point[0] + i][point[1] + j].is_valid:
-                        dist = sqrt((middle - i)**2 + (middle - j)**2)
+                        dist = sqrt((middle - i) ** 2 + (middle - j) ** 2)
                         if dist < closest:
                             closest = dist
                             closest_point = (point[0] + i, point[1] + j)
@@ -382,15 +415,16 @@ class Decompressor:
         for i in range(len(route) - 1):
             search_grid.cleanup()
             A = search_grid.node(route[i][1], route[i][0])
-            B = search_grid.node(route[i+1][1], route[i+1][0])
+            B = search_grid.node(route[i + 1][1], route[i + 1][0])
             A_to_B, _ = finder.find_path(A, B, search_grid)
-            
+
             if i == len(route) - 2:
                 new_path += A_to_B[:-1]
             else:
                 new_path += A_to_B
 
         return new_path
+
 
 def get_plot():
     """
@@ -410,12 +444,11 @@ def get_plot():
     return coordinate_list
 
 
-
 if __name__ == "__main__":
     print(get_plot())
 
-    #import cProfile
-    #cProfile.run('s.breadth_search((1, 4))')
+    # import cProfile
+    # cProfile.run('s.breadth_search((1, 4))')
     # TEST = [
     #     [1, 1, 1, 1, 0, 0, 0, 0],
     #     [1, 1, 1, 1, 0, 0, 0, 0],
