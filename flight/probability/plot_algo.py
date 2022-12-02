@@ -409,10 +409,11 @@ class Decompressor:
             the nearest point within the bounded area
         """
         cell_map.display()
-        point = (point[0] * cell_size, point[1] * cell_size)
-        middle = cell_size // 2
-        closest = float("inf")
-        closest_point = (point[0] + middle, point[1] + middle)
+        point: tuple[int, int] = (point[0] * cell_size, point[1] * cell_size)
+        middle: int = cell_size // 2
+        closest: float = float("inf")
+        closest_point: tuple[int, int] = (point[0] + middle, point[1] + middle)
+
         for i in range(cell_size):
             for j in range(cell_size):
                 try:
@@ -445,8 +446,8 @@ class Decompressor:
         uncompressed_point: tuple[int, int]
             the coordinates of the uncompressed point
         """
-        new_x = point[1] * cell_size + (cell_size // 2)
-        new_y = point[0] * cell_size + (cell_size // 2)
+        new_x: int = point[1] * cell_size + (cell_size // 2)
+        new_y: int = point[0] * cell_size + (cell_size // 2)
 
         if cell_map[new_y][new_x].is_valid:
             return (new_y, new_x)
@@ -473,16 +474,19 @@ class Decompressor:
         uncompressed_route : list[tuple[int, int]]
             the uncompressed route
         """
-        prepped_grid = Decompressor.__prep_grid(cell_map)
-        search_grid = Grid(matrix=prepped_grid)
-        finder = AStarFinder()
+        prepped_grid: ndarray = Decompressor.__prep_grid(cell_map)
+        search_grid: Grid = Grid(matrix=prepped_grid)
+        finder: AStarFinder = AStarFinder()
+
+    
         for i in range(len(route)):
             route[i] = Decompressor.__decompress_point(route[i], cell_map, cell_size)
         new_path = []
         for i in range(len(route) - 1):
             search_grid.cleanup()
-            A = search_grid.node(route[i][1], route[i][0])
-            B = search_grid.node(route[i + 1][1], route[i + 1][0])
+            A: Node = search_grid.node(route[i][1], route[i][0])
+            B: Node = search_grid.node(route[i + 1][1], route[i + 1][0])
+            A_to_B: list[tuple[int, int]]
             A_to_B, _ = finder.find_path(A, B, search_grid)
 
             if i == len(route) - 2:
