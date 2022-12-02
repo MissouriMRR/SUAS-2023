@@ -140,7 +140,6 @@ class Searcher:
 
     Methods
     -------
-
     get_num_valids() -> int
         returns number of non-empty cells
     get_valid_moves(history: list[tuple[int, int]]) -> list[tuple[int, int]]
@@ -166,6 +165,7 @@ class Searcher:
             The number of valid compressed cells
         """
         num: int = 0
+        i: int
         for i in range(len(self.compressed)):
             for j in range(len(self.compressed[0])):
                 if self.compressed[i][j] != 0:
@@ -174,12 +174,11 @@ class Searcher:
 
     def __init__(self, cell_map: CellMap, view_radius: int) -> None:
         self.compressed = Compressor.compress(view_radius, cell_map)
-        self.n = self.get_num_valids()
-        self.view_radius = view_radius
-        self.a_star = AStarFinder()
-        self.a_star_grid = Grid(matrix=self.compressed)
-        self.move_list = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1)]
-        self.shortest_path = float("inf")
+        self.n: int = self.get_num_valids()
+        self.view_radius: int = view_radius
+        self.a_star: AStarFinder = AStarFinder()
+        self.a_star_grid: Grid = Grid(matrix=self.compressed)
+        self.move_list: list[tuple[int, int]] = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1)]
 
     def get_valid_moves(self, history: list[tuple[int, int]]) -> list[tuple[int, int]]:
         """
@@ -196,9 +195,11 @@ class Searcher:
         moves : list[tuple[int, int]]
             A list of possible moves
         """
-        pos = history[-1]
-        hist_set = set(history)
-        moves = []
+        pos: tuple[int, int] = history[-1]
+        hist_set: set = set(history)
+        moves: list = []
+        move: tuple[int, int]
+
         for move in self.move_list:
             if (
                 0 <= pos[0] + move[0] < len(self.compressed)
@@ -226,6 +227,8 @@ class Searcher:
 
         cand_set: set = set(solution)  # O(1) lookup times
 
+        i: int
+        j: int
         for i in range(len(self.compressed)):
             for j in range(len(self.compressed[0])):
                 if self.compressed[i][j] != 0 and (i, j) not in cand_set:
@@ -248,6 +251,8 @@ class Searcher:
         """
         history_set: set = set(history)  # O(1) lookup time
         return_list: list = []
+        i: int
+        j: int
         for i in range(len(self.compressed)):
             for j in range(len(self.compressed[0])):
                 if (i, j) not in history_set:
@@ -272,6 +277,7 @@ class Searcher:
         """
         closest: tuple[float, float] = (-1.0, -1.0)
         closest_dist: float = float("inf")
+        point: tuple[int, int]
         for point in points:
             dist = abs(point[0] - px[0]) + abs(point[1] - px[1])
             if dist < closest_dist:
@@ -323,18 +329,19 @@ class Searcher:
             A list of points that defines the shortest continous path
             that visits all points in the compressed grid.
         """
-        histories = [[start]]
+        histories: list[list[tuple[int, int]]] = [[start]]
         while len(histories) != 0:
-            history = histories.pop(0)
+            history: list[tuple[int, int]] = histories.pop(0)
             if len(history) >= self.n:
                 if self.valid_solution(history):
                     return history
 
-            possible_moves = self.get_valid_moves(history)
+            possible_moves: list[tuple[int, int]] = self.get_valid_moves(history)
             if len(possible_moves) == 0:
                 history += self.in_corner(history[-1], history)
                 possible_moves = self.get_valid_moves(history)
 
+            move: tuple[int, int]
             for move in possible_moves:
                 new_history = list(history)
                 new_history.append(move)
