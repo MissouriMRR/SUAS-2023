@@ -166,6 +166,7 @@ class Searcher:
         """
         num: int = 0
         i: int
+        j: int
         for i in range(len(self.compressed)):
             for j in range(len(self.compressed[0])):
                 if self.compressed[i][j] != 0:
@@ -173,7 +174,7 @@ class Searcher:
         return num
 
     def __init__(self, cell_map: CellMap, view_radius: int) -> None:
-        self.compressed = Compressor.compress(view_radius, cell_map)
+        self.compressed: list[list[int]] = Compressor.compress(view_radius, cell_map)
         self.n: int = self.get_num_valids()
         self.view_radius: int = view_radius
         self.a_star: AStarFinder = AStarFinder()
@@ -309,6 +310,7 @@ class Searcher:
         start: Node = self.a_star_grid.node(pos[1], pos[0])
         end: Node = self.a_star_grid.node(approx_nearest[1], approx_nearest[0])
         self.a_star_grid.cleanup()
+        path: list[tuple[int, int]]
         path, _ = self.a_star.find_path(start, end, self.a_star_grid)
 
         return [(x[1], x[0]) for x in path[1:]]
