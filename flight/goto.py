@@ -54,8 +54,10 @@ async def move_to(
 
             #  accurately checks if location is reached and stops for 15 secs and then moves on.
             if (
-                (round(drone_lat, int(6*fast_param)) == round(latitude, int(6*fast_param)))
-                and (round(drone_long, int(6*fast_param)) == round(longitude, int(6*fast_param)))
+                (round(drone_lat, int(6 * fast_param)) == round(latitude, int(6 * fast_param)))
+                and (
+                    round(drone_long, int(6 * fast_param)) == round(longitude, int(6 * fast_param))
+                )
                 and (round(drone_alt, 1) == round(altitude_in_meters, 1))
             ):
                 location_reached = True
