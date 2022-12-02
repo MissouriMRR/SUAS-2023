@@ -2,18 +2,17 @@
 Functions for generating search paths to cover an area for finding the standard odlc objects
 """
 
-from typing import List, Dict, Tuple, Union
 from shapely.geometry import Polygon
 import utm
-import plotter
 from execute import move_to
 from mavsdk import System
 import logging
 import asyncio
 
 
-def latlon_to_utm(coords: Dict[str, Union[float, int, str]]) -> Dict[str, Union[float, int, str]]:
-    """Converts latlon coordinates to utm coordinates and adds the data to the dictionary
+def latlon_to_utm(coords: dict[str, float | int | str]) -> dict[str, float | int | str]:
+    """
+    Converts latlon coordinates to utm coordinates and adds the data to the dictionary
 
     Parameters
     ----------
@@ -22,11 +21,11 @@ def latlon_to_utm(coords: Dict[str, Union[float, int, str]]) -> Dict[str, Union[
 
     Returns
     -------
-    Dict[str, float]
+    coords : Dict[str, float]
         An updated dictionary with additional keys and values with utm data
     """
 
-    utm_coords: Tuple[float, float, int, str] = utm.from_latlon(
+    utm_coords: tuple[float, float, int, str] = utm.from_latlon(
         coords["latitude"], coords["longitude"]
     )
     coords["utm_x"] = utm_coords[0]
@@ -37,30 +36,32 @@ def latlon_to_utm(coords: Dict[str, Union[float, int, str]]) -> Dict[str, Union[
 
 
 def all_latlon_to_utm(
-    list_of_coords: List[Dict[str, Union[float, int, str]]]
-) -> List[Dict[str, Union[float, int, str]]]:
-    """Converts a list of dictionaries with latlon data to add utm data
+    list_of_coords: list[dict[str, float | int | str]]
+) -> list[dict[str, float | int | str]]:
+    """
+    Converts a list of dictionaries with latlon data to add utm data
 
     Parameters
     ----------
-    list_of_coords : List[Dict[str, Union[float, int, str]]]
+    list_of_coords : list[dict[str, union[float, int, str]]]
         A list of dictionaries that contain lat long data
 
     Returns
     -------
-    List[Dict[str, Union[float, int, str]]]
+    list_of_coords : [dict[str, union[float, int, str]]]
         An updated list of dictionaries with added utm data
     """
-
-    for i, _ in enumerate(list_of_coords):
-        list_of_coords[i] = latlon_to_utm(list_of_coords[i])
+    coord: dict[str, float | int | str]
+    for coord, _ in enumerate(list_of_coords):
+        list_of_coords[coord] = latlon_to_utm(list_of_coords[coord])
     return list_of_coords
 
 
 def generate_search_paths(
-    d_search_area_boundary: List[Dict[str, float]], buffer_distance: int
-) -> List[Tuple[float, float]]:
-    """Generates a list of search paths of increasingly smaller sizes until the whole area
+    d_search_area_boundary: list[dict[str, float]], buffer_distance: int
+) -> list[tuple[float, float]]:
+    """
+    Generates a list of search paths of increasingly smaller sizes until the whole area
     of the original shape has been covered
 
     Parameters
@@ -74,17 +75,17 @@ def generate_search_paths(
 
     Returns
     -------
-    List[Tuple[float, float]]
+    generated_search_paths : [Tuple[float, float]]
         A list of concentric search paths that cover the area of the polygon
     """
 
     # convert to shapely polygon for buffer operations
-    search_area_points: List[Tuple[float, float]] = [
+    search_area_points: list[tuple[float, float]] = [
         (point["utm_x"], point["utm_y"]) for point in d_search_area_boundary
     ]
     boundary_shape: Polygon = Polygon(search_area_points)
 
-    generated_search_paths = [] #: List[List[Tuple[float, float]]
+    generated_search_paths : list[list[tuple[float, float]]]
 
     # shrink boundary by a fixed amount until the area it covers is 0
     # add the smaller boundary to our list of search paths on each iteration
@@ -140,18 +141,14 @@ async def run() -> None:
     for point in range(3):
         await move_to(drone,Waypoint["lats"][point],Waypoint["longs"][point],85,True)
 
-    #return home
-    # logging.info("Last waypoint reached")
-    # logging.info("Returning to home")
-    # await drone.action.return_to_launch()
-    # print("Staying connected, press Ctrl-C to exit")
-
     #infinite loop till forced disconnect
     while True:
         await asyncio.sleep(1)
 
+    # Official Coordinates for Maryland
+
 if __name__ == "__main__":
-    data_search_area_boundary: List[Dict[str, float]] = [
+    data_search_area_boundary: list[dict[str, float]] = [
         {"latitude": 38.3144070396263, "longitude": -76.54394394383165}, # Top Right Corner
         {"latitude": 38.31430872867596,"longitude": -76.54397320409971}, # Right Midpoint
         {"latitude": 38.31421041772561,"longitude": -76.54400246436776}, # Bottom Right Corner
@@ -187,11 +184,12 @@ if __name__ == "__main__":
 
 
     # Add utm coordinates to all
-    data_search_area_boundary_utm: Dict[str, Union[float, int, str]] = all_latlon_to_utm(
+    data_search_area_boundary_utm: dict[str, float | int | str] = all_latlon_to_utm(
         data_search_area_boundary
     )
 
     # Generate search path
+    search_paths: dict[str, float | int | str]
     BUFFER_DISTANCE: int = -40 # use height/2 of camera image area on ground as buffer distance
     search_paths = generate_search_paths(data_search_area_boundary_utm, BUFFER_DISTANCE)
 
@@ -203,6 +201,3 @@ if __name__ == "__main__":
     # when you reach your starting point,
     # fly all points in search_paths[1],
     # etc... until all search paths have been flown
-
-    # Plot data
-    plotter.plot(search_paths)

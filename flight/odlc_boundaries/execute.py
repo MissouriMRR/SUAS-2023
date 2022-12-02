@@ -33,14 +33,14 @@ async def move_to(
     """
 
     # converts feet into meters
-    altitude = altitude * 0.3048
+    altitudeinMeters: float = altitude * 0.3048
 
     # get current altitude
     async for terrain_info in drone.telemetry.home():
         absolute_altitude: float = terrain_info.absolute_altitude_m
         break
 
-    await drone.action.goto_location(latitude, longitude, altitude + absolute_altitude, 0)
+    await drone.action.goto_location(latitude, longitude, altitudeinMeters + absolute_altitude, 0)
     location_reached: bool = False
     # First determine if we need to move fast through waypoints or need to slow down at each one
     # Then loops until the waypoint is reached
@@ -55,8 +55,8 @@ async def move_to(
 
                 # roughly checks if location is reached and moves on if so
                 if (
-                    (round(drone_lat, 5) == round(latitude, 5))
-                    and (round(drone_long, 5) == round(longitude, 5))
+                    (round(drone_lat, 3) == round(latitude, 3))
+                    and (round(drone_long, 3) == round(longitude, 3))
                     and (round(drone_alt, 1) == round(altitude, 1))
                 ):
                     location_reached = True
@@ -65,25 +65,6 @@ async def move_to(
 
             # tell machine to sleep to prevent contstant polling, preventing battery drain
             await asyncio.sleep(1)
-    else:
-        while not location_reached:
-            logging.info("Going to waypoint")
-            async for position in drone.telemetry.position():
-                # continuously checks current latitude, longitude and altitude of the drone
-                drone_lat = position.latitude_deg
-                drone_long = position.longitude_deg
-                drone_alt = position.relative_altitude_m
-
-                # accurately checks if location is reached and moves on if so
-                if (
-                    (round(drone_lat, 6) == round(latitude, 6))
-                    and (round(drone_long, 6) == round(longitude, 6))
-                    and (round(drone_alt, 1) == round(altitude, 1))
-                ):
-                    location_reached = True
-                    logging.info("arrived")
-                    break
-
             # tell machine to sleep to prevent contstant polling, preventing battery drain
             await asyncio.sleep(1)
     return
