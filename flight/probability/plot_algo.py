@@ -143,22 +143,16 @@ class Searcher:
 
     get_num_valids() -> int
         returns number of non-empty cells
-
     get_valid_moves(history: list[tuple[int, int]]) -> list[tuple[int, int]]
         returns all possible moves based on the current position
-
     valid_solution(solution: list[tuple[int, int]]) -> bool
         determines if a given path touches all cells
-
     find_unseens(history: list[tuple[int, int]]) -> list[tuple[int, int]]
         finds all cells not visited in the given path
-
     find_closest(points: list[tuple[int, int]], px: tuple[int, int]) -> tuple[int, int]
         finds the closest point to px
-
     in_corner(pos: tuple[int, int], history[list[tuple[int, int]]])
         returns the path to escape the given corner
-
     breadth_search(start: tuple[int, int]) -> list[tuple[int, int]]
         returns the shrotest circuit route through all cells.
     """
@@ -356,14 +350,11 @@ class Decompressor:
     -------
     __prep_grid(cell_map: CellMap) -> ndarray
         turns the CellMap into a numpy array
-
     get_valid_point(point: tuple[int, int], cell_map: CellMap, cell_size: int) -> tuple[int, int]
         given coordinates outside the bounded area, find the nearest point inside the area
-    
     __decompress_point(point: tuple[int, int], cell_map: CellMap, cell_size: int) -> tuple[int, int]
         given the coordinates of a compressed point, return the uncompressed coordinates in the
         center of that point
-    
     decompress_route(route: list[tuple[int, int]], cell_map: CellMap, cell_size: int) -> list[tuple[int, int]]
         given a compressed path, return the uncompressed path
     """
