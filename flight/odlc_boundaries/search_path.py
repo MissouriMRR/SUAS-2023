@@ -2,15 +2,15 @@
 Functions for generating search paths to cover an area for finding the standard odlc objects
 """
 
-from shapely.geometry import Polygon
-import utm
-from execute import move_to
-from mavsdk import System
 import logging
 import asyncio
+import utm
+from shapely.geometry import Polygon
+from execute import move_to
+from mavsdk import System
 
 
-def latlon_to_utm(coords: dict[str, float | int | str]) -> dict[str, float | int | str]:
+def latlon_to_utm(coords: dict[str, float]) -> dict[str, float]:
     """
     Converts latlon coordinates to utm coordinates and adds the data to the dictionary
 
@@ -30,14 +30,10 @@ def latlon_to_utm(coords: dict[str, float | int | str]) -> dict[str, float | int
     )
     coords["utm_x"] = utm_coords[0]
     coords["utm_y"] = utm_coords[1]
-    coords["utm_zone_number"] = utm_coords[2]
-    coords["utm_zone_letter"] = utm_coords[3]
     return coords
 
 
-def all_latlon_to_utm(
-    list_of_coords: list[dict[str, float | int | str]]
-) -> list[dict[str, float | int | str]]:
+def all_latlon_to_utm(list_of_coords: list[dict[str, float]]) -> list[dict[str, float]]:
     """
     Converts a list of dictionaries with latlon data to add utm data
 
@@ -85,8 +81,7 @@ def generate_search_paths(
     ]
     boundary_shape: Polygon = Polygon(search_area_points)
 
-    generated_search_paths: list[tuple[float, float]]
-
+    generated_search_paths: list[tuple[float, float]] = []
     # shrink boundary by a fixed amount until the area it covers is 0
     # add the smaller boundary to our list of search paths on each iteration
     while boundary_shape.area > 0:
@@ -105,10 +100,10 @@ async def run() -> None:
     entire waypoint section of the SUAS competition
     """
 
-    Waypoint: dict[str, list[float] | float] = {
+    waypoint: dict[str, list[float]] = {
         "lats": [38.31451966813249, 38.31430872867596, 38.31461622313521],
         "longs": [-76.54519982319357, -76.54397320409971, -76.54516993186949],
-        "Altitude": 85,
+        "Altitude": [85],
     }
 
     # create a drone object
@@ -142,8 +137,11 @@ async def run() -> None:
     await asyncio.sleep(10)
 
     # move to each waypoint in mission
+    point: int
     for point in range(3):
-        await move_to(drone, Waypoint["lats"][point], Waypoint["longs"][point], 85, True)
+        await move_to(
+            drone, waypoint["lats"][point], waypoint["longs"][point], waypoint["Altitude"][0]
+        )
 
     # infinite loop till forced disconnect
     while True:
@@ -174,7 +172,7 @@ if __name__ == "__main__":
     #   {"latitude": 37.94862722088389, "longitude": -91.78302701112852}, # Right Midpoint
     # ]
 
-    drone: System = System()
+    quad_copter: System = System()
 
     # algorithm
     # (2 coordinates for side 1) / 2 = starting point
@@ -186,12 +184,11 @@ if __name__ == "__main__":
     # run video camera the whole time recording data about odlc positions -- vision task?
 
     # Add utm coordinates to all
-    data_search_area_boundary_utm: list[dict[str, float | int | str]] = all_latlon_to_utm(
+    data_search_area_boundary_utm: list[dict[str, float]] = all_latlon_to_utm(
         data_search_area_boundary
     )
 
     # Generate search path
-    search_paths: dict[str, float | int | str]
     BUFFER_DISTANCE: int = -40  # use height/2 of camera image area on ground as buffer distance
     search_paths: list[tuple[float, float]] = generate_search_paths(
         data_search_area_boundary_utm, BUFFER_DISTANCE

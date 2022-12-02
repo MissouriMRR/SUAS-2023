@@ -4,12 +4,15 @@ for moving the drone to a certain waypoint
 """
 
 import asyncio
-from mavsdk import System
 import logging
+from mavsdk import System
 
 
 async def move_to(
-    drone: System, latitude: float, longitude: float, altitude: float, fast_mode: bool
+    drone: System,
+    latitude: float,
+    longitude: float,
+    altitude: float,
 ) -> None:
     """
     This function takes in a latitude, longitude and altitude and autonomously
@@ -26,21 +29,17 @@ async def move_to(
         a float containing the requested longitude to move to
     altitude: float
         a float contatining the requested altitude to go to (in feet)
-    fast_mode: bool
-        a boolean that determines if the drone will take less time checking its precise location
-        before moving on to another waypoint. If its true, it will move faster, if it is false,
-        it will move at normal speed
     """
 
     # converts feet into meters
-    altitudeinMeters: float = altitude * 0.3048
+    altitude_in_meters: float = altitude * 0.3048
 
     # get current altitude
     async for terrain_info in drone.telemetry.home():
         absolute_altitude: float = terrain_info.absolute_altitude_m
         break
 
-    await drone.action.goto_location(latitude, longitude, altitudeinMeters + absolute_altitude, 0)
+    await drone.action.goto_location(latitude, longitude, altitude_in_meters + absolute_altitude, 0)
     location_reached: bool = False
     # First determine if we need to move fast through waypoints or need to slow down at each one
     # Then loops until the waypoint is reached
