@@ -45,23 +45,23 @@ async def move_to(
     # First determine if we need to move fast through waypoints or need to slow down at each one
     # Then loops until the waypoint is reached
     while not location_reached:
-            logging.info("Going to waypoint")
-            async for position in drone.telemetry.position():
-                # continuously checks current latitude, longitude and altitude of the drone
-                drone_lat: float = position.latitude_deg
-                drone_long: float = position.longitude_deg
-                drone_alt: float = position.relative_altitude_m
+        logging.info("Going to waypoint")
+        async for position in drone.telemetry.position():
+            # continuously checks current latitude, longitude and altitude of the drone
+            drone_lat: float = position.latitude_deg
+            drone_long: float = position.longitude_deg
+            drone_alt: float = position.relative_altitude_m
 
-                # roughly checks if location is reached and moves on if so
-                if (
-                    (round(drone_lat, 3) == round(latitude, 3))
-                    and (round(drone_long, 3) == round(longitude, 3))
-                    and (round(drone_alt, 1) == round(altitude, 1))
-                ):
-                    location_reached = True
-                    logging.info("arrived")
-                    break
+            # roughly checks if location is reached and moves on if so
+            if (
+                (round(drone_lat, 3) == round(latitude, 3))
+                and (round(drone_long, 3) == round(longitude, 3))
+                and (round(drone_alt, 1) == round(altitude, 1))
+            ):
+                location_reached = True
+                logging.info("arrived")
+                break
 
-            # tell machine to sleep to prevent contstant polling, preventing battery drain
-            await asyncio.sleep(1)
+        # tell machine to sleep to prevent contstant polling, preventing battery drain
+        await asyncio.sleep(1)
     return
