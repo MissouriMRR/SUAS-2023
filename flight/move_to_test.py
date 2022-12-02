@@ -38,6 +38,7 @@ async def run() -> None:
     longs: list[float] = []
     altitudes: list[float] = []
 
+<<<<<<< HEAD
     waypoint_data = extract_gps.extract_gps(PATH)
     waypoints = waypoint_data['waypoints']
     #waypoint: tuple
@@ -48,6 +49,17 @@ async def run() -> None:
         longs.append(waypoint.longitude)
         altitudes.append(waypoint.altitude)
         
+=======
+    waypoint_data = extract_gps.extract_gps("./data/waypoint_data.json")
+    waypoints = waypoint_data["waypoints"]
+    for i in waypoints:
+        lats.append(i.latitude)
+        longs.append(i.longitude)
+        altitudes.append(i.altitude)
+    # print(lats)
+    # print(longs)
+    # print(altitudes)
+>>>>>>> be1e82ccb2c5e601fe97288c48039e170f0708a5
     # create a drone object
     drone: System = System()
     await drone.connect(SYSTEM_ADDRESS)
@@ -103,5 +115,10 @@ if __name__ == "__main__":
         loop = asyncio.get_event_loop()
         loop.run_until_complete(run())
     except KeyboardInterrupt:
+<<<<<<< HEAD
         logging.info("CTRL+C: Program ended")
         sys.exit(0)
+=======
+        print("Program ended")
+        sys.exit(0)
+>>>>>>> be1e82ccb2c5e601fe97288c48039e170f0708a5

@@ -52,6 +52,7 @@ async def move_to(
             drone_long: float = position.longitude_deg
             drone_alt: float = position.relative_altitude_m
 
+<<<<<<< HEAD
             #  accurately checks if location is reached and stops for 15 secs and then moves on.
             if (
                 (round(drone_lat, int(6*fast_param)) == round(latitude, int(6*fast_param)))
@@ -67,3 +68,19 @@ async def move_to(
         # tell machine to sleep to prevent contstant polling, preventing battery drain
         await asyncio.sleep(1)
     return
+=======
+                if (
+                    (round(drone_lat, 6) == round(latitude, 6))
+                    and (round(drone_long, 6) == round(longitude, 6))
+                    and (round(drone_alt, 1) == round(altitude, 1))
+                ):
+
+                    location_reached = True
+                    logging.info("arrived")
+                    asyncio.sleep(15)
+                    break
+
+            # tell machine to sleep to prevent contstant polling, preventing battery drain
+            await asyncio.sleep(1)
+    return
+>>>>>>> be1e82ccb2c5e601fe97288c48039e170f0708a5
