@@ -48,7 +48,7 @@ async def run() -> None:
         longs.append(waypoint.longitude)
         altitudes.append(waypoint.altitude)
 <<<<<<< HEAD
-        
+
 =======
 
 =======
