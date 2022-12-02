@@ -8,7 +8,7 @@ import logging
 import sys
 
 from flight import extract_gps
-from flight.Waypoint import goto
+from flight.Waypoint.goto import move_to
 
 
 async def run() -> None:
