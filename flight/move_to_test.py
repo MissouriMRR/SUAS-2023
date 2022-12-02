@@ -39,7 +39,7 @@ async def run() -> None:
     altitudes: list[float] = []
 
     waypoint_data = extract_gps.extract_gps(PATH)
-    waypoints = waypoint_data['waypoints']
+    waypoints = waypoint_data["waypoints"]
 
     waypoint: tuple
     for waypoint in waypoints:
