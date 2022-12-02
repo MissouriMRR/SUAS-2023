@@ -41,13 +41,28 @@ async def run() -> None:
     waypoint_data = extract_gps.extract_gps(PATH)
     waypoints = waypoint_data['waypoints']
     #waypoint: tuple
-    
+
     waypoint: tuple
     for waypoint in waypoints:
         lats.append(waypoint.latitude)
         longs.append(waypoint.longitude)
         altitudes.append(waypoint.altitude)
+<<<<<<< HEAD
         
+=======
+
+=======
+    waypoint_data = extract_gps.extract_gps("./data/waypoint_data.json")
+    waypoints = waypoint_data["waypoints"]
+    for i in waypoints:
+        lats.append(i.latitude)
+        longs.append(i.longitude)
+        altitudes.append(i.altitude)
+    # print(lats)
+    # print(longs)
+    # print(altitudes)
+>>>>>>> be1e82ccb2c5e601fe97288c48039e170f0708a5
+>>>>>>> 695c1ababb38244858dbe4090ef0dfadfe8d9f29
     # create a drone object
     drone: System = System()
     await drone.connect(SYSTEM_ADDRESS)
