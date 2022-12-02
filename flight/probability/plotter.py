@@ -47,7 +47,8 @@ def draw_cell(pos: Tuple[float, float] | None, prob: float) -> None:
     prob : float
         The probability of the cell containing a ODLC
     """
-    if pos[0] is None or pos[0] is  None: return
+    if pos[0] is None or pos[0] is None:
+        return
     plt.gca().add_patch(
         patches.Rectangle((pos[0], pos[1]), 0.00015, 0.00015, fill=True, color=get_p_color(prob))
     )
@@ -78,6 +79,7 @@ def get_prob_range(prob_map: CellMap) -> Tuple[float, float]:
                 low = prob
     return (low, high)
 
+
 def get_normalized_prob(raw_prob: float, prob_range: Tuple[float, float]) -> float:
     """
     Given a raw probability value, returns a normalized probability
@@ -97,6 +99,7 @@ def get_normalized_prob(raw_prob: float, prob_range: Tuple[float, float]) -> flo
         the normalized version of the raw probability
     """
     return (raw_prob - prob_range[0]) / (prob_range[1] - prob_range[0])
+
 
 def plot_prob_map(prob_map: CellMap, seen_mode: bool = False, path=[]) -> None:
     """
@@ -128,7 +131,7 @@ def plot_prob_map(prob_map: CellMap, seen_mode: bool = False, path=[]) -> None:
                     draw_cell((cell.lat, cell.lon), 1 if cell.seen else 0)
                 else:
                     draw_cell(
-                    (cell.lat, cell.lon),
+                        (cell.lat, cell.lon),
                         get_normalized_prob(cell.probability, prob_range),
                     )
 
@@ -136,7 +139,7 @@ def plot_prob_map(prob_map: CellMap, seen_mode: bool = False, path=[]) -> None:
     for point in path:
         x.append(point[0])
         y.append(point[1])
-    plt.plot(x, y, '-')
+    plt.plot(x, y, "-")
 
     plt.show()
 
@@ -198,5 +201,8 @@ def plot_data(
 
 
 if __name__ == "__main__":
-    plot_prob_map(CellMap(segment(rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]), 0.000025)), False, get_plot())
-
+    plot_prob_map(
+        CellMap(segment(rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]), 0.000025)),
+        False,
+        get_plot(),
+    )
