@@ -126,6 +126,6 @@ class CellMap:
         for sublist in self.data:
             item: Cell
             for item in sublist:
-                if item.lat is not None and item.lon is not None:
+                if item.is_valid:
                     flat_list.append((item.lat, item.lon))
         self.bounds: dict[str, list[float]] = get_bounds(flat_list)
