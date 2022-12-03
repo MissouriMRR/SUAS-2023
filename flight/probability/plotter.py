@@ -2,106 +2,32 @@
 Provides plotting functionality for visaulizing coordinate data
 """
 
-import copy
-from typing import List, Dict, Tuple
-from cell_map import CellMap
-from segmenter import segment, SUAS_2023_THETA, rotate_shape
-from helper import TEST_AREA, AIR_DROP_AREA
+from copy import deepcopy
 import matplotlib.pyplot as plt
 from matplotlib import patches
+from cell_map import CellMap
+from cell import Cell
+from segmenter import segment, SUAS_2023_THETA, rotate_shape
+from helper import AIR_DROP_AREA
 from plot_algo import get_plot
 
-P_1_COLOR = (246, 229, 37)
-P_0_COLOR = (38, 7, 144)
+CELL_COLOR: tuple[float, float, float] = (246/256, 229/256, 37/256)
 
 
-def get_p_color(prob: float) -> List[float]:
-    """
-    Given a probability [0, 1], return the color
-    of the cell.
-
-    Parameters
-    ----------
-    p : float
-        the probability of a ODLC being found in the cell
-
-    Returns
-    -------
-    color : List[float]
-        The RGB value of the probability's color
-    """
-    color = []
-    for i in range(3):
-        color.append((P_0_COLOR[i] + ((P_1_COLOR[i] - P_0_COLOR[i]) * prob)) / 255)
-    return color
-
-
-def draw_cell(pos: Tuple[float, float] | None, prob: float) -> None:
+def draw_cell(pos: tuple[float | None, float | None]) -> None:
     """
     draws a cell on the plot
 
     Parameters
     ----------
-    pos : Tuple(float, float) | None
+    pos : tuple(float, float) | None
         the position of the cell
-    prob : float
-        The probability of the cell containing a ODLC
     """
-    if pos[0] is None or pos[0] is None:
-        return
     plt.gca().add_patch(
-        patches.Rectangle((pos[0], pos[1]), 0.00015, 0.00015, fill=True, color=get_p_color(prob))
+        patches.Rectangle((pos[0], pos[1]), 0.00015, 0.00015, fill=True, color=CELL_COLOR)
     )
 
-
-def get_prob_range(prob_map: CellMap) -> Tuple[float, float]:
-    """
-    Given a cell map object, return the highest and lowest probabiltiies
-    recorded.
-
-    Parameters
-    ----------
-    prob_map : CellMap
-        the probability map to be examined
-
-    Returns
-    -------
-    probability_range : Tuple[float, float]
-        a float with the lowest and highest values
-    """
-    low, high = float("inf"), float("-inf")
-    for i in range(len(prob_map.data)):
-        for j in range(len(prob_map[0])):
-            prob = prob_map[i][j].probability
-            if prob > high:
-                high = prob
-            elif prob < low:
-                low = prob
-    return (low, high)
-
-
-def get_normalized_prob(raw_prob: float, prob_range: Tuple[float, float]) -> float:
-    """
-    Given a raw probability value, returns a normalized probability
-    where p(1) = highest probability on the map while p(0) = lowest
-    probability on map.
-
-    Parameters
-    ----------
-    raw_prob : float
-        the raw probability value found on the map
-    prob_range : Tuple[float, float]
-        tuple containing the highest and lowest probability values
-
-    Returns
-    -------
-    normalized_probability : float
-        the normalized version of the raw probability
-    """
-    return (raw_prob - prob_range[0]) / (prob_range[1] - prob_range[0])
-
-
-def plot_prob_map(prob_map: CellMap, seen_mode: bool = False, path=[]) -> None:
+def plot_path(prob_map: CellMap, path: list[tuple[float, float]] = deepcopy([])) -> None:
     """
     creates a visual of the current probability map.
 
@@ -110,32 +36,27 @@ def plot_prob_map(prob_map: CellMap, seen_mode: bool = False, path=[]) -> None:
     prob_map: CellMap
         the position of each cell and its probability of containing a
         drop point.
-    seen_mode : bool
-        An optional parameter that determines whether the output only highlights cells
-        that have been seen
+    path : list[tuple[float, float]]
+        The latitude longitude coordinates of every point the drone visits
     """
-    prob_range = get_prob_range(prob_map)
-    margin = 0.001
-    size = max(
+    margin: float = 0.001
+    size: float = max(
         abs(prob_map.bounds["x"][0] - prob_map.bounds["x"][1]),
         abs(prob_map.bounds["y"][0] - prob_map.bounds["y"][1]),
     )
     plt.xlim(prob_map.bounds["x"][0] - margin, prob_map.bounds["x"][0] + size + margin)
     plt.ylim(prob_map.bounds["y"][0] - margin, prob_map.bounds["y"][0] + size + margin)
 
+    i: int
+    j: int
     for i in range(len(prob_map.data)):
         for j in range(len(prob_map[0])):
-            cell = prob_map[i][j]
+            cell: Cell = prob_map[i][j]
             if cell.is_valid:
-                if seen_mode:
-                    draw_cell((cell.lat, cell.lon), 1 if cell.seen else 0)
-                else:
-                    draw_cell(
-                        (cell.lat, cell.lon),
-                        get_normalized_prob(cell.probability, prob_range),
-                    )
+                draw_cell((cell.lat, cell.lon))
 
-    x, y = [], []
+    x: list[float] = []
+    y: list[float] = []
     for point in path:
         x.append(point[0])
         y.append(point[1])
@@ -144,8 +65,7 @@ def plot_prob_map(prob_map: CellMap, seen_mode: bool = False, path=[]) -> None:
     plt.show()
 
 if __name__ == "__main__":
-    plot_prob_map(
+    plot_path(
         CellMap(segment(rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]), 0.000025)),
-        False,
         get_plot(),
     )
