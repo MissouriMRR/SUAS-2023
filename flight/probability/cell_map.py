@@ -85,7 +85,7 @@ class CellMap:
                         )
                     )
                 else:
-                    row.append(Cell(0, False, None, None, False))
+                    row.append(Cell(0, False, -1.0, -1.0, False))
             r_list.append(row)
         return r_list
 

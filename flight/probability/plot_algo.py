@@ -549,13 +549,13 @@ class Decompressor:
         return new_path
 
 
-def get_plot() -> list[tuple[float | None, float | None]]:
+def get_plot() -> list[tuple[float, float]]:
     """
     Gets the coordinates list for SUAS 2023
 
     Returns
     -------
-    list[tuple[int, int]]
+    list[tuple[float, float]]
     """
     area: list[list[tuple[float, float] | str]] = segment(
         rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]), 0.000025
@@ -568,7 +568,7 @@ def get_plot() -> list[tuple[float | None, float | None]]:
     path: list[tuple[int, int]] = Decompressor.decompress_route(
         searcher.breadth_search((0, 0)), cell_map, 8
     )
-    coordinate_list: list[tuple[float | None, float | None]] = []
+    coordinate_list: list[tuple[float, float]] = []
     point: tuple[int, int]
     for point in path:
         cell_map_point: Cell = cell_map[point[1]][point[0]]
