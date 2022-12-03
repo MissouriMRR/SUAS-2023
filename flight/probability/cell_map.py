@@ -5,8 +5,7 @@ Defines the CellMap class and has some basic tests at the bottom of the file.
 """
 
 from cell import Cell
-from helper import get_bounds, AIR_DROP_AREA
-from segmenter import segment, rotate_shape, SUAS_2023_THETA
+from helper import get_bounds
 
 class CellMap:
     """
@@ -15,12 +14,13 @@ class CellMap:
 
     Attributes
     ----------
-    points : list[list[tuple[float, float] | str]]
-        a two-dimensional array of latitude and longitude points that defines
+    data : list[list[Cell]
+        a two-dimensional array of Cell objects that defines
         the search area
-    ODLCs : int
-        the number of ODLCs on the map. Used to calculate the initial
-        probabilities of each cell.
+    num_valids : int
+        the number of Cells within the bounds,
+    bounds: dict[str: list[float]]
+        the latitude longitude boundaries of the search area
     """
 
     def __get_valids(self, points: list[list[tuple[float, float] | str]]) -> int:
@@ -39,6 +39,8 @@ class CellMap:
         """
 
         count: int = 0
+        i: int
+        j: int
         for i in range(len(points)):
             for j in range(len(points[0])):
                 if points[i][j] != "X":
@@ -64,9 +66,11 @@ class CellMap:
         Returns
         -------
         final_map : list[list[Cell]]
-            the map of cell objects
+            the two-dimensional list of cell objects
         """
         r_list: list[list[Cell]] = []
+        i: int
+        j: int
         for i in range(len(points)):
             row: list[Cell] = []
             for j in range(len(points[0])):
@@ -88,22 +92,17 @@ class CellMap:
     def __getitem__(self, index: int) -> list[Cell]:
         return self.data[index]
 
-    def display(self, drone_pos: tuple[int, int] | None = None) -> None:
+    def display(self) -> None:
         """
         Prints out the current CellMap in the standard output.
-
-        Parameters
-        ----------
-        drone_pos : tuple[int, int] | None
-            optional parameter for the drone's current index
         """
+        i: int
+        j: int
         for i in range(len(self.data)):
-            row_string = ""
+            row_string: str = ""
             for j in range(len(self.data[0])):
                 if not self.data[i][j].is_valid:
                     row_string += " "
-                elif drone_pos == (i, j):
-                    row_string += "S"
                 else:
                     row_string += "X"
             print(row_string)
@@ -118,18 +117,14 @@ class CellMap:
         ODLCs : int
             the number of ODLCs in the flight area
         """
-        self.num_valids = self.__get_valids(points)
-        self.data = self.__init_map(points, ODLCs)
+        self.num_valids: int = self.__get_valids(points)
+        self.data: list[list[Cell]] = self.__init_map(points, ODLCs)
 
-        flat_list = []
-        for sub_list in self.data:
-            for item in sub_list:
+        flat_list: list[tuple[float, float]] = []
+        sublist: list[Cell]
+        for sublist in self.data:
+            item: Cell
+            for item in sublist:
                 if item.lat is not None and item.lon is not None:
                     flat_list.append((item.lat, item.lon))
-        self.bounds = get_bounds(flat_list)
-
-
-if __name__ == "__main__":
-    area = segment(rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]))
-    cell_map = CellMap(area, 4)
-    cell_map.display()
+        self.bounds: dict[str: list[float]] = get_bounds(flat_list)
