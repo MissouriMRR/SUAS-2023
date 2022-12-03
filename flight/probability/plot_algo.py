@@ -144,6 +144,22 @@ class Searcher:
     """
     Performs a breath-first search looking for paths that stop by all cells
 
+    Attributes
+    ----------
+        compressed: NDArray[int8]
+            the compressed array that is being searched
+        num_valids: int
+            number of valid cells in array (excludes empty cells, for example)
+        a_star: AStarFinder
+            the A* searcher object, used as class variable to avoid overhead of
+            repeated initializations
+        a_star_grid: Grid
+            the A* search grid, used as class variable to avoid overhead of
+            repeated initializations
+        move_list: list[tuple[int, int]]
+            the list of valid moves in the grid ((1, 1) represents moving diagonally,
+            for example)
+ 
     Methods
     -------
     get_num_valids() -> int
@@ -183,7 +199,6 @@ class Searcher:
     def __init__(self, cell_map: CellMap, view_radius: int) -> None:
         self.compressed: NDArray[int8] = Compressor.compress(view_radius, cell_map)
         self.num_valids: int = self.get_num_valids()
-        self.view_radius: int = view_radius
         self.a_star: AStarFinder = AStarFinder()
         self.a_star_grid: Grid = Grid(matrix=self.compressed)
         self.move_list: list[tuple[int, int]] = [
