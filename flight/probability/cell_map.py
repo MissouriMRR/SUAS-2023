@@ -20,7 +20,7 @@ class CellMap:
         the search area
     num_valids : int
         the number of Cells within the bounds,
-    bounds: dict[str: list[float]]
+    bounds: dict[str, list[float]]
         the latitude longitude boundaries of the search area
     """
 
@@ -42,14 +42,14 @@ class CellMap:
         count: int = 0
         i: int
         j: int
-        for i in range(len(points)):
-            for j in range(len(points[0])):
+        for i, _ in enumerate(points):
+            for j, _ in enumerate(points[0]):
                 if points[i][j] != "X":
                     count += 1
         return count
 
     def __init_map(
-        self, points: list[list[tuple[float, float] | str]], ODLCs: int
+        self, points: list[list[tuple[float, float] | str]], odlc_count: int
     ) -> list[list[Cell]]:
         """
         This method creates the two-dimensional array filled with Cell
@@ -60,7 +60,7 @@ class CellMap:
         points : list[list[tuple[float, float] | str]]
             A two-dimensional array of latitude and longitude points that defines
             the search area
-        ODLCs : int
+        odlc_count : int
             the number of ODLCs in the search area
 
         Returns
@@ -71,13 +71,13 @@ class CellMap:
         r_list: list[list[Cell]] = []
         i: int
         j: int
-        for i in range(len(points)):
+        for i, _ in enumerate(points):
             row: list[Cell] = []
-            for j in range(len(points[0])):
+            for j, _ in enumerate(points[0]):
                 if points[i][j] != "X":  # ensures it is not the only used string value
                     row.append(
                         Cell(
-                            ODLCs / self.num_valids,
+                            odlc_count / self.num_valids,
                             False,
                             points[i][j][0],  # type: ignore
                             points[i][j][1],  # type: ignore
@@ -98,9 +98,9 @@ class CellMap:
         """
         i: int
         j: int
-        for i in range(len(self.data)):
+        for i, _ in enumerate(self.data):
             row_string: str = ""
-            for j in range(len(self.data[0])):
+            for j, _ in enumerate(self.data[0]):
                 if not self.data[i][j].is_valid:
                     row_string += " "
                 else:
@@ -108,18 +108,18 @@ class CellMap:
             print(row_string)
 
     def __init__(
-        self, points: list[list[tuple[float, float] | str]], ODLCs: int = 1
+        self, points: list[list[tuple[float, float] | str]], odlc_count: int = 1
     ) -> None:
         """
         Parameters
         ----------
         points : list[list[tuple[float, float] | str]]
             a collection of latitude, longitude coordinates to define the map
-        ODLCs : int
+        odlc_count : int
             the number of ODLCs in the flight area
         """
         self.num_valids: int = self.__get_valids(points)
-        self.data: list[list[Cell]] = self.__init_map(points, ODLCs)
+        self.data: list[list[Cell]] = self.__init_map(points, odlc_count)
 
         flat_list: list[tuple[float, float]] = []
         sublist: list[Cell]
@@ -128,4 +128,4 @@ class CellMap:
             for item in sublist:
                 if item.lat is not None and item.lon is not None:
                     flat_list.append((item.lat, item.lon))
-        self.bounds: dict[str : list[float]] = get_bounds(flat_list)
+        self.bounds: dict[str, list[float]] = get_bounds(flat_list)
