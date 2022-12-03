@@ -6,10 +6,13 @@ from math import floor, sqrt
 from bisect import insort
 from pathfinding.finder.a_star import AStarFinder
 from pathfinding.core.grid import Grid, Node
-from numpy import zeros, int8, ndarray
+from numpy import zeros, int8
+from numpy.typing import NDArray
 from cell_map import CellMap
+from cell import Cell
 from helper import AIR_DROP_AREA
 from segmenter import segment, rotate_shape, SUAS_2023_THETA
+
 
 class Compressor:
     """
@@ -22,15 +25,14 @@ class Compressor:
         Returns the number of in-bounds cells
     get_circum_square_r(r: int) -> int
         returns the side length of the square inside the view radius circle
-    __init_compressed_grid(cell_size : int, cell_map : CellMap) -> list[list[int]]:
+    __init_compressed_grid(cell_size : int, cell_map : CellMap) -> NDArray:
         Returns empty compressed grid with correct dimensions
     compress(radius: int, cell_map: CellMap) -> list[list[tuple[bool, int, int]]]
         compresses the given cell_map into larger cells based on the given radius
-    
     """
 
     @staticmethod
-    def analyze_cell(i: int, j: int, s: int, cell_map: CellMap) -> int:
+    def analyze_cell(i: int, j: int, size: int, cell_map: CellMap) -> int:
         """
         Given the compressed index, returns the number of valid locations
         within the cell
@@ -41,6 +43,8 @@ class Compressor:
             the row of the compressed cell
         j : int
             the column of the compressed cell
+        size: int
+            size of the cell
         cell_map : CellMap
             the map being compressed
 
@@ -50,42 +54,42 @@ class Compressor:
             the number of valid cells within the compressed cell
         """
         score: int = 0
-        row_start: int = s * i
-        row_end: int = min((s * (i + 1) - 1), len(cell_map.data) - 1)
-        col_start: int = s * j
-        col_end: int = min((s * (j + 1) - 1), len(cell_map[0]) - 1)
+        row_start: int = size * i
+        row_end: int = min((size * (i + 1) - 1), len(cell_map.data) - 1)
+        col_start: int = size * j
+        col_end: int = min((size * (j + 1) - 1), len(cell_map[0]) - 1)
 
         for row in range(row_start, row_end + 1):
             for col in range(col_start, col_end + 1):
                 try:
                     if cell_map[row][col].is_valid:
                         score += 1
-                except:
+                except IndexError:
                     pass
 
         return score
 
     @staticmethod
-    def get_circum_square_r(r: int) -> int:
+    def get_circum_square_r(radius: int) -> int:
         """
         Given the view radius of the seeker, return the radius of the
         circumscribed square that lies within it
 
         Parameters
         ----------
-        r : int
+        radius : int
             Radius of the circle
 
         Returns
         -------
-        s : int
+        side : int
             side length of the square
         """
 
-        return r# max(floor(sqrt(r/2)), 1)
+        return radius  # max(floor(sqrt(r/2)), 1)
 
     @staticmethod
-    def __init_compressed_grid(cell_size : int, cell_map : CellMap) -> list[list[int]]:
+    def __init_compressed_grid(cell_size: int, cell_map: CellMap) -> NDArray[int8]:
         """
         Returns an empty grid for the compressed map
 
@@ -98,7 +102,7 @@ class Compressor:
 
         Returns
         -------
-        empty_grid : list[list[int]]
+        empty_grid : NDArray
             an empty grid of three points repres
         """
         cols: int = floor(len(cell_map[0]) / cell_size)
@@ -106,7 +110,7 @@ class Compressor:
         return zeros((rows, cols), dtype=int8)
 
     @staticmethod
-    def compress(radius: int, cell_map: CellMap) -> list[list[tuple[bool, int, int]]]:
+    def compress(radius: int, cell_map: CellMap) -> NDArray[int8]:
         """
         Given a view radius, r, compress the binary map of the search area
         into cells with size r' and weight equal to their valid cell area.
@@ -120,17 +124,19 @@ class Compressor:
 
         Returns
         -------
-        compressed_map : list[list[tuple[bool, int, int]]]
+        compressed_map : NDArray[int8]
             A compressed map with cells of the form
             bool -> seen
             int -> value
             int -> dist
         """
-        s: int = Compressor.get_circum_square_r(radius)
-        new_grid: list[list[int]] = Compressor.__init_compressed_grid(s, cell_map)
-        for i in range(len(new_grid)):
-            for j in range(len(new_grid[0])):
-                new_grid[i][j] = Compressor.analyze_cell(i, j, s, cell_map)
+        side_len: int = Compressor.get_circum_square_r(radius)
+        new_grid: NDArray[int8] = Compressor.__init_compressed_grid(side_len, cell_map)
+        i: int
+        j: int
+        for i, _ in enumerate(new_grid):
+            for j, _ in enumerate(new_grid[0]):
+                new_grid[i][j] = Compressor.analyze_cell(i, j, side_len, cell_map)
         return new_grid
 
 
@@ -155,6 +161,7 @@ class Searcher:
     breadth_search(start: tuple[int, int]) -> list[tuple[int, int]]
         returns the shrotest circuit route through all cells.
     """
+
     def get_num_valids(self) -> int:
         """
         Retuns the number of valid compressed cells
@@ -167,19 +174,26 @@ class Searcher:
         num: int = 0
         i: int
         j: int
-        for i in range(len(self.compressed)):
-            for j in range(len(self.compressed[0])):
+        for i, _ in enumerate(self.compressed):
+            for j, _ in enumerate(self.compressed[0]):
                 if self.compressed[i][j] != 0:
                     num += 1
         return num
 
     def __init__(self, cell_map: CellMap, view_radius: int) -> None:
-        self.compressed: list[list[int]] = Compressor.compress(view_radius, cell_map)
-        self.n: int = self.get_num_valids()
+        self.compressed: NDArray[int8] = Compressor.compress(view_radius, cell_map)
+        self.num_valids: int = self.get_num_valids()
         self.view_radius: int = view_radius
         self.a_star: AStarFinder = AStarFinder()
         self.a_star_grid: Grid = Grid(matrix=self.compressed)
-        self.move_list: list[tuple[int, int]] = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1)]
+        self.move_list: list[tuple[int, int]] = [
+            (1, 0),
+            (-1, 0),
+            (0, 1),
+            (0, -1),
+            (1, 1),
+            (-1, -1),
+        ]
 
     def get_valid_moves(self, history: list[tuple[int, int]]) -> list[tuple[int, int]]:
         """
@@ -197,8 +211,8 @@ class Searcher:
             A list of possible moves
         """
         pos: tuple[int, int] = history[-1]
-        hist_set: set = set(history)
-        moves: list = []
+        hist_set: set[tuple[int, int]] = set(history)
+        moves: list[tuple[int, int]] = []
         move: tuple[int, int]
 
         for move in self.move_list:
@@ -226,12 +240,12 @@ class Searcher:
             Whether all coordinates are in the candidates list
         """
 
-        cand_set: set = set(solution)  # O(1) lookup times
+        cand_set: set[tuple[int, int]] = set(solution)  # O(1) lookup times
 
         i: int
         j: int
-        for i in range(len(self.compressed)):
-            for j in range(len(self.compressed[0])):
+        for i, _ in enumerate(self.compressed):
+            for j, _ in enumerate(self.compressed[0]):
                 if self.compressed[i][j] != 0 and (i, j) not in cand_set:
                     return False
         return True
@@ -250,8 +264,8 @@ class Searcher:
         unseen_points : list[tuple[int, int]]
             list of all unseen cells
         """
-        history_set: set = set(history)  # O(1) lookup time
-        return_list: list = []
+        history_set: set[tuple[int, int]] = set(history)  # O(1) lookup time
+        return_list: list[tuple[int, int]] = []
         i: int
         j: int
         for i in range(len(self.compressed)):
@@ -259,8 +273,10 @@ class Searcher:
                 if (i, j) not in history_set:
                     return_list.append((i, j))
         return return_list
- 
-    def find_closest(self, points: list[tuple[int, int]], px: tuple[int, int]) -> tuple[int, int]:
+
+    def find_closest(
+        self, points: list[tuple[int, int]], cur_point: tuple[int, int]
+    ) -> tuple[int, int]:
         """
         Finds the closest point in terms of Euclidean distance
 
@@ -268,7 +284,7 @@ class Searcher:
         ----------
         points : list[tuple[int, int]]
             the points to be pruned
-        px : tuple[int, int]
+        cur_point : tuple[int, int]
             the point the distances are relative to
 
         Returns
@@ -276,19 +292,19 @@ class Searcher:
         closest_point : tuple[int, int]
             The coordinates of the closest point
         """
-        closest: tuple[float, float] = (-1.0, -1.0)
+        closest: tuple[int, int] = (-1, -1)
         closest_dist: float = float("inf")
         point: tuple[int, int]
         for point in points:
-            dist = abs(point[0] - px[0]) + abs(point[1] - px[1])
+            dist = abs(point[0] - cur_point[0]) + abs(point[1] - cur_point[1])
             if dist < closest_dist:
                 closest_dist = dist
                 closest = point
         return closest
 
     def in_corner(
-        self, pos: tuple[int,int], history: list[tuple[int,int]]
-    )->list[tuple[int, int]]:
+        self, pos: tuple[int, int], history: list[tuple[int, int]]
+    ) -> list[tuple[int, int]]:
         """
         function to get the searcher out of a corner to the closest
         undiscovered cell
@@ -306,7 +322,9 @@ class Searcher:
             the path to reach the nearest unexplored cell
         """
 
-        approx_nearest: tuple[int, int] = self.find_closest(self.find_unseens(history), pos)
+        approx_nearest: tuple[int, int] = self.find_closest(
+            self.find_unseens(history), pos
+        )
         start: Node = self.a_star_grid.node(pos[1], pos[0])
         end: Node = self.a_star_grid.node(approx_nearest[1], approx_nearest[0])
         self.a_star_grid.cleanup()
@@ -334,7 +352,7 @@ class Searcher:
         histories: list[list[tuple[int, int]]] = [[start]]
         while len(histories) != 0:
             history: list[tuple[int, int]] = histories.pop(0)
-            if len(history) >= self.n:
+            if len(history) >= self.num_valids:
                 if self.valid_solution(history):
                     return history
 
@@ -347,7 +365,10 @@ class Searcher:
             for move in possible_moves:
                 new_history = list(history)
                 new_history.append(move)
-                insort(histories, new_history, key=lambda x: len(x))
+                insort(histories, new_history, key=len)
+        return [
+            (-1, -1)
+        ]  # mypy was not happy with only the conditional return statement
 
 
 class Decompressor:
@@ -357,18 +378,23 @@ class Decompressor:
 
     Methods
     -------
-    __prep_grid(cell_map: CellMap) -> ndarray
+    __prep_grid(cell_map: CellMap) -> NDArray
         turns the CellMap into a numpy array
     get_valid_point(point: tuple[int, int], cell_map: CellMap, cell_size: int) -> tuple[int, int]
         given coordinates outside the bounded area, find the nearest point inside the area
     __decompress_point(point: tuple[int, int], cell_map: CellMap, cell_size: int) -> tuple[int, int]
         given the coordinates of a compressed point, return the uncompressed coordinates in the
         center of that point
-    decompress_route(route: list[tuple[int, int]], cell_map: CellMap, cell_size: int) -> list[tuple[int, int]]
+    decompress_route(
+        route: list[tuple[int, int]],
+        cell_map: CellMap, cell_size: int
+        ) -> list[tuple[int, int]]
+
         given a compressed path, return the uncompressed path
     """
+
     @staticmethod
-    def __prep_grid(cell_map: CellMap) -> ndarray:
+    def __prep_grid(cell_map: CellMap) -> NDArray[int8]:
         """
         Creates a numpy array of the given CellMap for faster computation
 
@@ -376,13 +402,18 @@ class Decompressor:
         ----------
         cell_map: CellMap
             the CellMap to turn into a numpy array
-        
+
         Returns
         -------
-        numpy_grid: ndarray
+        numpy_grid: NDArray
             the numpy version of the uncompressed CellMap
         """
-        new_grid: ndarray = zeros((len(cell_map.data), len(cell_map[0])))
+        new_grid: NDArray[int8] = zeros(
+            (len(cell_map.data), len(cell_map[0])), dtype=int8
+        )
+        i: int
+        j: int
+
         for i in range(len(cell_map.data)):
             for j in range(len(cell_map[0])):
                 if cell_map[i][j].is_valid:
@@ -390,7 +421,9 @@ class Decompressor:
         return new_grid
 
     @staticmethod
-    def get_valid_point(point: tuple[int, int], cell_map: CellMap, cell_size: int) -> tuple[int, int]:
+    def get_valid_point(
+        point: tuple[int, int], cell_map: CellMap, cell_size: int
+    ) -> tuple[int, int]:
         """
         given coordinates outside the bounded area, find the nearest point inside the area
 
@@ -409,25 +442,29 @@ class Decompressor:
             the nearest point within the bounded area
         """
         cell_map.display()
-        point: tuple[int, int] = (point[0] * cell_size, point[1] * cell_size)
+        point = (point[0] * cell_size, point[1] * cell_size)
         middle: int = cell_size // 2
         closest: float = float("inf")
         closest_point: tuple[int, int] = (point[0] + middle, point[1] + middle)
 
+        i: int
+        j: int
         for i in range(cell_size):
             for j in range(cell_size):
                 try:
                     if cell_map[point[0] + i][point[1] + j].is_valid:
-                        dist = sqrt((middle - i) ** 2 + (middle - j) ** 2)
+                        dist: float = sqrt((middle - i) ** 2 + (middle - j) ** 2)
                         if dist < closest:
                             closest = dist
                             closest_point = (point[0] + i, point[1] + j)
-                except:
+                except IndexError:
                     pass
         return closest_point
 
     @staticmethod
-    def __decompress_point(point: tuple[int, int], cell_map: CellMap, cell_size: int) -> tuple[int, int]:
+    def __decompress_point(
+        point: tuple[int, int], cell_map: CellMap, cell_size: int
+    ) -> tuple[int, int]:
         """
         Given the coordinates of a compressed cell, return the uncompressed point directly
         in its middle
@@ -440,7 +477,7 @@ class Decompressor:
             the map being searched
         cell_size: int
             the size of an compressed point relative to an uncompressed one
-        
+
         Returns
         -------
         uncompressed_point: tuple[int, int]
@@ -451,11 +488,12 @@ class Decompressor:
 
         if cell_map[new_y][new_x].is_valid:
             return (new_y, new_x)
-        else:
-            return Decompressor.get_valid_point(point, cell_map, cell_size)
+        return Decompressor.get_valid_point(point, cell_map, cell_size)
 
     @staticmethod
-    def decompress_route(route: list[tuple[int, int]], cell_map: CellMap, cell_size: int) -> list[tuple[int, int]]:
+    def decompress_route(
+        route: list[tuple[int, int]], cell_map: CellMap, cell_size: int
+    ) -> list[tuple[int, int]]:
         """
         Takes the path generated using the compressed map and decompresses it
         to the original resolution of the CellMap.
@@ -474,43 +512,51 @@ class Decompressor:
         uncompressed_route : list[tuple[int, int]]
             the uncompressed route
         """
-        prepped_grid: ndarray = Decompressor.__prep_grid(cell_map)
+        prepped_grid: NDArray[int8] = Decompressor.__prep_grid(cell_map)
         search_grid: Grid = Grid(matrix=prepped_grid)
         finder: AStarFinder = AStarFinder()
 
-    
-        for i in range(len(route)):
+        for i, _ in enumerate(route):
             route[i] = Decompressor.__decompress_point(route[i], cell_map, cell_size)
-        new_path = []
+        new_path: list[tuple[int, int]] = []
         for i in range(len(route) - 1):
             search_grid.cleanup()
-            A: Node = search_grid.node(route[i][1], route[i][0])
-            B: Node = search_grid.node(route[i + 1][1], route[i + 1][0])
-            A_to_B: list[tuple[int, int]]
-            A_to_B, _ = finder.find_path(A, B, search_grid)
+            start: Node = search_grid.node(route[i][1], route[i][0])
+            end: Node = search_grid.node(route[i + 1][1], route[i + 1][0])
+            path: list[tuple[int, int]]
+            path, _ = finder.find_path(start, end, search_grid)
 
             if i == len(route) - 2:
-                new_path += A_to_B[:-1]
+                new_path += path[:-1]
             else:
-                new_path += A_to_B
+                new_path += path
 
         return new_path
 
 
-def get_plot():
+def get_plot() -> list[tuple[float | None, float | None]]:
     """
     Gets the coordinates list for SUAS 2023
+
+    Returns
+    -------
+    list[tuple[int, int]]
     """
-    area = segment(rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]), 0.000025)
+    area: list[list[tuple[float, float] | str]] = segment(
+        rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]), 0.000025
+    )
 
-    cell_map = CellMap(area, 5)
+    cell_map: CellMap = CellMap(area, 5)
     cell_map.display()
-    s = Searcher(cell_map, 8)
+    searcher: Searcher = Searcher(cell_map, 8)
 
-    path = Decompressor.decompress_route(s.breadth_search((0, 0)), cell_map, 8)
-    coordinate_list = []
+    path: list[tuple[int, int]] = Decompressor.decompress_route(
+        searcher.breadth_search((0, 0)), cell_map, 8
+    )
+    coordinate_list: list[tuple[float | None, float | None]] = []
+    point: tuple[int, int]
     for point in path:
-        cell_map_point = cell_map[point[1]][point[0]]
+        cell_map_point: Cell = cell_map[point[1]][point[0]]
         coordinate_list.append((cell_map_point.lat, cell_map_point.lon))
     return coordinate_list
 
