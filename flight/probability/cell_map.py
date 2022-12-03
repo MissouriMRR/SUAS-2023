@@ -4,7 +4,6 @@ Summary
 Defines the CellMap class and has some basic tests at the bottom of the file.
 """
 
-from typing import Any
 from cell import Cell
 from helper import get_bounds, AIR_DROP_AREA
 from segmenter import segment, rotate_shape, SUAS_2023_THETA
@@ -39,10 +38,11 @@ class CellMap:
             the number of valid cells in the cell map
         """
 
-        count = 0
+        count: int = 0
         for i in range(len(points)):
             for j in range(len(points[0])):
-                if points[i][j] != 'X': count += 1
+                if points[i][j] != "X":
+                    count += 1
         return count
 
     def __init_map(self,
@@ -70,13 +70,16 @@ class CellMap:
         for i in range(len(points)):
             row: list[Cell] = []
             for j in range(len(points[0])):
-                if points[i][j] != 'X': #ensures it is not the only used string value
-                    row.append(Cell(
-                                    ODLCs / self.num_valids,
-                                    False,
-                                    points[i][j][0], #type: ignore
-                                    points[i][j][1], #type: ignore
-                                    True))
+                if points[i][j] != "X":  # ensures it is not the only used string value
+                    row.append(
+                        Cell(
+                            ODLCs / self.num_valids,
+                            False,
+                            points[i][j][0],  # type: ignore
+                            points[i][j][1],  # type: ignore
+                            True,
+                        )
+                    )
                 else:
                     row.append(Cell(0, False, None, None, False))
             r_list.append(row)
@@ -98,38 +101,13 @@ class CellMap:
             row_string = ""
             for j in range(len(self.data[0])):
                 if not self.data[i][j].is_valid:
-                    row_string += ' '
+                    row_string += " "
                 elif drone_pos == (i, j):
-                    row_string += 'S'
+                    row_string += "S"
                 else:
-                    row_string += 'X'
+                    row_string += "X"
             print(row_string)
 
-    #TODO: FINISH THIS METHOD!
-    #TODO: Fix the seeker type. Seeker module imports cell_map module, so
-          #create new type with typing?
-    def update_probs(self, pos: tuple[int, int], seeker: Any) -> None:
-        """
-        Given a drone at position pos[0], pos[1], this function updates the probabalities
-        of each cell to reflect that the seeker has observed them.
-
-        Parameters
-        ----------
-        pos : tuple[int, int]
-            the index of the drone
-        seeker : Seeker
-            the seeker object, including its find_prob and other attributes
-        """
-
-        for disp_vec in seeker.view_vecs:
-            try:
-                poi = (pos[0] + disp_vec[0], pos[1] + disp_vec[1])
-                if poi[0] >= 0 and poi[1] >= 0 and poi not in seeker.current_view:
-                    self[poi[0]][poi[1]].probability *= 1 - seeker.find_prob
-                    self[poi[0]][poi[1]].seen = True
-
-            except:
-                pass
 
     def __init__(self, points: list[list[tuple[float, float] | str]], ODLCs: int = 1) -> None:
         """
