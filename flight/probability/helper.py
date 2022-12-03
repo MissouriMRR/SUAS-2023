@@ -45,7 +45,7 @@ def get_bounds(points: list[tuple[float, float]]) -> dict[str, list[float]]:
 
     Returns
     -------
-    bounds: dict[chr, list[float]]
+    bounds: dict[str, list[float]]
         The bounds of the search area
     """
     x_bounds: list[float] = [float("inf"), float("-inf")]
