@@ -7,6 +7,7 @@ Defines the CellMap class and has some basic tests at the bottom of the file.
 from cell import Cell
 from helper import get_bounds
 
+
 class CellMap:
     """
     a two-dimensional array where the row element's are square segments of the
@@ -47,10 +48,9 @@ class CellMap:
                     count += 1
         return count
 
-    def __init_map(self,
-                   points: list[list[tuple[float, float] | str]],
-                   ODLCs: int
-                   ) -> list[list[Cell]]:
+    def __init_map(
+        self, points: list[list[tuple[float, float] | str]], ODLCs: int
+    ) -> list[list[Cell]]:
         """
         This method creates the two-dimensional array filled with Cell
         objects used by the CellMap.
@@ -107,8 +107,9 @@ class CellMap:
                     row_string += "X"
             print(row_string)
 
-
-    def __init__(self, points: list[list[tuple[float, float] | str]], ODLCs: int = 1) -> None:
+    def __init__(
+        self, points: list[list[tuple[float, float] | str]], ODLCs: int = 1
+    ) -> None:
         """
         Parameters
         ----------
@@ -127,4 +128,4 @@ class CellMap:
             for item in sublist:
                 if item.lat is not None and item.lon is not None:
                     flat_list.append((item.lat, item.lon))
-        self.bounds: dict[str: list[float]] = get_bounds(flat_list)
+        self.bounds: dict[str : list[float]] = get_bounds(flat_list)
