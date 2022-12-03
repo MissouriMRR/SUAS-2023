@@ -11,7 +11,7 @@ from segmenter import segment, SUAS_2023_THETA, rotate_shape
 from helper import AIR_DROP_AREA
 from plot_algo import get_plot
 
-CELL_COLOR: tuple[float, float, float] = (246/256, 229/256, 37/256)
+CELL_COLOR: tuple[float, float, float] = (246 / 256, 229 / 256, 37 / 256)
 
 
 def draw_cell(pos: tuple[float | None, float | None]) -> None:
@@ -24,10 +24,15 @@ def draw_cell(pos: tuple[float | None, float | None]) -> None:
         the position of the cell
     """
     plt.gca().add_patch(
-        patches.Rectangle((pos[0], pos[1]), 0.00015, 0.00015, fill=True, color=CELL_COLOR)
+        patches.Rectangle(
+            (pos[0], pos[1]), 0.00015, 0.00015, fill=True, color=CELL_COLOR
+        )
     )
 
-def plot_path(prob_map: CellMap, path: list[tuple[float, float]] = deepcopy([])) -> None:
+
+def plot_path(
+    prob_map: CellMap, path: list[tuple[float, float]] = deepcopy([])
+) -> None:
     """
     creates a visual of the current probability map.
 
@@ -64,8 +69,13 @@ def plot_path(prob_map: CellMap, path: list[tuple[float, float]] = deepcopy([]))
 
     plt.show()
 
+
 if __name__ == "__main__":
     plot_path(
-        CellMap(segment(rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]), 0.000025)),
+        CellMap(
+            segment(
+                rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]), 0.000025
+            )
+        ),
         get_plot(),
     )
