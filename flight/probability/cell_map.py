@@ -22,7 +22,7 @@ class CellMap:
         the number of Cells within the bounds,
     bounds: dict[str, list[float]]
         the latitude longitude boundaries of the search area
-    
+
     Methods
     -------
     __get_valids(points: list[list[tuple[float, float] | str]]) -> int
