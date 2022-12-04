@@ -118,6 +118,8 @@ class CellMap:
 
     def __init__(self, points: list[list[tuple[float, float] | str]], odlc_count: int = 1) -> None:
         """
+        initializes the object with given parameters
+
         Parameters
         ----------
         points : list[list[tuple[float, float] | str]]

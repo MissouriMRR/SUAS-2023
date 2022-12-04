@@ -197,6 +197,16 @@ class Searcher:
         return num
 
     def __init__(self, cell_map: CellMap, view_radius: int) -> None:
+        """
+        Initializes the object
+
+        Parameters
+        ----------
+        cell_map: CellMap
+            the cell map being searched
+        view_radius: int
+            how many cells away the searcher can see
+        """
         self.compressed: NDArray[int8] = Compressor.compress(view_radius, cell_map)
         self.num_valids: int = self.get_num_valids()
         self.a_star: AStarFinder = AStarFinder()
