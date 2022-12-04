@@ -21,6 +21,15 @@ class CellMap:
         the number of Cells within the bounds,
     bounds: dict[str, list[float]]
         the latitude longitude boundaries of the search area
+    
+    Methods
+    -------
+    __get_valids(points: list[list[tuple[float, float] | str]]) -> int
+        returns the number of valid points in the points passed to the CellMap
+    __init_map(points: list[list[tuple[float, float] | str]], odlc_count: int)-> list[list[Cell]]
+        creates two-dimensional list of Cells
+    display()
+        prints state of CellMap into standard output
     """
 
     def __get_valids(self, points: list[list[tuple[float, float] | str]]) -> int:
