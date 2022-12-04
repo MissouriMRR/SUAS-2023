@@ -5,50 +5,58 @@ Defines the public 'segment' function that allows a polygon to be divided
 into uniform squares
 """
 from math import ceil, sin, cos, asin
-from typing import List, Tuple
 from helper import get_bounds, AIR_DROP_AREA, calculate_dist
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
-CELL_SIZE = 0.00015
-c = calculate_dist(AIR_DROP_AREA[0], AIR_DROP_AREA[1])
-b = AIR_DROP_AREA[1][0] - AIR_DROP_AREA[0][0]
-SUAS_2023_THETA = asin(b / c)
+CELL_SIZE: float = 0.00015
+c: float = calculate_dist(AIR_DROP_AREA[0], AIR_DROP_AREA[1])
+b: float = AIR_DROP_AREA[1][0] - AIR_DROP_AREA[0][0]
+SUAS_2023_THETA: float = asin(b / c)
 
 
 def segment(
-    polygon: List[Tuple[float, float]], cell_size: float = CELL_SIZE, rotate: float = 0
-) -> List[List[Tuple[float, float] | str]]:
+    polygon: list[tuple[float, float]],
+    cell_size: float = CELL_SIZE,
+    rotated: float = 0,
+    p_of_r: tuple[float, float] = (-1.0, -1.0),
+) -> list[list[tuple[float, float] | str]]:
     """
     divides the ODLC search area into a probability map
 
     Parameters
     ----------
-    polygon: List[Tuple[float, float]]
+    polygon: list[tuple[float, float]]
         A list of points defining the polygon
     cell_size : float
         The size (in degrees of latitude) of each segment
+    rotated: float
+        the radians the shape has been rotated
+    p_of_r: tuple[float, float]
+        the point the shape was rotated about
 
     Returns
     -------
-    segmented_area : List[List[Tuple[float, float], | str]]
+    segmented_area : list[list[tuple[float, float], | str]]
         The new area divided into equally sized squares, with some
         squares simply being 'X' to represent that they are out of
         bounds
     """
-    CENTER_OFFSET = cell_size / 2
-    prob_map_points = []
-    bounds = get_bounds(polygon)
-    within_check = Polygon(polygon)
+    center_offset: float = cell_size / 2
+    prob_map_points: list[list[tuple[float, float] | str]] = []
+    bounds: dict[str, list[float]] = get_bounds(polygon)
+    within_check: Polygon = Polygon(polygon)
+    i: int
+    j: int
     for i in range(ceil((bounds["x"][1] - bounds["x"][0]) / cell_size)):
-        row: List[Tuple[float, float] | str] = []
+        row: list[tuple[float, float] | str] = []
         for j in range(ceil((bounds["y"][1] - bounds["y"][0]) / cell_size)):
             # check if point is within polygon
-            x_val = bounds["x"][0] + CENTER_OFFSET + (i * cell_size)
-            y_val = bounds["y"][0] + CENTER_OFFSET + (j * cell_size)
-            geo_point = Point(x_val, y_val)
+            x_val: float = bounds["x"][0] + center_offset + (i * cell_size)
+            y_val: float = bounds["y"][0] + center_offset + (j * cell_size)
+            geo_point: Point = Point(x_val, y_val)
             if within_check.contains(geo_point):
-                new_point = rotate_point((x_val, y_val), -SUAS_2023_THETA, AIR_DROP_AREA[0])
+                new_point = rotate_point((x_val, y_val), -rotated, p_of_r)
                 row.append((new_point[0], new_point[1]))
             else:
                 row.append("X")
@@ -58,49 +66,52 @@ def segment(
 
 
 def rotate_point(
-    point: Tuple[float, float], theta: float, p_of_r: Tuple[float, float]
-) -> Tuple[float, float]:
+    point: tuple[float, float], theta: float, p_of_r: tuple[float, float]
+) -> tuple[float, float]:
     """
     Rotates a given x,y point theta degrees around any arbitrary point.
 
     Parameters
     ----------
-    point: Tuple[float, float]
+    point: tuple[float, float]
         the point to be rotated
     theta: float
         the angle to be rotated by
-    p_of_r: Tuple[float, float]
+    p_of_r: tuple[float, float]
         the point of rotation
 
     Returns
     -------
-    rotated_point : Tuple[float, float]
+    rotated_point : tuple[float, float]
         the coordinates of the rotated point
     """
-    x0, xc = point[0], p_of_r[0]
-    y0, yc = point[1], p_of_r[1]
+    x_init: float = point[0]
+    x_rot: float = p_of_r[0]
+    y_init: float = point[1]
+    y_rot: float = p_of_r[1]
     return (
-        ((x0 - xc) * cos(theta) - (y0 - yc) * sin(theta) + xc),
-        ((x0 - xc) * sin(theta) + (y0 - yc) * cos(theta) + yc),
+        ((x_init - x_rot) * cos(theta) - (y_init - y_rot) * sin(theta) + x_rot),
+        ((x_init - x_rot) * sin(theta) + (y_init - y_rot) * cos(theta) + y_rot),
     )
 
 
 def rotate_shape(
-    shape: List[Tuple[float, float]], theta: float, p_of_r: Tuple[float, float]
-) -> List[Tuple[float, float]]:
+    shape: list[tuple[float, float]], theta: float, p_of_r: tuple[float, float]
+) -> list[tuple[float, float]]:
     """
     Rotates an entire collection of points
 
     Parameters
     ----------
-    shape: List[Tuple[float, float]]
+    shape: list[tuple[float, float]]
         the collection of points
     theta : float
         the angle to rotate by
-    p_of_r : Tuple[int, int]
+    p_of_r : tuple[float, float]
         point of rotation
     """
-    new_shape = []
+    new_shape: list[tuple[float, float]] = []
+    point: tuple[float, float]
     for point in shape:
         new_shape.append(rotate_point(point, theta, p_of_r))
     return new_shape
