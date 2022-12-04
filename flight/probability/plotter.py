@@ -74,7 +74,10 @@ if __name__ == "__main__":
     plot_path(
         CellMap(
             segment(
-                rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]), 0.000025
+                rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]),
+                0.000025,
+                SUAS_2023_THETA,
+                AIR_DROP_AREA[0]
             )
         ),
         get_plot(),
