@@ -7,7 +7,6 @@ Defines the CellMap class and has some basic tests at the bottom of the file.
 from cell import Cell
 from helper import get_bounds
 
-
 class CellMap:
     """
     a two-dimensional array where the row element's are square segments of the
