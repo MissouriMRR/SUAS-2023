@@ -159,7 +159,7 @@ class Searcher:
         move_list: list[tuple[int, int]]
             the list of valid moves in the grid ((1, 1) represents moving diagonally,
             for example)
- 
+
     Methods
     -------
     get_num_valids() -> int
@@ -558,7 +558,10 @@ def get_plot() -> list[tuple[float, float]]:
     list[tuple[float, float]]
     """
     area: list[list[tuple[float, float] | str]] = segment(
-        rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]), 0.000025
+        rotate_shape(AIR_DROP_AREA, SUAS_2023_THETA, AIR_DROP_AREA[0]),
+        0.000025,
+        SUAS_2023_THETA,
+        AIR_DROP_AREA[0],
     )
 
     cell_map: CellMap = CellMap(area, 5)
