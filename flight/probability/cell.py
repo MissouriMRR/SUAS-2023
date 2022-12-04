@@ -19,7 +19,7 @@ class Cell:
         ODLCs / num_cells_in_grid.
     seen : bool
         Represents whether the drone has seen the cell. Initially False.
-    x : float 
+    x : float
         The cell's latitude
     y : float
         The Cell's longitude

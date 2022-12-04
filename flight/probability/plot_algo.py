@@ -337,9 +337,7 @@ class Searcher:
             the path to reach the nearest unexplored cell
         """
 
-        approx_nearest: tuple[int, int] = self.find_closest(
-            self.find_unseens(history), pos
-        )
+        approx_nearest: tuple[int, int] = self.find_closest(self.find_unseens(history), pos)
         start: Node = self.a_star_grid.node(pos[1], pos[0])
         end: Node = self.a_star_grid.node(approx_nearest[1], approx_nearest[0])
         self.a_star_grid.cleanup()
@@ -381,9 +379,7 @@ class Searcher:
                 new_history = list(history)
                 new_history.append(move)
                 insort(histories, new_history, key=len)
-        return [
-            (-1, -1)
-        ]  # mypy was not happy with only the conditional return statement
+        return [(-1, -1)]  # mypy was not happy with only the conditional return statement
 
 
 class Decompressor:
@@ -423,9 +419,7 @@ class Decompressor:
         numpy_grid: NDArray
             the numpy version of the uncompressed CellMap
         """
-        new_grid: NDArray[int8] = zeros(
-            (len(cell_map.data), len(cell_map[0])), dtype=int8
-        )
+        new_grid: NDArray[int8] = zeros((len(cell_map.data), len(cell_map[0])), dtype=int8)
         i: int
         j: int
 
