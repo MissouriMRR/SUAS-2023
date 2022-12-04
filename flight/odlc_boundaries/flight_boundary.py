@@ -36,7 +36,8 @@ if __name__ == "__main__":
 
     # Find the closest point
     (closest_point, shrunk_boundary) = point_finder.find_closest_point(
-        odlc, boundary_points, 
+        odlc,
+        boundary_points,
     )
 
     # Plot data
