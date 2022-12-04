@@ -109,6 +109,11 @@ def rotate_shape(
         the angle to rotate by
     p_of_r : tuple[float, float]
         point of rotation
+
+    Returns
+    -------
+    rotated_shape: list[tuple[float, float]]
+        the coordinates of the rotated shape
     """
     new_shape: list[tuple[float, float]] = []
     point: tuple[float, float]
