@@ -5,7 +5,7 @@ are used to convey information between flight and vision processes.
 
 from enum import Enum
 
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -33,7 +33,7 @@ class BoundingBox:
         coordinate consists of a tuple 2 integers.
     obj_type : ObjectType
         Enumeration that denotes what type of object the BoundingBox represents.
-    attributes : Optional[dict[str, Any]]
+    attributes : dict[str, Any] | None
         Any additional attributes to convey about the object in the BoundingBox.
     """
 
@@ -41,7 +41,7 @@ class BoundingBox:
         self,
         vertices: tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]],
         obj_type: ObjectType,
-        attributes: Optional[dict[str, Any]] = None,
+        attributes: dict[str, Any] | None = None,
     ) -> None:
         self._vertices: tuple[
             tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]
