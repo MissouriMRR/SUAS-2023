@@ -49,6 +49,18 @@ class BoundingBox:
         self._obj_type: ObjectType = obj_type
         self._attributes: dict[str, Any] = attributes if attributes is not None else {}
 
+    def __repr__(self) -> str:
+        """
+        Returns a string representation of the BoundingBox
+        that contains its id, object type, and vertices.
+
+        Returns
+        -------
+        str
+            the string representation of the BoundingBox object
+        """
+        return f"BoundingBox[{id(self)}, {self.obj_type}]: {str(self._vertices)}"
+
     @property
     def vertices(self) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]:
         """
@@ -123,17 +135,34 @@ class BoundingBox:
         """
         self._attributes = att
 
-    def __repr__(self) -> str:
+    def set_attribute(self, attribute_name: str, attribute: Any) -> None:
         """
-        Returns a string representation of the BoundingBox
-        that contains its id, object type, and vertices.
+        Sets an attribute of the BoundingBox.
+
+        Parameters
+        ----------
+        attribute_name : str
+            the name of the attribute
+        attribute : Any
+            the value to set the attribute to, which can be of any type
+        """
+        self.attributes[attribute_name] = attribute
+
+    def get_attribute(self, attribute_name: str) -> Any:
+        """
+        Gets an attribute of the BoundingBox.
+
+        Parameters
+        ----------
+        attribute_name : str
+            the name of the attribute
 
         Returns
         -------
-        str
-            The string representation of the BoundingBox object.
+        attribute : Any
+            the value of the attribute, which can be of any type
         """
-        return f"BoundingBox[{id(self)}, {self.obj_type}]: {str(self._vertices)}"
+        return self.attributes[attribute_name]
 
     def get_x_vals(self) -> list[int]:
         """
