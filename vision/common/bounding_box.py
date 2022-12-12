@@ -5,7 +5,7 @@ are used to convey information between flight and vision processes.
 
 from enum import Enum
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 
@@ -27,50 +27,50 @@ class BoundingBox:
 
     Parameters
     ----------
-    vertices : Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]
+    vertices : tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]
         The main structure of the BoundingBox. Denotes the 4 coordinates
         representing a box in an image. Vertices is a tuple of 4 coordinates. Each
         coordinate consists of a tuple 2 integers.
     obj_type : ObjectType
         Enumeration that denotes what type of object the BoundingBox represents.
-    attributes : Optional[Dict[str, Any]]
+    attributes : Optional[dict[str, Any]]
         Any additional attributes to convey about the object in the BoundingBox.
     """
 
     def __init__(
         self,
-        vertices: Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]],
+        vertices: tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]],
         obj_type: ObjectType,
-        attributes: Optional[Dict[str, Any]] = None,
+        attributes: Optional[dict[str, Any]] = None,
     ) -> None:
-        self._vertices: Tuple[
-            Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]
+        self._vertices: tuple[
+            tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]
         ] = vertices
         self._obj_type: ObjectType = obj_type
-        self._attributes: Dict[str, Any] = attributes if attributes is not None else {}
+        self._attributes: dict[str, Any] = attributes if attributes is not None else {}
 
     @property
-    def vertices(self) -> Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]:
+    def vertices(self) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]:
         """
         Getter for _vertices. Gets the 4 vertices that make up the BoundingBox.
 
         Returns
         -------
-        _vertices : Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]
+        _vertices : tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]
             The 4 coordinates of the BoundingBox.
         """
         return self._vertices
 
     @vertices.setter
     def vertices(
-        self, verts: Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]
+        self, verts: tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]
     ) -> None:
         """
         Setter for _vertices. Sets the 4 vertices that make up the BoundingBox.
 
         Parameters
         ----------
-        vert : Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]]
+        vert : tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]
             The 4 coordinates to assign to the BoundingBox.
         """
         self._vertices = verts
@@ -100,25 +100,25 @@ class BoundingBox:
         self._obj_type = o_type
 
     @property
-    def attributes(self) -> Dict[str, Any]:
+    def attributes(self) -> dict[str, Any]:
         """
         Getter for _attributes. Gets the additional attributes of the BoundingBox.
 
         Returns
         -------
-        _attributes : Dict[str, Any]
+        _attributes : dict[str, Any]
             Any additional attributes of the BoundingBox.
         """
         return self._attributes
 
     @attributes.setter
-    def attributes(self, att: Dict[str, Any]) -> None:
+    def attributes(self, att: dict[str, Any]) -> None:
         """
         Setter for _attributes. Sets the value of the BoundingBox's additional attributes.
 
         Parameters
         ----------
-        att : Dict[str, Any]
+        att : dict[str, Any]
             The additional attributes to assign to the BoundingBox.
         """
         self._attributes = att
@@ -135,55 +135,55 @@ class BoundingBox:
         """
         return f"BoundingBox[{id(self)}, {self.obj_type}]: {str(self._vertices)}"
 
-    def get_x_vals(self) -> List[int]:
+    def get_x_vals(self) -> list[int]:
         """
         Gets the x values of the 4 coordinates.
 
         Returns
         -------
-        x_vals : List[int]
+        x_vals : list[int]
             The 4 x values of the vertices.
         """
-        x_vals: List[int] = [vert[0] for vert in self._vertices]
+        x_vals: list[int] = [vert[0] for vert in self._vertices]
         return x_vals
 
-    def get_y_vals(self) -> List[int]:
+    def get_y_vals(self) -> list[int]:
         """
         Gets the y values of the 4 coordinates.
 
         Returns
         -------
-        y_vals : List[int]
+        y_vals : list[int]
             The 4 y values of the vertices.
         """
-        y_vals: List[int] = [vert[1] for vert in self._vertices]
+        y_vals: list[int] = [vert[1] for vert in self._vertices]
         return y_vals
 
-    def get_x_extremes(self) -> Tuple[int, int]:
+    def get_x_extremes(self) -> tuple[int, int]:
         """
         Gets the minimum and maximum x values of the BoundingBox
 
         Returns
         -------
-        min_x, max_x : Tuple[int, int]
+        min_x, max_x : tuple[int, int]
             The minimum and maximum x values.
         """
-        x_vals: List[int] = self.get_x_vals()
+        x_vals: list[int] = self.get_x_vals()
         min_x: int = np.amin(x_vals)
         max_x: int = np.amax(x_vals)
 
         return min_x, max_x
 
-    def get_y_extremes(self) -> Tuple[int, int]:
+    def get_y_extremes(self) -> tuple[int, int]:
         """
         Gets the minimum and maximum y values of the BoundingBox
 
         Returns
         -------
-        min_y, max_y : Tuple[int, int]
+        min_y, max_y : tuple[int, int]
             The minimum and maximum y values.
         """
-        y_vals: List[int] = self.get_y_vals()
+        y_vals: list[int] = self.get_y_vals()
         min_y: int = np.amin(y_vals)
         max_y: int = np.amax(y_vals)
 
