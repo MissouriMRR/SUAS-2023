@@ -218,6 +218,39 @@ class BoundingBox:
 
         return min_y, max_y
 
+    def get_x_avg(self) -> int:
+        """
+        Gets the average x coordinate of the bounding box.
+
+        Returns
+        -------
+        average : int
+            the average of the 4 coordinates' x-values
+        """
+        return int(np.mean(self.get_x_vals()))
+
+    def get_y_avg(self) -> int:
+        """
+        Gets the average y coordinate of the bounding box.
+
+        Returns
+        -------
+        average : int
+            the average of the 4 coordinates' y-values
+        """
+        return int(np.mean(self.get_y_vals()))
+
+    def get_center_coord(self) -> tuple[int, int]:
+        """
+        Gets the coordinate of the center of the BoundingBox
+
+        Returns
+        -------
+        center_pt : tuple[int, int]
+            the coordinate point at the center of the bounding box
+        """
+        return (self.get_x_avg(), self.get_y_avg())
+
     def get_rotation_angle(self) -> float:
         """
         Calculates the angle of rotation of the BoundingBox
