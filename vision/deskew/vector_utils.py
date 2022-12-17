@@ -4,7 +4,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 from nptyping import Float64
 
-from vision.constants import Point, Vector, SENSOR_WIDTH, SENSOR_HEIGHT, ROTATION_OFFSET
+from vision.common.constants import Point, Vector, SENSOR_WIDTH, SENSOR_HEIGHT, ROTATION_OFFSET
 
 
 # Vector pointing toward the +X axis, represents the camera's forward direction when the rotation
