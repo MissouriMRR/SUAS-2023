@@ -275,5 +275,51 @@ class BoundingBox:
         return angle
 
 
+# Driver for testing functionality of BoundingBox object
 if __name__ == "__main__":
-    pass
+    coordinates: tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]] = (
+        (0, 0),
+        (10, 0),
+        (10, 10),
+        (0, 10),
+    )
+    object_type: ObjectType = ObjectType.STD_OBJECT
+    object_attributes: dict[str, Any] = {"shape": "triangle", "latitude": 89.9}
+
+    # constructor
+    object_bounds = BoundingBox(
+        vertices=coordinates, obj_type=object_type, attributes=object_attributes
+    )
+
+    # repr
+    print(object_bounds)
+
+    # vertices
+    print("Vertices:", object_bounds.vertices)
+
+    # object type
+    print("Object Type:", object_bounds.obj_type)
+
+    # various ways to interact with attributes
+    print("Attributes:", object_bounds.attributes)
+    print("Shape Attribute:", object_bounds.attributes["shape"])
+
+    object_bounds.set_attribute("longitude", 120.3)
+    print("Longitude Attribute:", object_bounds.get_attribute("longitude"))
+
+    object_bounds.attributes["altitude"] = 50
+    print("Altitude Attribute:", object_bounds.attributes["altitude"])
+
+    # values, extremes, average
+    print()
+    print("X values:", object_bounds.get_x_vals())
+    print("Y values:", object_bounds.get_y_vals())
+    print("X extremes:", object_bounds.get_x_extremes())
+    print("Y extremes:", object_bounds.get_y_extremes())
+    print("X average:", object_bounds.get_x_avg())
+    print("Y average:", object_bounds.get_y_avg())
+
+    # center and rotation
+    print()
+    print("Center coordinate:", object_bounds.get_center_coord())
+    print("Rotation angle:", object_bounds.get_rotation_angle())
