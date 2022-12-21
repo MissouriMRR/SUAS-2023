@@ -4,10 +4,44 @@ are used to convey information between flight and vision processes.
 """
 
 from enum import Enum
-
-from typing import Any
+from typing import Any, TypeAlias
 
 import numpy as np
+
+# A set of 4 coordinates that distinguish a region of an image.
+# The order of the coordinates is (top-left, top-right, bottom-right, bottom-left).
+Vertices: TypeAlias = tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]
+
+
+def tlwh_to_vertices(tl_x: int, tl_y: int, width: int, height: int) -> Vertices:
+    """
+    Gets the vertices of a bounding box from a coordinate, width, and height.
+
+    Parameters
+    ----------
+    tl_x : int
+        the top-left x coordinate of the bounding box
+    tl_y : int
+        the top-left y coordinate of the bounding box
+    width : int
+        the width of the bounding box
+    height : int
+        the height of the bounding box
+
+    Returns
+    -------
+    vertices : Vertices
+        Denotes the 4 coordinates representing a box in an image.
+        Vertices is a tuple of 4 coordinates.
+        Each coordinate consists of a tuple 2 integers.
+        Order is (top-left, top-right, bottom-right, bottom-left).
+    """
+    tl_coord: tuple[int, int] = (tl_x, tl_y)  # top left
+    tr_coord: tuple[int, int] = (tl_x + width, tl_y)  # top right
+    br_coord: tuple[int, int] = (tl_x + width, tl_y + height)  # bottom right
+    bl_coord: tuple[int, int] = (tl_x, tl_y + height)  # bottom left
+
+    return (tl_coord, tr_coord, br_coord, bl_coord)
 
 
 class ObjectType(Enum):
@@ -27,7 +61,7 @@ class BoundingBox:
 
     Parameters
     ----------
-    vertices : tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]
+    vertices : Vertices
         The main structure of the BoundingBox. Denotes the 4 coordinates
         representing a box in an image. Vertices is a tuple of 4 coordinates. Each
         coordinate consists of a tuple 2 integers.
@@ -39,7 +73,7 @@ class BoundingBox:
 
     def __init__(
         self,
-        vertices: tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]],
+        vertices: Vertices,
         obj_type: ObjectType,
         attributes: dict[str, Any] | None = None,
     ) -> None:
@@ -62,27 +96,25 @@ class BoundingBox:
         return f"BoundingBox[{id(self)}, {self.obj_type}]: {str(self._vertices)}"
 
     @property
-    def vertices(self) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]:
+    def vertices(self) -> Vertices:
         """
         Getter for _vertices. Gets the 4 vertices that make up the BoundingBox.
 
         Returns
         -------
-        _vertices : tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]
+        _vertices : Vertices
             The 4 coordinates of the BoundingBox.
         """
         return self._vertices
 
     @vertices.setter
-    def vertices(
-        self, verts: tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]
-    ) -> None:
+    def vertices(self, verts: Vertices) -> None:
         """
         Setter for _vertices. Sets the 4 vertices that make up the BoundingBox.
 
         Parameters
         ----------
-        vert : tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]]
+        vert : Vertices
             The 4 coordinates to assign to the BoundingBox.
         """
         self._vertices = verts
@@ -274,10 +306,78 @@ class BoundingBox:
 
         return angle
 
+    def get_width(self) -> int:
+        """
+        Get the width of the BoundingBox.
+
+        Returns
+        -------
+        width: int
+            the width of the BoundingBox based on max and min x values.
+        """
+        min_x: int
+        max_x: int
+        min_x, max_x = self.get_x_extremes()
+        width: int = max_x - min_x
+
+        return width
+
+    def get_height(self) -> int:
+        """
+        Get the height of the BoundingBox.
+
+        Returns
+        -------
+        height: int
+            the height of the BoundingBox based on max and min x values.
+        """
+        min_y: int
+        max_y: int
+        min_y, max_y = self.get_y_extremes()
+        height: int = max_y - min_y
+
+        return height
+
+    def get_width_height(self) -> tuple[int, int]:
+        """
+        Gets the width and height of the BoundingBox.
+
+        Returns
+        -------
+        (width, height) : tuple[int, int]
+            the width and height of the bounding box
+        """
+        return self.get_width(), self.get_height()
+
+    def get_tlwh(self) -> tuple[int, int, int, int]:
+        """
+        Gets the BoundingBox formatted with top left coordinate, width, and height.
+
+        Returns
+        -------
+        tlwh_coord : tuple[int, int, int, int]
+            the bounding box in top left, width, height format
+
+            tl_x : int
+                the top-left x coordinate of the bounding box
+            tl_y : int
+                the top-left y coordinate of the bounding box
+            width : int
+                the width of the bounding box
+            height : int
+                the height of the bounding box
+        """
+        tl_x: int = self.vertices[0][0]
+        tl_y: int = self.vertices[0][1]
+        width: int = self.get_width()
+        height: int = self.get_height()
+
+        return tl_x, tl_y, width, height
+
 
 # Driver for testing functionality of BoundingBox object
 if __name__ == "__main__":
-    coordinates: tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]] = (
+    coordinates: Vertices = (
         (0, 0),
         (10, 0),
         (10, 10),
