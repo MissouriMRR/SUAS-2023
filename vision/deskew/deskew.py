@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 
 from vision.deskew.vector_utils import pixel_intersect
-from vision.constants import Image, Corners
+from vision.common.constants import Image, Corners
 
 
 def perspective_matrix(
