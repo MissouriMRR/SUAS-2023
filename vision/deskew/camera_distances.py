@@ -1,7 +1,7 @@
 """Functions for calculating locations of objects in an image"""
 
 import numpy as np
-from vision.constants import Point
+from vision.common.constants import Point
 
 from vision.deskew import coordinate_lengths
 from vision.deskew import vector_utils
