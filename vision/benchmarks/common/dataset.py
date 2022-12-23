@@ -4,7 +4,7 @@ Dataset classes.
 
 from typing import Any
 
-from vision.constants import Image
+from vision.common.constants import Image
 
 
 class BenchImage:
