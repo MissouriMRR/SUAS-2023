@@ -31,3 +31,29 @@ class BenchImage:
 
         # result of timing run, in seconds
         self.timing_results: list[float]
+
+
+class BenchDataset:
+    """
+    A set of BenchImages to run a benchmark on.
+
+    Parameters
+    ----------
+    images : list[BenchImage]
+        a set of images to run a benchmark on
+
+        image : BenchImage
+            an image for running a benchmark on
+    headings : list[str]
+        the headings for benchmark results
+
+        heading : str
+            a heading for the resulting csv file
+    set_name : str
+        the name of the dataset
+    """
+
+    def __init__(self, images: list[BenchImage], headings: list[str], dataset_name: str) -> None:
+        self.images: list[BenchImage] = images
+        self.headings: list[str] = headings
+        self.dataset_name: str = dataset_name
