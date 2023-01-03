@@ -2,7 +2,11 @@
 Dataset classes.
 """
 
+import csv
+
 from typing import Any
+
+import cv2
 
 from vision.common.constants import Image
 
@@ -57,3 +61,48 @@ class BenchDataset:
         self.images: list[BenchImage] = images
         self.headings: list[str] = headings
         self.dataset_name: str = dataset_name
+
+
+def load_dataset(filename: str, dataset_name: str) -> BenchDataset:
+    """
+    Load a dataset from a csv file.
+
+    NOTE: csv file is formatted as follows, with the first line being the headings
+        image_name, goal1, goal2, ...
+
+    Parameters
+    ----------
+    filename : str
+        the path and name of the file
+
+    Returns
+    -------
+    BenchDataset
+        the resulting dataset
+    """
+    images: list[BenchImage] = []
+    headings: list[str] = []
+
+    # load images from file
+    with open(filename, mode="r") as file:
+        csv_file = csv.reader(file)
+
+        for i, line in enumerate(csv_file):
+            if i == 0:  # headings
+                headings = line
+            else:  # data
+                image_name = line[0]
+                image: Image = cv2.imread(image_name)  # load the image
+                accuracy_goals: list[Any] = line[1:]  # the rest of the line is goals
+
+                # create the benchmark image and add to list
+                bench_image: BenchImage = BenchImage(
+                    image=image, image_name=image_name, accuracy_goals=accuracy_goals
+                )
+                images.append(bench_image)
+
+    # create and return the dataset
+    dataset: BenchDataset = BenchDataset(
+        images=images, headings=headings, dataset_name=dataset_name
+    )
+    return dataset
