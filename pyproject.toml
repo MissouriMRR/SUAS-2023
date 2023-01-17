@@ -21,6 +21,7 @@ matplotlib = "^3.5.1"
 utm = "^0.7.0"
 Shapely = "^1.8.1"
 nptyping = "^2.3.1"
+scipy = "^1.9.3"
 
 [tool.poetry.dev-dependencies]
 black = "^21.12b0"
