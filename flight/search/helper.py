@@ -1,6 +1,4 @@
 """
-Summary
--------
 Several useful functions repeatedly used in other files
 """
 from math import sqrt
