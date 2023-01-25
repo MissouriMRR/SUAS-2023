@@ -50,8 +50,8 @@ def get_bounds(points: list[tuple[float, float]]) -> dict[str, list[float]]:
     y_bounds: list[float] = [float("inf"), float("-inf")]
 
     i: int
-    dim: tuple[int, list[float]]
     for i, _ in enumerate(points):
+        dim: tuple[int, list[float]]
         for dim in ((0, x_bounds), (1, y_bounds)):
             if points[i][dim[0]] < dim[1][0]:  # smallest x | y
                 dim[1][0] = points[i][dim[0]]
