@@ -207,7 +207,7 @@ class Searcher:
         Parameters
         ----------
         history : list[tuple[int, int]]
-            list of i, j positions visited thus far
+            list of row, column positions visited thus far
 
         Returns
         -------
