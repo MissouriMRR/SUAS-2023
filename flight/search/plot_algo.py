@@ -82,7 +82,7 @@ class Compressor:
 
         Returns
         -------
-        empty_grid : NDArray
+        empty_grid : NDArray[Int8]
             an empty grid of three points repres
         """
         cols: int = floor(len(cell_map[0]) / cell_size)
