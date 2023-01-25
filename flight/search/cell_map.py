@@ -75,7 +75,7 @@ class CellMap:
         final_map : list[list[Cell]]
             the two-dimensional list of cell objects
         """
-        r_list: list[list[Cell]] = []
+        final_map: list[list[Cell]] = []
         i: int
         j: int
         for i, _ in enumerate(points):
@@ -93,8 +93,8 @@ class CellMap:
                     )
                 else:
                     row.append(Cell(0, False, -1.0, -1.0, False))
-            r_list.append(row)
-        return r_list
+            final_map.append(row)
+        return final_map
 
     def __getitem__(self, index: int) -> list[Cell]:
         return self.data[index]
