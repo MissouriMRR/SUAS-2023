@@ -11,6 +11,7 @@ from segmenter import segment, SUAS_2023_THETA, rotate_shape
 from helper import AIR_DROP_AREA
 from plot_algo import get_plot
 
+#the color used when drawing the search area's cells
 CELL_COLOR: tuple[float, float, float] = (246 / 256, 229 / 256, 37 / 256)
 
 
