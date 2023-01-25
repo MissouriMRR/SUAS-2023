@@ -32,16 +32,16 @@ class Compressor:
     """
 
     @staticmethod
-    def analyze_cell(i: int, j: int, size: int, cell_map: CellMap) -> int:
+    def analyze_cell(row: int, col: int, size: int, cell_map: CellMap) -> int:
         """
         Given the compressed index, returns the number of valid locations
         within the cell
 
         Parameters
         ----------
-        i : int
+        row : int
             the row of the compressed cell
-        j : int
+        col : int
             the column of the compressed cell
         size: int
             size of the cell
@@ -54,10 +54,10 @@ class Compressor:
             the number of valid cells within the compressed cell
         """
         score: int = 0
-        row_start: int = size * i
-        row_end: int = min((size * (i + 1) - 1), len(cell_map.data) - 1)
-        col_start: int = size * j
-        col_end: int = min((size * (j + 1) - 1), len(cell_map[0]) - 1)
+        row_start: int = size * row
+        row_end: int = min((size * (row + 1) - 1), len(cell_map.data) - 1)
+        col_start: int = size * col
+        col_end: int = min((size * (col + 1) - 1), len(cell_map[0]) - 1)
 
         for row in range(row_start, row_end + 1):
             for col in range(col_start, col_end + 1):
