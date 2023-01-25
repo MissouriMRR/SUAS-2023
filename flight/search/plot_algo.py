@@ -23,7 +23,6 @@ class Compressor:
     -------
     analyze_cell(i : int, j: int, s: int, cell_map: CellMap) -> int
         Returns the number of in-bounds cells
-    get_circum_square_r(r: int) -> int
         returns the side length of the square inside the view radius circle
     __init_compressed_grid(cell_size : int, cell_map : CellMap) -> NDArray:
         Returns empty compressed grid with correct dimensions
@@ -70,25 +69,6 @@ class Compressor:
         return score
 
     @staticmethod
-    def get_circum_square_r(radius: int) -> int:
-        """
-        Given the view radius of the seeker, return the radius of the
-        circumscribed square that lies within it
-
-        Parameters
-        ----------
-        radius : int
-            Radius of the circle
-
-        Returns
-        -------
-        side : int
-            side length of the square
-        """
-
-        return radius  # max(floor(sqrt(r/2)), 1)
-
-    @staticmethod
     def __init_compressed_grid(cell_size: int, cell_map: CellMap) -> NDArray[Int8]:
         """
         Returns an empty grid for the compressed map
@@ -130,13 +110,12 @@ class Compressor:
             int -> value
             int -> dist
         """
-        side_len: int = Compressor.get_circum_square_r(radius)
-        new_grid: NDArray[Int8] = Compressor.__init_compressed_grid(side_len, cell_map)
+        new_grid: NDArray[Int8] = Compressor.__init_compressed_grid(radius, cell_map)
         i: int
         j: int
         for i, _ in enumerate(new_grid):
             for j, _ in enumerate(new_grid[0]):
-                new_grid[i][j] = Compressor.analyze_cell(i, j, side_len, cell_map)
+                new_grid[i][j] = Compressor.analyze_cell(i, j, radius, cell_map)
         return new_grid
 
 
