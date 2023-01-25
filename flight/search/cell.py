@@ -1,6 +1,4 @@
 """
-Summary
--------
 defines the Cell dataclass
 """
 
