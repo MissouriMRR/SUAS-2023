@@ -1,6 +1,4 @@
 """
-Summary
--------
 Defines the public 'segment' function that allows a polygon to be divided
 into uniform squares
 """
