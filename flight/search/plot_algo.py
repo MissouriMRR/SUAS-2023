@@ -70,9 +70,7 @@ class Compressor:
         return score
 
     @staticmethod
-    def __init_compressed_grid(
-        cell_size: int, cell_map: CellMap
-    ) -> NDArray[Shape["*, *"], Int8]:
+    def __init_compressed_grid(cell_size: int, cell_map: CellMap) -> NDArray[Shape["*, *"], Int8]:
         """
         Returns an empty grid for the compressed map
 
@@ -112,9 +110,7 @@ class Compressor:
             whether a cell has been seen (bool), what how many subcells
             are within it (int) and its distance (int)
         """
-        new_grid: NDArray[Shape["*, *"], Int8] = Compressor.__init_compressed_grid(
-            radius, cell_map
-        )
+        new_grid: NDArray[Shape["*, *"], Int8] = Compressor.__init_compressed_grid(radius, cell_map)
         i: int
         j: int
         for i in range(len(new_grid)):
@@ -172,9 +168,7 @@ class Searcher:
         view_radius: int
             how many cells away the searcher can see
         """
-        self.compressed: NDArray[Shape["*, *"], Int8] = Compressor.compress(
-            view_radius, cell_map
-        )
+        self.compressed: NDArray[Shape["*, *"], Int8] = Compressor.compress(view_radius, cell_map)
         self.num_valids: int = self.get_num_valids()
         self.a_star: AStarFinder = AStarFinder()
         self.a_star_grid: Grid = Grid(matrix=self.compressed)
@@ -332,9 +326,7 @@ class Searcher:
             the path to reach the nearest unexplored cell
         """
 
-        approx_nearest: tuple[int, int] = self.find_closest(
-            self.find_unseens(history), pos
-        )
+        approx_nearest: tuple[int, int] = self.find_closest(self.find_unseens(history), pos)
         start: Node = self.a_star_grid.node(pos[1], pos[0])
         end: Node = self.a_star_grid.node(approx_nearest[1], approx_nearest[0])
         self.a_star_grid.cleanup()
@@ -376,9 +368,7 @@ class Searcher:
                 new_history = list(history)
                 new_history.append(move)
                 insort(histories, new_history, key=len)
-        return [
-            (-1, -1)
-        ]  # mypy was not happy with only the conditional return statement
+        return [(-1, -1)]  # mypy was not happy with only the conditional return statement
 
 
 class Decompressor:

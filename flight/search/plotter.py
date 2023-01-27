@@ -25,15 +25,11 @@ def draw_cell(pos: tuple[float | None, float | None]) -> None:
         the position of the cell
     """
     plt.gca().add_patch(
-        patches.Rectangle(
-            (pos[0], pos[1]), 0.00015, 0.00015, fill=True, color=CELL_COLOR
-        )
+        patches.Rectangle((pos[0], pos[1]), 0.00015, 0.00015, fill=True, color=CELL_COLOR)
     )
 
 
-def plot_path(
-    prob_map: CellMap, path: list[tuple[float, float]] = deepcopy([])
-) -> None:
+def plot_path(prob_map: CellMap, path: list[tuple[float, float]] = deepcopy([])) -> None:
     """
     creates a visual of the current probability map.
 

@@ -31,9 +31,7 @@ class CellMap:
         prints state of CellMap into standard output
     """
 
-    def __init__(
-        self, points: list[list[tuple[float, float] | str]], odlc_count: int = 1
-    ) -> None:
+    def __init__(self, points: list[list[tuple[float, float] | str]], odlc_count: int = 1) -> None:
         """
         initializes the object with given parameters
 
