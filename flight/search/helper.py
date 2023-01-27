@@ -1,7 +1,7 @@
 """
 Several useful functions repeatedly used in other files
 """
-#pylint: disable=C0200
+# pylint: disable=C0200
 from math import sqrt
 
 AIR_DROP_AREA: list[tuple[float, float]] = [
