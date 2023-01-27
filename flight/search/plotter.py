@@ -11,7 +11,7 @@ from flight.search.segmenter import segment, SUAS_2023_THETA, rotate_shape
 from flight.search.helper import AIR_DROP_AREA
 from flight.search.plot_algo import get_plot
 
-#the color used when drawing the search area's cells
+# the color used when drawing the search area's cells
 CELL_COLOR: tuple[float, float, float] = (246 / 256, 229 / 256, 37 / 256)
 
 
@@ -25,11 +25,15 @@ def draw_cell(pos: tuple[float | None, float | None]) -> None:
         the position of the cell
     """
     plt.gca().add_patch(
-        patches.Rectangle((pos[0], pos[1]), 0.00015, 0.00015, fill=True, color=CELL_COLOR)
+        patches.Rectangle(
+            (pos[0], pos[1]), 0.00015, 0.00015, fill=True, color=CELL_COLOR
+        )
     )
 
 
-def plot_path(prob_map: CellMap, path: list[tuple[float, float]] = deepcopy([])) -> None:
+def plot_path(
+    prob_map: CellMap, path: list[tuple[float, float]] = deepcopy([])
+) -> None:
     """
     creates a visual of the current probability map.
 
@@ -57,8 +61,8 @@ def plot_path(prob_map: CellMap, path: list[tuple[float, float]] = deepcopy([]))
             if cell.is_valid:
                 draw_cell((cell.lat, cell.lon))
 
-    x: list[float] = [] #pylint: disable=C0103
-    y: list[float] = [] #pylint: disable=C0103
+    x: list[float] = []  # pylint: disable=C0103
+    y: list[float] = []  # pylint: disable=C0103
     for point in path:
         x.append(point[0])
         y.append(point[1])
