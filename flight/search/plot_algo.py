@@ -1,6 +1,7 @@
 """
 The actual algorithm powering the drone's navigation
 """
+#pylint: disable=C0200
 
 from math import floor, sqrt
 from bisect import insort
@@ -58,10 +59,10 @@ class Compressor:
         col_start: int = size * col
         col_end: int = min((size * (col + 1) - 1), len(cell_map[0]) - 1)
 
-        for row in range(row_start, row_end + 1):
-            for col in range(col_start, col_end + 1):
+        for i in range(row_start, row_end + 1):
+            for j in range(col_start, col_end + 1):
                 try:
-                    if cell_map[row][col].is_valid:
+                    if cell_map[i][j].is_valid:
                         score += 1
                 except IndexError:
                     pass
@@ -113,8 +114,8 @@ class Compressor:
         new_grid: NDArray[Int8] = Compressor.__init_compressed_grid(radius, cell_map)
         i: int
         j: int
-        for i, _ in enumerate(new_grid):
-            for j, _ in enumerate(new_grid[0]):
+        for i in range(len(new_grid)):
+            for j in range(len(new_grid[0])):
                 new_grid[i][j] = Compressor.analyze_cell(i, j, radius, cell_map)
         return new_grid
 
@@ -169,8 +170,8 @@ class Searcher:
         num: int = 0
         i: int
         j: int
-        for i, _ in enumerate(self.compressed):
-            for j, _ in enumerate(self.compressed[0]):
+        for i in range(len(self.compressed)):
+            for j in range(len(self.compressed[0])):
                 if self.compressed[i][j] != 0:
                     num += 1
         return num
@@ -248,8 +249,8 @@ class Searcher:
 
         i: int
         j: int
-        for i, _ in enumerate(self.compressed):
-            for j, _ in enumerate(self.compressed[0]):
+        for i in range(len(self.compressed)):
+            for j in range(self.compressed[0]):
                 if self.compressed[i][j] != 0 and (i, j) not in cand_set:
                     return False
         return True
@@ -515,10 +516,10 @@ class Decompressor:
         finder: AStarFinder = AStarFinder()
 
         i: int
-        for i, _ in enumerate(route):
+        for i in range(len(route)):
             route[i] = Decompressor.__decompress_point(route[i], cell_map, cell_size)
         new_path: list[tuple[int, int]] = []
-        
+
         i: int
         for i in range(len(route) - 1):
             search_grid.cleanup()
