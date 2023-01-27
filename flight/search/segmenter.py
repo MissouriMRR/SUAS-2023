@@ -8,9 +8,9 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
 CELL_SIZE: float = 0.00015
-c: float = calculate_dist(AIR_DROP_AREA[0], AIR_DROP_AREA[1])
-b: float = AIR_DROP_AREA[1][0] - AIR_DROP_AREA[0][0]
-SUAS_2023_THETA: float = asin(b / c)
+c: float = calculate_dist(AIR_DROP_AREA[0], AIR_DROP_AREA[1]) #the hypotenuse
+b: float = AIR_DROP_AREA[1][0] - AIR_DROP_AREA[0][0] #another side length
+SUAS_2023_THETA: float = asin(b / c) #the angle to rotate the SUAS_2023 area
 
 
 def segment(
