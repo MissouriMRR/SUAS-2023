@@ -1,7 +1,7 @@
 """
 Defines the CellMap class and has some basic tests at the bottom of the file.
 """
-
+#pylint: disable=C0200
 from flight.search.cell import Cell
 from flight.search.helper import get_bounds
 
@@ -49,7 +49,7 @@ class CellMap:
         count: int = 0
         i: int
         j: int
-        for i, _ in enumerate(points):
+        for i in range(len(points)):
             for j, _ in enumerate(points[0]):
                 if points[i][j] != "X":
                     count += 1
@@ -78,9 +78,9 @@ class CellMap:
         final_map: list[list[Cell]] = []
         i: int
         j: int
-        for i, _ in enumerate(points):
+        for i in range(len(points)): #pylint: disable=C0200
             row: list[Cell] = []
-            for j, _ in enumerate(points[0]):
+            for j in range(len(points[0])):
                 if points[i][j] != "X":  # ensures it is not the only used string value
                     row.append(
                         Cell(
@@ -105,9 +105,9 @@ class CellMap:
         """
         i: int
         j: int
-        for i, _ in enumerate(self.data):
+        for i in range(len(self.data)):
             row_string: str = ""
-            for j, _ in enumerate(self.data[0]):
+            for j in range(len(self.data[0])):
                 if not self.data[i][j].is_valid:
                     row_string += " "
                 else:
