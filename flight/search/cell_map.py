@@ -1,7 +1,7 @@
 """
 Defines the CellMap class and has some basic tests at the bottom of the file.
 """
-#pylint: disable=C0200
+# pylint: disable=C0200
 from flight.search.cell import Cell
 from flight.search.helper import get_bounds
 
@@ -30,7 +30,10 @@ class CellMap:
     display()
         prints state of CellMap into standard output
     """
-    def __init__(self, points: list[list[tuple[float, float] | str]], odlc_count: int = 1) -> None:
+
+    def __init__(
+        self, points: list[list[tuple[float, float] | str]], odlc_count: int = 1
+    ) -> None:
         """
         initializes the object with given parameters
 
@@ -100,7 +103,7 @@ class CellMap:
         final_map: list[list[Cell]] = []
         i: int
         j: int
-        for i in range(len(points)): #pylint: disable=C0200
+        for i in range(len(points)):  # pylint: disable=C0200
             row: list[Cell] = []
             for j in range(len(points[0])):
                 if points[i][j] != "X":  # ensures it is not the only used string value
