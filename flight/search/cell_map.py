@@ -2,8 +2,8 @@
 Defines the CellMap class and has some basic tests at the bottom of the file.
 """
 #pylint: disable=C0200
-from flight.search.cell import Cell
-from flight.search.helper import get_bounds
+from cell import Cell
+from helper import get_bounds
 
 
 class CellMap:
@@ -30,6 +30,28 @@ class CellMap:
     display()
         prints state of CellMap into standard output
     """
+    def __init__(self, points: list[list[tuple[float, float] | str]], odlc_count: int = 1) -> None:
+        """
+        initializes the object with given parameters
+
+        Parameters
+        ----------
+        points : list[list[tuple[float, float] | str]]
+            a collection of latitude, longitude coordinates to define the map
+        odlc_count : int
+            the number of ODLCs in the flight area
+        """
+        self.num_valids: int = self.__get_valids(points)
+        self.data: list[list[Cell]] = self.__init_map(points, odlc_count)
+
+        flat_list: list[tuple[float, float]] = []
+        sublist: list[Cell]
+        for sublist in self.data:
+            item: Cell
+            for item in sublist:
+                if item.is_valid:
+                    flat_list.append((item.lat, item.lon))
+        self.bounds: dict[str, list[float]] = get_bounds(flat_list)
 
     def __get_valids(self, points: list[list[tuple[float, float] | str]]) -> int:
         """
@@ -114,25 +136,3 @@ class CellMap:
                     row_string += "X"
             print(row_string)
 
-    def __init__(self, points: list[list[tuple[float, float] | str]], odlc_count: int = 1) -> None:
-        """
-        initializes the object with given parameters
-
-        Parameters
-        ----------
-        points : list[list[tuple[float, float] | str]]
-            a collection of latitude, longitude coordinates to define the map
-        odlc_count : int
-            the number of ODLCs in the flight area
-        """
-        self.num_valids: int = self.__get_valids(points)
-        self.data: list[list[Cell]] = self.__init_map(points, odlc_count)
-
-        flat_list: list[tuple[float, float]] = []
-        sublist: list[Cell]
-        for sublist in self.data:
-            item: Cell
-            for item in sublist:
-                if item.is_valid:
-                    flat_list.append((item.lat, item.lon))
-        self.bounds: dict[str, list[float]] = get_bounds(flat_list)
