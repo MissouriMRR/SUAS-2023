@@ -6,8 +6,8 @@ import logging
 import asyncio
 import utm
 from shapely.geometry import Polygon
-from execute import move_to
 from mavsdk import System
+from execute import move_to
 
 
 def latlon_to_utm(coords: dict[str, float]) -> dict[str, float]:
@@ -87,7 +87,7 @@ def generate_search_paths(
     while boundary_shape.area > 0:
         # print(boundary_shape.exterior.coords.xy)
         generated_search_paths.append(
-            tuple(zip(*boundary_shape.exterior.coords.xy))  # pylint: disable=maybe-no-member
+            tuple(zip(*boundary_shape.exterior.coords.xy))  # type: ignore[arg-type]
         )
         boundary_shape = boundary_shape.buffer(buffer_distance, single_sided=True)
 
