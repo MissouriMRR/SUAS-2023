@@ -531,7 +531,6 @@ class Decompressor:
             route[i] = Decompressor.__decompress_point(route[i], cell_map, cell_size)
         new_path: list[tuple[int, int]] = []
 
-        i: int
         for i in range(len(route) - 1):
             search_grid.cleanup()
             start: Node = search_grid.node(route[i][1], route[i][0])
