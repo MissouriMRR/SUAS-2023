@@ -106,10 +106,9 @@ class Compressor:
         Returns
         -------
         compressed_map : NDArray[Int8]
-            A compressed map with cells of the form
-            bool -> seen
-            int -> value
-            int -> dist
+            A compressed map with three-dimensional cells representing
+            whether a cell has been seen (bool), what how many subcells
+            are within it (int) and its distance (int)
         """
         new_grid: NDArray[Int8] = Compressor.__init_compressed_grid(radius, cell_map)
         i: int
