@@ -5,11 +5,11 @@ Provides plotting functionality for visaulizing coordinate data
 from copy import deepcopy
 import matplotlib.pyplot as plt
 from matplotlib import patches
-from cell_map import CellMap
-from cell import Cell
-from segmenter import segment, SUAS_2023_THETA, rotate_shape
-from helper import AIR_DROP_AREA
-from plot_algo import get_plot
+from flight.search.cell_map import CellMap
+from flight.search.cell import Cell
+from flight.search.segmenter import segment, SUAS_2023_THETA, rotate_shape
+from flight.search.helper import AIR_DROP_AREA
+from flight.search.plot_algo import get_plot
 
 #the color used when drawing the search area's cells
 CELL_COLOR: tuple[float, float, float] = (246 / 256, 229 / 256, 37 / 256)

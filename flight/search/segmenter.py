@@ -3,7 +3,7 @@ Defines the public 'segment' function that allows a polygon to be divided
 into uniform squares
 """
 from math import ceil, sin, cos, asin
-from helper import get_bounds, AIR_DROP_AREA, calculate_dist
+from flight.search.helper import get_bounds, AIR_DROP_AREA, calculate_dist
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 

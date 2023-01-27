@@ -9,10 +9,10 @@ from pathfinding.finder.a_star import AStarFinder
 from pathfinding.core.grid import Grid, Node
 import numpy as np
 from nptyping import Int8, NDArray, Shape
-from cell_map import CellMap
-from cell import Cell
-from helper import AIR_DROP_AREA
-from segmenter import segment, rotate_shape, SUAS_2023_THETA
+from flight.search.cell_map import CellMap
+from flight.search.cell import Cell
+from flight.search.helper import AIR_DROP_AREA
+from flight.search.segmenter import segment, rotate_shape, SUAS_2023_THETA
 
 
 class Compressor:
@@ -156,7 +156,7 @@ class Searcher:
     breadth_search(start: tuple[int, int]) -> list[tuple[int, int]]
         returns the shrotest circuit route through all cells.
     """
-    
+
     def __init__(self, cell_map: CellMap, view_radius: int) -> None:
         """
         Initializes the object

@@ -2,8 +2,8 @@
 Defines the CellMap class and has some basic tests at the bottom of the file.
 """
 #pylint: disable=C0200
-from cell import Cell
-from helper import get_bounds
+from flight.search.cell import Cell
+from flight.search.helper import get_bounds
 
 
 class CellMap:
