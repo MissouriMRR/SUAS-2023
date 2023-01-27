@@ -57,8 +57,8 @@ def plot_path(prob_map: CellMap, path: list[tuple[float, float]] = deepcopy([]))
             if cell.is_valid:
                 draw_cell((cell.lat, cell.lon))
 
-    x: list[float] = []
-    y: list[float] = []
+    x: list[float] = [] #pylint: disable=C0103
+    y: list[float] = [] #pylint: disable=C0103
     for point in path:
         x.append(point[0])
         y.append(point[1])
