@@ -135,4 +135,3 @@ class CellMap:
                 else:
                     row_string += "X"
             print(row_string)
-
