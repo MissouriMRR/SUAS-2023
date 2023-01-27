@@ -156,25 +156,7 @@ class Searcher:
     breadth_search(start: tuple[int, int]) -> list[tuple[int, int]]
         returns the shrotest circuit route through all cells.
     """
-
-    def get_num_valids(self) -> int:
-        """
-        Retuns the number of valid compressed cells
-
-        Returns
-        -------
-        num_valids: int
-            The number of valid compressed cells
-        """
-        num: int = 0
-        i: int
-        j: int
-        for i in range(len(self.compressed)):
-            for j in range(len(self.compressed[0])):
-                if self.compressed[i][j] != 0:
-                    num += 1
-        return num
-
+    
     def __init__(self, cell_map: CellMap, view_radius: int) -> None:
         """
         Initializes the object
@@ -198,6 +180,24 @@ class Searcher:
             (1, 1),
             (-1, -1),
         ]
+
+    def get_num_valids(self) -> int:
+        """
+        Retuns the number of valid compressed cells
+
+        Returns
+        -------
+        num_valids: int
+            The number of valid compressed cells
+        """
+        num: int = 0
+        i: int
+        j: int
+        for i in range(len(self.compressed)):
+            for j in range(len(self.compressed[0])):
+                if self.compressed[i][j] != 0:
+                    num += 1
+        return num
 
     def get_valid_moves(self, history: list[tuple[int, int]]) -> list[tuple[int, int]]:
         """
