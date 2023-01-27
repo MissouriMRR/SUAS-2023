@@ -8,7 +8,7 @@ from bisect import insort
 from pathfinding.finder.a_star import AStarFinder
 from pathfinding.core.grid import Grid, Node
 import numpy as np
-from nptyping import Int8, NDArray
+from nptyping import Int8, NDArray, Shape
 from cell_map import CellMap
 from cell import Cell
 from helper import AIR_DROP_AREA
@@ -70,7 +70,7 @@ class Compressor:
         return score
 
     @staticmethod
-    def __init_compressed_grid(cell_size: int, cell_map: CellMap) -> NDArray[Int8]:
+    def __init_compressed_grid(cell_size: int, cell_map: CellMap) -> NDArray[Shape["*, *"], Int8]:
         """
         Returns an empty grid for the compressed map
 
@@ -83,7 +83,7 @@ class Compressor:
 
         Returns
         -------
-        empty_grid : NDArray[Int8]
+        empty_grid : NDArray[Shape['*, *'], Int8]
             an empty grid of three points repres
         """
         cols: int = floor(len(cell_map[0]) / cell_size)
@@ -91,7 +91,7 @@ class Compressor:
         return np.zeros((rows, cols), dtype=np.int8)
 
     @staticmethod
-    def compress(radius: int, cell_map: CellMap) -> NDArray[Int8]:
+    def compress(radius: int, cell_map: CellMap) -> NDArray[Shape["*, *"], Int8]:
         """
         Given a view radius, r, compress the binary map of the search area
         into cells with size r' and weight equal to their valid cell area.
@@ -105,12 +105,12 @@ class Compressor:
 
         Returns
         -------
-        compressed_map : NDArray[Int8]
+        compressed_map : NDArray[Shape['*, *'], Int8]
             A compressed map with three-dimensional cells representing
             whether a cell has been seen (bool), what how many subcells
             are within it (int) and its distance (int)
         """
-        new_grid: NDArray[Int8] = Compressor.__init_compressed_grid(radius, cell_map)
+        new_grid: NDArray[Shape["*, *"], Int8] = Compressor.__init_compressed_grid(radius, cell_map)
         i: int
         j: int
         for i in range(len(new_grid)):
@@ -125,7 +125,7 @@ class Searcher:
 
     Attributes
     ----------
-        compressed: NDArray[Int8]
+        compressed: NDArray[Shape['*, *'], Int8]
             the compressed array that is being searched
         num_valids: int
             number of valid cells in array (excludes empty cells, for example)
@@ -186,7 +186,7 @@ class Searcher:
         view_radius: int
             how many cells away the searcher can see
         """
-        self.compressed: NDArray[Int8] = Compressor.compress(view_radius, cell_map)
+        self.compressed: NDArray[Shape["*, *"], Int8] = Compressor.compress(view_radius, cell_map)
         self.num_valids: int = self.get_num_valids()
         self.a_star: AStarFinder = AStarFinder()
         self.a_star_grid: Grid = Grid(matrix=self.compressed)
@@ -249,7 +249,7 @@ class Searcher:
         i: int
         j: int
         for i in range(len(self.compressed)):
-            for j in range(self.compressed[0]):
+            for j in range(len(self.compressed[0])):
                 if self.compressed[i][j] != 0 and (i, j) not in cand_set:
                     return False
         return True
@@ -378,7 +378,7 @@ class Decompressor:
 
     Methods
     -------
-    __prep_grid(cell_map: CellMap) -> NDArray
+    __prep_grid(cell_map: CellMap) -> NDArray[Shape["*, *"], Int8]
         turns the CellMap into a numpy array
     get_valid_point(point: tuple[int, int], cell_map: CellMap, cell_size: int) -> tuple[int, int]
         given coordinates outside the bounded area, find the nearest point inside the area
@@ -394,7 +394,7 @@ class Decompressor:
     """
 
     @staticmethod
-    def __prep_grid(cell_map: CellMap) -> NDArray[Int8]:
+    def __prep_grid(cell_map: CellMap) -> NDArray[Shape["*, *"], Int8]:
         """
         Creates a numpy array of the given CellMap for faster computation
 
@@ -405,10 +405,10 @@ class Decompressor:
 
         Returns
         -------
-        numpy_grid: NDArray
+        numpy_grid: NDArray[Shape["*, *"], Int8]
             the numpy version of the uncompressed CellMap
         """
-        new_grid: NDArray[Int8] = np.zeros((len(cell_map.data), len(cell_map[0])), dtype=np.int8)
+        new_grid: NDArray[Shape["*, *"], Int8] = np.zeros((len(cell_map.data), len(cell_map[0])), dtype=np.int8)
         i: int
         j: int
 
@@ -510,7 +510,7 @@ class Decompressor:
         uncompressed_route : list[tuple[int, int]]
             the uncompressed route
         """
-        prepped_grid: NDArray[Int8] = Decompressor.__prep_grid(cell_map)
+        prepped_grid: NDArray[Shape["*, *"], Int8] = Decompressor.__prep_grid(cell_map)
         search_grid: Grid = Grid(matrix=prepped_grid)
         finder: AStarFinder = AStarFinder()
 
