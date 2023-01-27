@@ -50,7 +50,7 @@ class CellMap:
         i: int
         j: int
         for i in range(len(points)):
-            for j, _ in enumerate(points[0]):
+            for j in range(len(points[0])):
                 if points[i][j] != "X":
                     count += 1
         return count
