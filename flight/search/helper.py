@@ -1,6 +1,7 @@
 """
 Several useful functions repeatedly used in other files
 """
+#pylint: disable=C0200
 from math import sqrt
 
 AIR_DROP_AREA: list[tuple[float, float]] = [
@@ -50,7 +51,7 @@ def get_bounds(points: list[tuple[float, float]]) -> dict[str, list[float]]:
     y_bounds: list[float] = [float("inf"), float("-inf")]
 
     i: int
-    for i, _ in enumerate(points):
+    for i in range(len(points)):
         dim: tuple[int, list[float]]
         for dim in ((0, x_bounds), (1, y_bounds)):
             if points[i][dim[0]] < dim[1][0]:  # smallest x | y
