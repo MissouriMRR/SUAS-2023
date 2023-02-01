@@ -57,7 +57,3 @@ async def print_status_text(drone: mavsdk.System) -> None:
             print(f"Status: {status_text.type}: {status_text.text}")
     except asyncio.CancelledError:
         return
-
-
-if __name__ == "__main__":
-    asyncio.run(run())
