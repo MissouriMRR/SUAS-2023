@@ -156,7 +156,7 @@ def main() -> None:
     # TODO: Change if we add another test Python script for the second drone
     print("Run")
     print()
-    print("\t./opensitl_multiple_drones.sh")
+    print("\t./opensitlmultiple.sh")
     print()
     print("and")
     print()
