@@ -6,7 +6,6 @@ import time
 from dataclasses import dataclass
 
 import mavsdk.telemetry
-
 import utm
 
 # Input points are dicts with time and UTM coordinate data

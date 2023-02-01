@@ -14,9 +14,7 @@ async def run() -> None:
     """
 
     drone: mavsdk.System = mavsdk.System()
-    print("Will connect")
     await drone.connect(system_address="udp://:14540")
-    print("Connected")
 
     status_text_task: asyncio.Task[None] = asyncio.ensure_future(print_status_text(drone))
 

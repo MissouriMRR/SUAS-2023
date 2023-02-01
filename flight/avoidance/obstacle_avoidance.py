@@ -10,8 +10,8 @@ import time
 import mavsdk
 import mavsdk.telemetry
 
-from point import Point, InputPoint
-from velocity import Velocity
+from .point import Point, InputPoint
+from .velocity import Velocity
 
 
 async def calculate_avoidance_velocity(
@@ -146,24 +146,3 @@ async def calculate_avoidance_velocity(
     avoidance_velocity: Velocity = drone_velocity + correction_velocity
 
     return avoidance_velocity
-
-
-def main() -> None:
-    """
-    Tells the user how to test this module
-    """
-
-    # TODO: Change if we add another test Python script for the second drone
-    print("Run")
-    print()
-    print("\t./opensitlmultiple.sh")
-    print()
-    print("and")
-    print()
-    print("\tpython3 ./test.py")
-    print()
-    print("to test this module.")
-
-
-if __name__ == "__main__":
-    main()
