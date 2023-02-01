@@ -43,7 +43,7 @@ class StateMachine:
         Runs the flight code specific to each state until completion
         """
         while self.current_state:
-            self.current_state: State = await self.current_state.run(self.drone)
+            self.current_state = await self.current_state.run(self.drone)
 
 
 async def log_flight_mode(drone: System) -> None:
