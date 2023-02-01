@@ -13,17 +13,16 @@ import numpy as np
 from nptyping import NDArray, Shape, UInt8, IntC, Float32, Bool
 import cv2
 
-"""
-Brainstorming:
-Any ODLC shape will have a letter in it so the contour hierarchy will have stuff (needs heirarchy)
-bounding box will probably be close to a square and/or small (def will not be like whole image)
-wont have any crazy points that are really far from center of mass, can use:
-	>>> moms = cv2.moments(single_contour)
-	>>> center_x = (moms["m10"] / moms["m00"])
-	>>> center_y = (moms["m01"] / moms["m00"])
-either will be circular or approxPolyDP will work well min area lost w/o erroneous area incl.
 
-"""
+# Brainstorming:
+# Any ODLC shape will have a letter in it so the contour hierarchy will have stuff (needs heirarchy)
+# bounding box will probably be close to a square and/or small (def will not be like whole image)
+# wont have any crazy points that are really far from center of mass, can use:
+# 	>>> moms = cv2.moments(single_contour)
+# 	>>> center_x = (moms["m10"] / moms["m00"])
+# 	>>> center_y = (moms["m01"] / moms["m00"])
+# either will be circular or approxPolyDP will work well min area lost w/o erroneous area incl.
+
 
 # return types for cv2.findContours() -> (Tuple[contours], hierarchy)
 contour_type: TypeAlias = NDArray[Shape["*, 1, 2"], IntC]
@@ -237,7 +236,7 @@ def test_roughness(
     returns true if the non-overlapping area between the two contours is less than the specified
     amount, false otherwise
     """
-    # TODO: figure out how much non overlap is too much
+    # kinda need to figure out how much non overlap is too much
     box: bound_box_type = _min_common_bounding_box((contour, approx))
 
     contour_mask: mask_type = _generate_mask(contour, box)
@@ -372,28 +371,3 @@ if __name__ == "__main__":
         approx = cv2.approxPolyDP(cnt, 0.05 * peri, True)
         print("Polygonness Test:", test_roughness(cnt, approx))
         print("Circleness Test:", test_circleness(img2[:, :, 0]))
-
-    # print("contours:", type(cnts), len(cnts))
-    # print("hierarchy:", type(hier), hier.shape)
-    # print("contour:", type(cnts[0]), cnts[0].shape)
-    # rect = cv2.boxPoints(cv2.minAreaRect(cnts[0]))
-    # print("box", type(rect), type(rect[0, 0]), rect)
-
-    # padding = int(img.shape[0]*0.05)
-    # img = cv2.copyMakeBorder(img, padding, padding, padding, padding, cv2.BORDER_CONSTANT, None, 0)
-    # cv2.imshow("pic2", np.dstack((img, img, img)))
-    # cv2.waitKey(0)
-    # blurred = cv2.GaussianBlur(img, (5, 5), 5)
-    # cv2.imshow("pic3", np.dstack((blurred, blurred, blurred)))
-    # cv2.waitKey(0)
-    # circles = cv2.HoughCircles(
-    #     blurred,
-    #     cv2.HOUGH_GRADIENT,
-    #     dp=1,
-    #     minDist=100,
-    #     param1=50,
-    #     param2=30,
-    #     minRadius=1,
-    #     maxRadius=250,
-    # )
-    # print("circles:", type(circles), circles.shape, circles, type(circles[0, 0, 0]))
