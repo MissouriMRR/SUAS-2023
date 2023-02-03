@@ -19,6 +19,7 @@ class DroneNotFoundError(Exception):
     """
     Exception for when the drone cannot connect
     """
+
     pass
 
 
