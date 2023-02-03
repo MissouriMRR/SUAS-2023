@@ -1,6 +1,7 @@
 """Functions and Configurations for logging flight & vision data during flight"""
 
 import logging
+from typing import TextIO
 from multiprocessing import Queue
 from logging import Formatter, FileHandler, StreamHandler
 from logging.handlers import QueueHandler, QueueListener
@@ -10,10 +11,12 @@ from datetime import datetime
 LOG_FILE: str = f"logs/{datetime.now()}.log"
 LOG_LEVEL = logging.DEBUG
 LOG_FORMAT: str = "%(levelname)s | %(asctime)s @ %(processname)s:%(funcName)s > %(message)s"
-COLOR_LOG_FORMAT: str = "(log_color)s%(levelname)s | %(asctime)s @  %(processName)s:%(funcName)s > %(message)s%(reset)s"
+COLOR_LOG_FORMAT: str = (
+    "(log_color)s%(levelname)s | %(asctime)s @  %(processName)s:%(funcName)s > %(message)s%(reset)s"
+)
 
 
-def init_logger(queue: Queue) -> QueueListener:
+def init_logger(queue: Queue[str]) -> QueueListener:
     """
     Initializes a QueueListener object to be used throughout the competition code to contain log messages
 
@@ -32,13 +35,13 @@ def init_logger(queue: Queue) -> QueueListener:
     file.setFormatter(file_formatter)
 
     console_formatter: Formatter = ColoredFormatter(COLOR_LOG_FORMAT)
-    console: StreamHandler = logging.StreamHandler()
+    console: StreamHandler[TextIO] = logging.StreamHandler()
     console.setFormatter(console_formatter)
 
     return QueueListener(queue, file, console)
 
 
-def worker_configurer(queue: Queue) -> None:
+def worker_configurer(queue: Queue[str]) -> None:
     """
     Configures the logger to send logging messages to QueueListener process
 
@@ -52,4 +55,3 @@ def worker_configurer(queue: Queue) -> None:
     root.addHandler(queue_handler)
     root.setLevel(LOG_LEVEL)
     return
-

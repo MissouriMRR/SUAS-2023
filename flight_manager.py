@@ -34,14 +34,14 @@ class FlightManager:
         self.run_threads(args.simulation)
 
     def init_flight(
-        self, flight_args: tuple[Communication, bool, Queue, worker_configurer, StateSettings]
+        self, flight_args: tuple[Communication, bool, Queue[str], StateSettings]
     ) -> Process:
         """
         Initializes the flight state machine process
 
         Parameters
         ----------
-        flight_args: Tuple[Communication, bool, Queue, worker_configurer, StateSettings]
+        flight_args: Tuple[Communication, bool, Queue, StateSettings]
             Arguments necessary for flight logging and state machine settings
         Returns
         -------
@@ -66,9 +66,8 @@ class FlightManager:
         # Start manager
         manager.start()
         # Create Communication object from manager
-        comm_obj: Communication = manager.Communication()
-
-        log_queue: Queue = Queue(-1)
+        comm_obj: Communication = manager.Communication()  # type: ignore[attr-defined]
+        log_queue: Queue[str] = Queue(-1)
         logging_process = init_logger(log_queue)
         logging_process.start()
 
@@ -77,7 +76,7 @@ class FlightManager:
         # Create new processes
         logging.info("Spawning Processes")
 
-        flight_args = (comm_obj, sim, log_queue, worker_configurer, self.state_settings)
+        flight_args = (comm_obj, sim, log_queue, self.state_settings)
         flight_process: Process = self.init_flight(flight_args)
         # Start flight function
         flight_process.start()
@@ -87,7 +86,7 @@ class FlightManager:
         logging.debug(f"Description: {self.state_settings.run_description}")
 
         try:
-            while comm_obj.get_state() != "Final State":
+            while comm_obj.state != "Final State":
                 # If the process is no longer alive,
                 # (i.e. error has been raised in this case)
                 # then create a new instance and start the new process
@@ -101,7 +100,7 @@ class FlightManager:
             # TODO send a message to the flight process to land instead of
             # basically overwriting the process
             logging.info("Ctrl-C Pressed, forcing drone to land")
-            comm_obj.set_state("land")
+            comm_obj.state = "Land"
             flight_process = self.init_flight(flight_args)
             flight_process.start()
 

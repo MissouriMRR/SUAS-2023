@@ -6,7 +6,7 @@ import mavsdk
 from multiprocessing import Queue
 
 import logger
-from communication import Communication as Communication
+from communication import Communication
 from flight import config
 from flight.states import STATES, State
 from flight.state_settings import StateSettings
@@ -19,10 +19,23 @@ class DroneNotFoundError(Exception):
     """
     Exception for when the drone cannot connect
     """
-    pass
 
 
 class StateMachine:
+    """
+    Class for the flight state machine
+
+    Attributes
+    ----------
+    current_state : State
+        State currently being run in the state machine
+
+    Methods
+    -------
+    run() -> None
+        Initiates the run method for each state in the state machine
+    """
+
     def __init__(self, initial_state: State, drone: System) -> None:
         """
         Initializes flight state machine
@@ -36,14 +49,13 @@ class StateMachine:
         """
         self.current_state: State = initial_state
         self.drone: System = drone
-        return
 
     async def run(self) -> None:
         """
         Runs the flight code specific to each state until completion
         """
         while self.current_state:
-            self.current_state = await self.current_state.run(self.drone)
+            self.current_state = await self.current_state.run(self.drone)  # type: ignore[assignment]
 
 
 async def log_flight_mode(drone: System) -> None:
@@ -196,7 +208,9 @@ async def init_and_begin(comm: Communication, sim: bool, state_settings: StateSe
         return
 
 
-def flight(comm: Communication, sim: bool, log_queue: Queue, state_settings: StateSettings) -> None:
+def flight(
+    comm: Communication, sim: bool, log_queue: Queue[str], state_settings: StateSettings
+) -> None:
     """
     Starts asynchronous event loop for flight code
 
