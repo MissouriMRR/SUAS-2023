@@ -2,9 +2,10 @@
 Defines and implements the Velocity class used in obstacle_avoidance.py
 """
 
-import math
+from __future__ import annotations
 from dataclasses import dataclass
-from typing import Union
+import math
+from typing import overload
 
 import mavsdk.telemetry
 
@@ -29,7 +30,7 @@ class Velocity:
     down_vel: float
 
     @classmethod
-    def from_mavsdk_velocityned(cls, velocity: mavsdk.telemetry.VelocityNed) -> "Velocity":
+    def from_mavsdk_velocityned(cls, velocity: mavsdk.telemetry.VelocityNed) -> Velocity:
         """
         Factory method accepting a mavsdk.telemetry.VelocityNed object
 
@@ -45,21 +46,29 @@ class Velocity:
 
         return cls(velocity.north_m_s, velocity.east_m_s, velocity.down_m_s)
 
-    def __add__(self, rhs: "Velocity") -> "Velocity":
+    def __add__(self, rhs: Velocity) -> Velocity:
         return Velocity(
             self.north_vel + rhs.north_vel,
             self.east_vel + rhs.east_vel,
             self.down_vel + rhs.down_vel,
         )
 
-    def __sub__(self, rhs: "Velocity") -> "Velocity":
+    def __sub__(self, rhs: Velocity) -> Velocity:
         return Velocity(
             self.north_vel - rhs.north_vel,
             self.east_vel - rhs.east_vel,
             self.down_vel - rhs.down_vel,
         )
 
-    def __mul__(self, rhs: Union["Velocity", float]) -> "Velocity":
+    @overload
+    def __mul__(self, rhs: float) -> Velocity:
+        ...
+
+    @overload
+    def __mul__(self, rhs: Velocity) -> Velocity:
+        ...
+
+    def __mul__(self, rhs: float | Velocity) -> Velocity:
         if isinstance(rhs, float):
             rhs = Velocity(rhs, rhs, rhs)
 
@@ -69,10 +78,18 @@ class Velocity:
             self.down_vel * rhs.down_vel,
         )
 
-    def __rmul__(self, lhs: float) -> "Velocity":
+    def __rmul__(self, lhs: float) -> Velocity:
         return self.__mul__(lhs)
 
-    def __truediv__(self, rhs: Union["Velocity", float]) -> "Velocity":
+    @overload
+    def __truediv__(self, rhs: float) -> Velocity:
+        ...
+
+    @overload
+    def __truediv__(self, rhs: Velocity) -> Velocity:
+        ...
+
+    def __truediv__(self, rhs: float | Velocity) -> Velocity:
         if isinstance(rhs, float):
             rhs = Velocity(rhs, rhs, rhs)
 
@@ -93,7 +110,7 @@ class Velocity:
 
         return math.hypot(self.north_vel, self.east_vel, self.down_vel)
 
-    def normalized(self) -> "Velocity":
+    def normalized(self) -> Velocity:
         """
         Normalizes a Velocity object
 

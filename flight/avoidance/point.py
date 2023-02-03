@@ -2,15 +2,16 @@
 Defines and implements the Point class used in obstacle_avoidance.py
 """
 
-import time
+from __future__ import annotations
 from dataclasses import dataclass
+import time
 
 import mavsdk.telemetry
 import utm
 
 # Input points are dicts with time and UTM coordinate data
 # May change in the future
-InputPoint = dict[str, float | int | str]
+InputPoint = dict[str, float | str]
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,13 +48,13 @@ class Point:
         position_data: InputPoint,
         force_zone_number: int | None = None,
         force_zone_letter: str | None = None,
-    ) -> "Point":
+    ) -> Point:
         """
         Factory method accepting a dict with position data
 
         Parameters
         ----------
-        position_data : dict[str, Union[float, int, str]]
+        position_data : InputPoint
             A dict containing at least the following keys:
             'utm_x', 'utm_y', 'utm_zone_number', 'utm_zone_letter'
         force_zone_letter : int | None = None
@@ -74,7 +75,7 @@ class Point:
             utm_x, utm_y, utm_zone_number, utm_zone_letter = utm.from_latlon(
                 *utm.to_latlon(utm_x, utm_y, utm_zone_number, utm_zone_letter),
                 force_zone_number=force_zone_number,
-                force_zone_letter=force_zone_letter
+                force_zone_letter=force_zone_letter,
             )
 
         return cls(
@@ -87,7 +88,7 @@ class Point:
         )
 
     @classmethod
-    def from_mavsdk_position(cls, position: mavsdk.telemetry.Position) -> "Point":
+    def from_mavsdk_position(cls, position: mavsdk.telemetry.Position) -> Point:
         """
         Factory method accepting a mavsdk.telemetry.Position object
 
