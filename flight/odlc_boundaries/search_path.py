@@ -134,11 +134,14 @@ async def run() -> None:
     await drone.action.takeoff()
 
     # wait for drone to take off
+    print("sleeping")
     await asyncio.sleep(10)
+    print("finished sleeping")
 
     # move to each waypoint in mission
     point: int
     for point in range(3):
+        print("Moving")
         await move_to(
             drone, waypoint["lats"][point], waypoint["longs"][point], waypoint["Altitude"][0]
         )
@@ -172,8 +175,6 @@ if __name__ == "__main__":
     #   {"latitude": 37.94862722088389, "longitude": -91.78302701112852}, # Right Midpoint
     # ]
 
-    quad_copter: System = System()
-
     # algorithm
     # (2 coordinates for side 1) / 2 = starting point
     # (2 coordinates for opposite side) / 2 = ending coordinate
@@ -193,8 +194,6 @@ if __name__ == "__main__":
     search_paths: list[tuple[float, float]] = generate_search_paths(
         data_search_area_boundary_utm, BUFFER_DISTANCE
     )
-
-    print(search_paths)
 
     asyncio.run(run())
 

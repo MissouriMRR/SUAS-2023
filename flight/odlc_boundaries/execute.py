@@ -28,7 +28,7 @@ async def move_to(
     longitude: float
         a float containing the requested longitude to move to
     altitude: float
-        a float contatining the requested altitude to go to (in feet)
+        a float containing the requested altitude to go to (in feet)
     """
 
     # converts feet into meters
@@ -53,9 +53,9 @@ async def move_to(
 
             # roughly checks if location is reached and moves on if so
             if (
-                (round(drone_lat, 3) == round(latitude, 3))
-                and (round(drone_long, 3) == round(longitude, 3))
-                and (round(drone_alt, 1) == round(altitude, 1))
+                (round(drone_lat, 4) == round(latitude, 4))
+                and (round(drone_long, 4) == round(longitude, 4))
+                and (round(drone_alt, 1) == round(altitude_in_meters, 1))
             ):
                 location_reached = True
                 logging.info("arrived")
