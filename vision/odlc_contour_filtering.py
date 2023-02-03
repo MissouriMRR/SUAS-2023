@@ -7,21 +7,20 @@ the processed image and the original image should be accessable,
 the list of odlc shapes.
 
 Output: will identify which contours are odlc shapes, and what types of odlc shapes it is.
+
+Brainstorming:
+Any ODLC shape will have a letter in it so the contour hierarchy will have stuff (needs heirarchy)
+bounding box will probably be close to a square and/or small (def will not be like whole image)
+wont have any crazy points that are really far from center of mass, can use:
+	>>> moms = cv2.moments(single_contour)
+	>>> center_x = (moms["m10"] / moms["m00"])
+	>>> center_y = (moms["m01"] / moms["m00"])
+either will be circular or approxPolyDP will work well min area lost w/o erroneous area incl.
 """
 from typing import TypeAlias
 import numpy as np
 from nptyping import NDArray, Shape, UInt8, IntC, Float32, Bool
 import cv2
-
-
-# Brainstorming:
-# Any ODLC shape will have a letter in it so the contour hierarchy will have stuff (needs heirarchy)
-# bounding box will probably be close to a square and/or small (def will not be like whole image)
-# wont have any crazy points that are really far from center of mass, can use:
-# 	>>> moms = cv2.moments(single_contour)
-# 	>>> center_x = (moms["m10"] / moms["m00"])
-# 	>>> center_y = (moms["m01"] / moms["m00"])
-# either will be circular or approxPolyDP will work well min area lost w/o erroneous area incl.
 
 
 # return types for cv2.findContours() -> (Tuple[contours], hierarchy)
@@ -204,7 +203,7 @@ def _generate_mask(contour: contour_type, box: bound_box_type) -> mask_type:
     the input contour
     """
     dims: tuple[int, int] = (box[2] - box[0], box[3] - box[1])
-    shifted_cnt: contour_type = contour - np.array((box[0], box[2]))
+    # shifted_cnt: contour_type = contour - np.array((box[0], box[2]))
 
     mask: mask_type = np.zeros(dims)
     mask = cv2.drawContours(mask, [contour], -1, True, cv2.FILLED)
@@ -297,77 +296,79 @@ def test_circleness(img: sc_image_type) -> bool:
 
     if circles is None:
         return False
-    else:
-        for circle in circles[0]:
-            if (
-                int(max(img.shape[0], img.shape[1]) / 1.6)
-                <= circle[2]
-                <= int(min(img.shape[0], img.shape[1]) * 1.1)
-            ):
-                return True
+
+    for circle in circles[0]:
+        if (
+            int(max(img.shape[0], img.shape[1]) / 1.6)
+            <= circle[2]
+            <= int(min(img.shape[0], img.shape[1]) * 1.1)
+        ):
+            return True
 
     return False
 
 
-def filter_contour(
-    contours: tuple[contour_type], hierarchy: hierarchy_type, contour_index: int, image: image_type
-) -> bool:
-    """
-    runs all created test functions and handles logic to determine if a given contour (from the
-    tuple of contours) is an ODLC shape or not
+# def filter_contour(
+#     contours: tuple[contour_type],
+#     hierarchy: hierarchy_type,
+#     contour_index: int, image: image_type
+# ) -> bool:
+#     """
+#     runs all created test functions and handles logic to determine if a given contour (from the
+#     tuple of contours) is an ODLC shape or not
 
-    parameters
-    ----------
-    contours : tuple[contour_type]
-        The list of contours returned by the contour detection algorithm
-    hierarchy : hierarchy_type
-        The contour hierarchy list returned by the contour detection algorithm
-        (the 2nd value returned by cv2.findContours())
-    contour_index : int
-        The index corresponding to the contour in contours and hierarchy to be checked
-    image : image_type
-        a cropped bounding box arround the contour in question
+#     parameters
+#     ----------
+#     contours : tuple[contour_type]
+#         The list of contours returned by the contour detection algorithm
+#     hierarchy : hierarchy_type
+#         The contour hierarchy list returned by the contour detection algorithm
+#         (the 2nd value returned by cv2.findContours())
+#     contour_index : int
+#         The index corresponding to the contour in contours and hierarchy to be checked
+#     image : image_type
+#         a cropped bounding box arround the contour in question
 
-    returns
-    -------
-    true if the contour is (probably) an ODLC shape
-    """
-    # test hierarchy, bounding_box, and jaggedness
-    # then calculate approxPolyDP if above all pass (maybe change depending on test results)
+#     returns
+#     -------
+#     true if the contour is (probably) an ODLC shape
+#     """
+#     # test hierarchy, bounding_box, and jaggedness
+#     # then calculate approxPolyDP if above all pass (maybe change depending on test results)
 
-    # (vertical len, horizontal len)
-    image_dims: tuple[int, int] = image.shape[:2]
-    return False
+#     # (vertical len, horizontal len)
+#     image_dims: tuple[int, int] = image.shape[:2]
+#     return False
 
 
 if __name__ == "__main__":
-    img = np.zeros([500, 500, 3], dtype=UInt8)
+    image = np.zeros([500, 500, 3], dtype=UInt8)
 
-    pts: contour_type = np.array([[249, 0], [499, 249], [249, 499], [0, 249]], IntC).reshape(
-        -1, 1, 2
-    )
-    img = cv2.polylines(img, [pts], True, (255, 255, 255))
+    raw_pts = np.array([[249, 0], [499, 249], [249, 499], [0, 249]], IntC)
 
-    cv2.imshow("pic", img)
+    pts: contour_type = raw_pts.reshape((-1, 1, 2))
+    image = cv2.polylines(image, [pts], True, (255, 255, 255))
+
+    cv2.imshow("pic", image)
     cv2.waitKey(0)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # print("grayscale image shape", img.shape)
-    cnts_tmp, hier_tmp = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cnts_tmp, hier_tmp = cv2.findContours(image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     print("contours1:", type(cnts_tmp), len(cnts_tmp), cnts_tmp)
-    img2 = np.dstack((img, img, img))
+    img2 = np.dstack((image, image, image))
 
     img2 = cv2.drawContours(img2, cnts_tmp, 0, (255, 255, 255), thickness=cv2.FILLED)
     cv2.imshow("cnts1-0", img2)
     cv2.waitKey(0)
 
-    cnts, hier = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cnts, hier = cv2.findContours(image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    for i, cnt in enumerate(cnts):
-        print("\nHierarchy Test:", test_heirarchy(hier, i))
-        print("Min Area Box Test:", test_min_area_box(cnt))
-        print("Bounding Box Test:", test_bounding_box(cnt, (img.shape[0], img.shape[1])))
-        print("Jaggedness Test:", test_spikiness(cnt))
-        peri = cv2.arcLength(cnt, True)
-        approx = cv2.approxPolyDP(cnt, 0.05 * peri, True)
-        print("Polygonness Test:", test_roughness(cnt, approx))
+    for ind, cntr in enumerate(cnts):
+        print("\nHierarchy Test:", test_heirarchy(hier, ind))
+        print("Min Area Box Test:", test_min_area_box(cntr))
+        print("Bounding Box Test:", test_bounding_box(cntr, (image.shape[0], image.shape[1])))
+        print("Jaggedness Test:", test_spikiness(cntr))
+        peri = cv2.arcLength(cntr, True)
+        approximate = cv2.approxPolyDP(cntr, 0.05 * peri, True)
+        print("Polygonness Test:", test_roughness(cntr, approximate))
         print("Circleness Test:", test_circleness(img2[:, :, 0]))
