@@ -31,6 +31,7 @@ class FlightManager:
         Runs the threads for the state machine and ensures machine progresses
 
     """
+
     def __init__(self, state_settings: StateSettings) -> None:
         """
         Constructor for the flight manager
