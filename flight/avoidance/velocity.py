@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import math
 from typing import overload
 
+import mavsdk.offboard
 import mavsdk.telemetry
 
 
@@ -45,6 +46,20 @@ class Velocity:
         """
 
         return cls(velocity.north_m_s, velocity.east_m_s, velocity.down_m_s)
+
+    def to_mavsdk_velocitynedyaw(self) -> mavsdk.offboard.VelocityNedYaw:
+        """
+        Converts this Velocity object to a mavsdk.offboard.VelocityNedYaw
+        object
+
+        Returns
+        -------
+        The equivalent mavsdk.offboard.VelocityNedYaw object
+        """
+
+        yaw_deg: float = math.degrees(math.atan2(self.east_vel, self.north_vel))
+
+        return mavsdk.offboard.VelocityNedYaw(self.north_vel, self.east_vel, self.down_vel, yaw_deg)
 
     def __add__(self, rhs: Velocity) -> Velocity:
         return Velocity(

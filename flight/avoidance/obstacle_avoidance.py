@@ -46,17 +46,18 @@ async def calculate_avoidance_velocity(
         if obstacle avoidance should activate, otherwise None
     """
 
-    if len(obstacle_data) < 2:
+    if not obstacle_data:
+        # No obstacles found
+        return None
+
+    if len(obstacle_data) == 1:
         raise ValueError(
-            "Expected obstacle_data to have length of at least 2; "
+            "Expected obstacle_data to have a length of 0 or at least 2; "
             f"got a length of {len(obstacle_data)}"
         )
 
     # Get position of drone
-    drone_position: mavsdk.telemetry.Position
-    async for position in drone.telemetry.position():
-        drone_position = position
-        break
+    drone_position: mavsdk.telemetry.Position = await anext(drone.telemetry.position())
 
     # Convert drone position to Point object
     drone_position: Point = Point.from_mavsdk_position(drone_position)  # type: ignore
@@ -99,10 +100,7 @@ async def calculate_avoidance_velocity(
         return None
 
     # Get velocity of drone
-    drone_velocity: mavsdk.telemetry.VelocityNed
-    async for velocity in drone.telemetry.velocity_ned():
-        drone_velocity = velocity
-        break
+    drone_velocity: mavsdk.telemetry.VelocityNed = await anext(drone.telemetry.velocity_ned())
 
     # Convert drone velocity to Velocity object
     # Units don't change, only the type of the object
