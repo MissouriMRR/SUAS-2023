@@ -2,13 +2,14 @@
 import asyncio
 import logging
 from mavsdk import System
+from mavsdk.core import ConnectionState
 import mavsdk
 from multiprocessing import Queue
 
 import logger
 from communication import Communication
 from flight import config
-from flight.states import STATES, State
+from flight.states import STATES, State, StateEnum
 from flight.state_settings import StateSettings
 
 SIM_ADDR: str = "udp://:14540"  # Address to connect to drone simulator
@@ -69,6 +70,7 @@ async def log_flight_mode(drone: System) -> None:
         MAVSDK object for drone control
     """
     previous_flight_mode: str = ""
+    flight_mode: str
     async for flight_mode in drone.telemetry.flight_mode():
         if flight_mode is not previous_flight_mode:
             previous_flight_mode = flight_mode
@@ -87,11 +89,12 @@ async def observe_in_air(drone: System, comm: Communication) -> None:
         Object to check the current state and enter the final state upon landing
     """
     was_in_air: bool = False
+    is_in_air: bool
     async for is_in_air in drone.telemetry.in_air():
         if is_in_air:
             was_in_air = is_in_air
         if was_in_air and not is_in_air:
-            comm.state = "Final_State"
+            comm.state = StateEnum.Final_State
             return
 
 
@@ -104,6 +107,7 @@ async def wait_for_connect(drone: System) -> None:
     drone : System
         MAVSDK object for drone control
     """
+    state: ConnectionState
     async for state in drone.core.connection_state():
         if state.is_connected:
             logging.debug("Connected to drone with UUID: %s", state.uuid)
@@ -178,9 +182,9 @@ async def start_flight(comm: Communication, drone: System, state_settings: State
             await drone.action.land()
         except:
             logging.error("No system available")
-            comm.state = "Final_State"
+            comm.state = StateEnum.Final_State
             return
-    comm.state = "Final_State"
+    comm.state = StateEnum.Final_State
     await termination_task
     flight_mode_task.cancel()
 

@@ -22,12 +22,12 @@ def init_logger(queue: Queue[str]) -> QueueListener:
 
     Parameters
     ----------
-    queue : Queue
+    queue : Queue[str]
         Data structure to hold logging messages
 
     Returns
     -------
-    QueueListener
+    queue_listener : QueueListener
         Object to process log messages
     """
     file_formatter: Formatter = logging.Formatter(LOG_FORMAT)
@@ -47,7 +47,7 @@ def worker_configurer(queue: Queue[str]) -> None:
 
     Parameters
     ----------
-    queue : Queue
+    queue : Queue[str]
         Data structure that holds logging messages
     """
     queue_handler: QueueHandler = QueueHandler(queue)

@@ -1,4 +1,5 @@
 """Communication object to pass between flight and vision code"""
+from flight.states import StateEnum
 
 
 class Communication:
@@ -20,13 +21,32 @@ class Communication:
     """
 
     def __init__(self) -> None:
-        self.__state: str = "Start_State"
+        """
+        Initializes the Communication module to the first state in the state machine
+        """
+        self.__state: str = StateEnum.Start_State
 
     @property
     def state(self) -> str:
+        """
+        Function to return the name of the state
+
+        Returns
+        -------
+        __state : str
+            State name assigned to the individual state
+        """
         return self.__state
 
     @state.setter
     def state(self, new_state: str) -> None:
+        """
+        Changes the current state to the one passed
+
+        Parameters
+        ----------
+        new_state : str
+            Name of teh new state in the state machine
+        """
         self.__state = new_state
         return

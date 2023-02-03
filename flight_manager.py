@@ -8,10 +8,29 @@ from multiprocessing.managers import BaseManager
 from logger import init_logger, worker_configurer
 from communication import Communication
 from flight.flight import flight
+from flight.states import StateEnum
 from flight.state_settings import StateSettings
 
 
 class FlightManager:
+    """
+    Class to initiate state machine and multithreading
+
+    Attributes
+    ----------
+    state_settings : StateSettings
+        Descriptors and parameters for the flight state machine
+
+    Methods
+    -------
+    main() -> None
+        Initiates threads for the flight code
+    init_flight(flight_args: tuple[Communication, bool, Queue[str], StateSettings]) -> Process
+        Starts a process for the flight state machine
+    run_threads(sim: bool) -> None
+        Runs the threads for the state machine and ensures machine progresses
+
+    """
     def __init__(self, state_settings: StateSettings) -> None:
         """
         Constructor for the flight manager
@@ -43,9 +62,18 @@ class FlightManager:
         ----------
         flight_args: Tuple[Communication, bool, Queue, StateSettings]
             Arguments necessary for flight logging and state machine settings
+            comm : Communication
+                Object to monitor the current state of the machine for flight & vision code
+            sim : bool
+                Flag to check if simulator is being used
+            queue : Queue[str]
+                Structure to handle logging messages
+            state_settings : StateSettings
+                Settings for the flight state machine
+
         Returns
         -------
-        Process
+        process : Process
             Multiprocessing object for flight state machine
         """
         return Process(target=flight, name="flight", args=flight_args)
@@ -56,8 +84,8 @@ class FlightManager:
 
         Parameters
         ----------
-            sim: bool
-                Decides if the simulator is active
+        sim: bool
+            Decides if the simulator is active
         """
         # Register Communication object to Base Manager
         BaseManager.register("Communication", Communication)
@@ -86,21 +114,17 @@ class FlightManager:
         logging.debug(f"Description: {self.state_settings.run_description}")
 
         try:
-            while comm_obj.state != "Final State":
-                # If the process is no longer alive,
-                # (i.e. error has been raised in this case)
-                # then create a new instance and start the new process
-                # (i.e. restart the process)
+            while comm_obj.state != StateEnum.Final_State:
+                # State machine is still running
                 if flight_process.is_alive() is not True:
+                    # Flight process has been killed; restart the process
                     logging.error("Flight process terminated, restarting")
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
         except KeyboardInterrupt:
             # Ctrl-C was pressed
-            # TODO send a message to the flight process to land instead of
-            # basically overwriting the process
             logging.info("Ctrl-C Pressed, forcing drone to land")
-            comm_obj.state = "Land"
+            comm_obj.state = StateEnum.Land
             flight_process = self.init_flight(flight_args)
             flight_process.start()
 
