@@ -18,6 +18,7 @@ class Communication:
     state(new_state) -> None
         Updates the name of the current state
     """
+
     def __init__(self) -> None:
         self.__state: str = "Start_State"
 

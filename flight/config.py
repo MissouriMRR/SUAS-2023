@@ -1,9 +1,9 @@
 """File to hold important constant values and configure drone upon startup"""
 from mavsdk import System
 
-MAX_ALT: int = 500      # Feet
-TAKEOFF_ALT: int = 75   # Feet
-WAIT: float = 2.0       # Seconds
+MAX_ALT: int = 500  # Feet
+TAKEOFF_ALT: int = 75  # Feet
+WAIT: float = 2.0  # Seconds
 
 
 async def config_params(drone: System) -> None:
