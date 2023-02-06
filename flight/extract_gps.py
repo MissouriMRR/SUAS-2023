@@ -7,6 +7,7 @@ import json
 import argparse
 from typing_extensions import TypedDict
 
+
 # Initialize namedtuples to store latitude/longitude/altitude data for provided points
 class Waypoint(NamedTuple):
     """
