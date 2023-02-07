@@ -1,7 +1,10 @@
 """
 Several useful functions repeatedly used in other files
 """
+
 # pylint: disable=C0200
+#NOTE: removes "consider using enumerate" error
+
 from math import sqrt
 
 AIR_DROP_AREA: list[tuple[float, float]] = [
