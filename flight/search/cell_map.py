@@ -73,14 +73,14 @@ class CellMap:
             the number of valid cells in the cell map
         """
 
-        count: int = 0
+        num_valids: int = 0
         i: int
         j: int
         for i in range(len(points)):
             for j in range(len(points[0])):
                 if points[i][j] != "X":
-                    count += 1
-        return count
+                    num_valids += 1
+        return num_valids
 
     def __init_map(
         self, points: list[list[tuple[float, float] | str]], odlc_count: int
