@@ -3,7 +3,7 @@ Several useful functions repeatedly used in other files
 """
 
 # pylint: disable=C0200
-#NOTE: removes "consider using enumerate" error
+# NOTE: removes "consider using enumerate" error
 
 from math import sqrt
 
