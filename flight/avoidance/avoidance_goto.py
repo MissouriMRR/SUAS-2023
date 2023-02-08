@@ -7,7 +7,6 @@ import asyncio
 from asyncio import Task
 from typing import AsyncIterator
 
-import mavsdk
 import mavsdk.telemetry
 
 from .obstacle_avoidance import calculate_avoidance_velocity
