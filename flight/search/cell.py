@@ -2,10 +2,9 @@
 defines the Cell dataclass
 """
 
-from dataclasses import dataclass
+# pylint: disable=R0903
+#NOTE: disabled the "too few public methods" error
 
-
-@dataclass
 class Cell:
     """
     Represents a grid cell in the search area.
@@ -25,8 +24,9 @@ class Cell:
         Represents whether the cell is actually within the ODLC search area.
     """
 
-    probability: float
-    seen: bool
-    lat: float
-    lon: float
-    is_valid: bool
+    def __init__(self, probability: float, seen: bool, lat: float, lon: float, is_valid: bool):
+        self.probability: float = probability
+        self.seen: float = seen
+        self.lat: float = lat
+        self.lon: float = lon
+        self.is_valid: float = is_valid
