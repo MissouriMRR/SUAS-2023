@@ -1,5 +1,6 @@
 """
-Several useful functions repeatedly used in other files
+Several useful functions repeatedly used in other files, such as 'calculate_dist' and 
+'get_bounds,' which are used repeatedly when breaking the search area into a grid.
 """
 
 # pylint: disable=C0200
