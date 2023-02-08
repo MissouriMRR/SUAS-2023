@@ -50,11 +50,9 @@ async def calculate_avoidance_velocity(
         # No obstacles found
         return None
 
-    if len(obstacle_data) == 1:
-        raise ValueError(
-            "Expected obstacle_data to have a length of 0 or at least 2; "
-            f"got a length of {len(obstacle_data)}"
-        )
+    if len(obstacle_data) < 2:
+        # Need at least 2 data points to calculate velocity of the obstacle
+        return None
 
     # Get position of drone
     drone_position: mavsdk.telemetry.Position = await anext(drone.telemetry.position())
