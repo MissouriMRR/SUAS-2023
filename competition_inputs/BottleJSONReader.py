@@ -1,5 +1,5 @@
 import json
-# GJ 2-7-2023
+# G J 2-7-2023
 # Opens and imports JSON File 'BottleJSON.json' as a list
 f = open('competition_inputs/BottleJSON.json')
 data=json.load(f)
