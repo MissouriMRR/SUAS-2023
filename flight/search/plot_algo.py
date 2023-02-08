@@ -27,9 +27,9 @@ class Compressor:
     analyze_cell(i : int, j: int, s: int, cell_map: CellMap) -> int
         Returns the number of in-bounds cells
         returns the side length of the square inside the view radius circle
-    __init_compressed_grid(cell_size : int, cell_map : CellMap) -> NDArray:
+    __init_compressed_grid(cell_size : int, cell_map : CellMap) ->  NDArray[Shape["*, *"], Int8]:
         Returns empty compressed grid with correct dimensions
-    compress(radius: int, cell_map: CellMap) -> list[list[tuple[bool, int, int]]]
+    compress(radius: int, cell_map: CellMap) -> NDArray[Shape["*, *"], Int8]
         compresses the given cell_map into larger cells based on the given radius
     """
 
