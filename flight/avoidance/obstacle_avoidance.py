@@ -60,6 +60,7 @@ async def calculate_avoidance_velocity(
     drone_position: mavsdk.telemetry.Position = await anext(drone.telemetry.position())
 
     # Convert drone position to Point object
+    # type ignore comments are to allow shadowing
     drone_position: Point = Point.from_mavsdk_position(drone_position)  # type: ignore
 
     # Convert obstacle data to list of Point objects
