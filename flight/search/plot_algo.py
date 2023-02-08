@@ -185,7 +185,7 @@ class Searcher:
 
     def get_num_valids(self) -> int:
         """
-        Retuns the number of valid compressed cells
+        Returns the number of valid compressed cells
 
         Returns
         -------
