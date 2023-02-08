@@ -302,7 +302,7 @@ class Searcher:
         closest_dist: float = float("inf")
         point: tuple[int, int]
         for point in points:
-            dist = abs(point[0] - cur_point[0]) + abs(point[1] - cur_point[1])
+            dist: int = abs(point[0] - cur_point[0]) + abs(point[1] - cur_point[1])
             if dist < closest_dist:
                 closest_dist = dist
                 closest = point
