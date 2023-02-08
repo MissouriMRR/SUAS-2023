@@ -1,7 +1,9 @@
 """
 The actual algorithm powering the drone's navigation
 """
+
 # pylint: disable=C0200
+# NOTE: removes "consider using enumerate" error
 
 from math import floor, sqrt
 from bisect import insort
@@ -567,18 +569,4 @@ def get_plot() -> list[tuple[float, float]]:
 
 
 if __name__ == "__main__":
-    print(get_plot())
-
-    # import cProfile
-    # cProfile.run('s.breadth_search((1, 4))')
-    # TEST = [
-    #     [1, 1, 1, 1, 0, 0, 0, 0],
-    #     [1, 1, 1, 1, 0, 0, 0, 0],
-    #     [1, 1, 1, 1, 0, 0, 0, 0],
-    #     [1, 1, 1, 1, 0, 0, 0, 0],
-    #     [0, 0, 0, 0, 1, 1, 1, 1],
-    #     [0, 0, 0, 0, 1, 1, 1, 1],
-    #     [0, 0, 0, 0, 1, 1, 1, 1],
-    #     [0, 0, 0, 0, 1, 1, 1, 1],
-    # ]
-    # print(compress_area(4, TEST))
+    pass
