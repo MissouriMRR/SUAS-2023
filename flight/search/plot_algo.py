@@ -407,7 +407,7 @@ class Decompressor:
 
         Returns
         -------
-        numpy_grid: NDArray[Shape["*, *"], Int8]
+        new_grid: NDArray[Shape["*, *"], Int8]
             the numpy version of the uncompressed CellMap
         """
         new_grid: NDArray[Shape["*, *"], Int8] = np.zeros(
@@ -440,7 +440,7 @@ class Decompressor:
 
         Returns
         -------
-        nearest_point: tuple[int, int]
+        closest_point: tuple[int, int]
             the nearest point within the bounded area
         """
         cell_map.display()
