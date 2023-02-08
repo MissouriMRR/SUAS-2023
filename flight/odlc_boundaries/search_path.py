@@ -39,16 +39,16 @@ def all_latlon_to_utm(list_of_coords: list[dict[str, float]]) -> list[dict[str, 
 
     Parameters
     ----------
-    list_of_coords : list[dict[str, union[float, int, str]]]
+    list_of_coords : list[dict[str | float | int | str]]
         A list of dictionaries that contain lat long data
 
     Returns
     -------
-    list_of_coords : [dict[str, union[float, int, str]]]
+    list_of_coords : [dict[str | float | int | str]]
         An updated list of dictionaries with added utm data
     """
     coord: int
-    for coord, _ in enumerate(list_of_coords):
+    for coord in range(len(list_of_coords)):
         list_of_coords[coord] = latlon_to_utm(list_of_coords[coord])
     return list_of_coords
 
@@ -85,7 +85,6 @@ def generate_search_paths(
     # shrink boundary by a fixed amount until the area it covers is 0
     # add the smaller boundary to our list of search paths on each iteration
     while boundary_shape.area > 0:
-        # print(boundary_shape.exterior.coords.xy)
         generated_search_paths.append(
             tuple(zip(*boundary_shape.exterior.coords.xy))  # type: ignore[arg-type]
         )
@@ -134,14 +133,12 @@ async def run() -> None:
     await drone.action.takeoff()
 
     # wait for drone to take off
-    print("sleeping")
     await asyncio.sleep(10)
-    print("finished sleeping")
 
     # move to each waypoint in mission
     point: int
     for point in range(3):
-        print("Moving")
+        logging.info("Moving")
         await move_to(
             drone, waypoint["lats"][point], waypoint["longs"][point], waypoint["Altitude"][0]
         )
@@ -150,10 +147,9 @@ async def run() -> None:
     while True:
         await asyncio.sleep(1)
 
-    # Official Coordinates for Maryland
-
 
 if __name__ == "__main__":
+    # Official Coordinates for Maryland
     data_search_area_boundary: list[dict[str, float]] = [
         {"latitude": 38.3144070396263, "longitude": -76.54394394383165},  # Top Right Corner
         {"latitude": 38.31430872867596, "longitude": -76.54397320409971},  # Right Midpoint
@@ -163,9 +159,8 @@ if __name__ == "__main__":
         {"latitude": 38.31442311312976, "longitude": -76.54522971451763},  # Bottom Left Corner
     ]
 
-    # Test Coordinates at the Golf Course
-
     # data_search_area_boundary: List[Dict[str, float]] = [
+    # Test Coordinates at the Golf Course
     #   {"latitude": 37.94949210234766, "longitude": -91.78461752885457,}, # Top Left Corner
     #   {"latitude": 37.94890371012351, "longitude": -91.78484629708285,}, # Bottom Left Corner
     #   {"latitude": 37.94824920904741, "longitude": -91.78307727392504,}, # Bottom Right Corner

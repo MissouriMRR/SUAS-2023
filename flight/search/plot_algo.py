@@ -3,7 +3,7 @@ The actual algorithm powering the drone's navigation
 """
 
 # pylint: disable=C0200
-#NOTE: removes "consider using enumerate" error
+# NOTE: removes "consider using enumerate" error
 
 from math import floor, sqrt
 from bisect import insort
