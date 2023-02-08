@@ -57,7 +57,7 @@ def plot_path(prob_map: CellMap, path: list[tuple[float, float]] = deepcopy([]))
             if cell.is_valid:
                 draw_cell((cell.lat, cell.lon))
 
-                         # has pylint ignore single-letter variable names
+                # has pylint ignore single-letter variable names
     x: list[float] = []  # pylint: disable=C0103
     y: list[float] = []  # pylint: disable=C0103
     for point in path:

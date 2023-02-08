@@ -3,7 +3,8 @@ defines the Cell dataclass
 """
 
 # pylint: disable=R0903
-#NOTE: disabled the "too few public methods" error
+# NOTE: disabled the "too few public methods" error
+
 
 class Cell:
     """
