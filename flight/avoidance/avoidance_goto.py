@@ -63,21 +63,25 @@ async def goto_with_avoidance(
         drone.action.goto_location(latitude_deg, longitude_deg, absolute_altitude_m, yaw_deg)
     )
 
-    while not goto_task.done():
-        # Get next list of obstacle positions
-        obstacle_positions: list[InputPoint] = await anext(position_updates)
+    try:
+        while not goto_task.done():
+            # Get next list of obstacle positions
+            obstacle_positions: list[InputPoint] = await anext(position_updates)
 
-        # Calculate avoidance velocity
-        avoidance_velocity: Velocity | None = await calculate_avoidance_velocity(
-            drone, obstacle_positions, avoidance_radius, avoidance_speed, False
-        )
+            # Calculate avoidance velocity
+            avoidance_velocity: Velocity | None = await calculate_avoidance_velocity(
+                drone, obstacle_positions, avoidance_radius, avoidance_speed, False
+            )
 
-        # If no avoidance is needed, restart goto and continue
-        if avoidance_velocity is None:
-            if goto_task.cancelled():
-                goto_task = await restart_goto()
-            continue
+            # If no avoidance is needed, restart goto and continue
+            if avoidance_velocity is None:
+                if goto_task.cancelled():
+                    goto_task = await restart_goto()
+                continue
 
-        # Cancel goto then change velocity to avoid the obstacle
+            # Cancel goto then change velocity to avoid the obstacle
+            goto_task.cancel()
+            await drone.offboard.set_velocity_ned(avoidance_velocity.to_mavsdk_velocitynedyaw())
+    finally:
+        # Cancel goto_task if this task is canceled
         goto_task.cancel()
-        await drone.offboard.set_velocity_ned(avoidance_velocity.to_mavsdk_velocitynedyaw())
