@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 from contextlib import *
 import matplotlib.pyplot as plt
+from PIL import Image
 
 hostname = "os-122229001687.local"
 lidar_port = 7502
@@ -35,12 +36,21 @@ with closing(client.Scans.stream(hostname, lidar_port, complete=False)) as strea
         for scan in stream:
             # uncomment if you'd like to see frame id printed
             # print("frame id: {} ".format(scan.frame_id))
-            reflectivity = client.destagger(stream.metadata, scan.field(client.ChanField.REFLECTIVITY))
-            reflectivity = (reflectivity / np.max(reflectivity) * 255).astype(np.uint8)
-            cv2.imshow("scaled reflectivity", reflectivity)
+            # reflectivity = client.destagger(stream.metadata, scan.field(client.ChanField.REFLECTIVITY))
+            # reflectivity = (reflectivity / np.max(reflectivity) * 255).astype(np.uint8)
+
+            ranges = scan.field(client.ChanField.RANGE)
+            ranges_destaggered = client.destagger(stream.metadata, ranges)
+            print(ranges_destaggered)
+            print(ranges_destaggered.shape)
+            print(ranges_destaggered.dtype)
+            cv2.imshow("name", ranges_destaggered)
             key = cv2.waitKey(1)
-            range_field = scan.field(client.ChanField.RANGE)
-            range_img = client.destagger(stream.metadata, range_field)
-            print(range_field)
-            print(range_img)
-            plt.imshow(range_img, cmap='gray', resample=False)
+
+            # cv2.imshow("scaled reflectivity", reflectivity)
+            # key = cv2.waitKey(1)
+            # range_field = scan.field(client.ChanField.RANGE)
+            # range_img = client.destagger(stream.metadata, range_field)
+            # print(range_img)
+            # print(range_img.shape)
+            # plt.imshow(range_img, cmap='gray', resample=False)
