@@ -1,21 +1,7 @@
 """
-This file contains code to filter contours to identify the odlc shapes from an already processed
-image.
-
-Assumed input: unmodified contours found from a well-processed image,
-the processed image and the original image should be accessable,
-the list of odlc shapes.
-
-Output: will identify which contours are odlc shapes, and what types of odlc shapes it is.
-
-Brainstorming:
-Any ODLC shape will have a letter in it so the contour hierarchy will have stuff (needs heirarchy)
-bounding box will probably be close to a square and/or small (def will not be like whole image)
-wont have any crazy points that are really far from center of mass, can use:
-	>>> moms = cv2.moments(single_contour)
-	>>> center_x = (moms["m10"] / moms["m00"])
-	>>> center_y = (moms["m01"] / moms["m00"])
-either will be circular or approxPolyDP will work well min area lost w/o erroneous area incl.
+This file contains functions to filter contours to identify the odlc shapes from an already
+processed image. The only function that should be needed is filter_contour(), the rest are helper
+functions.
 """
 from typing import TypeAlias
 import numpy as np
@@ -330,7 +316,8 @@ def filter_contour(
         The index corresponding to the contour in contours and hierarchy to be checked
         (must be in bounds of contours tuple and hierarchy array)
     image_dims : tuple[int, int]
-        the dimensions entire original image (only height and width as gotten from image.shape[:2])
+        the dimensions of the original entire image
+        (only height and width as gotten from image.shape[:2], not the color channels)
     approx_contour : contour_type | None = None
         Optional parameter to provide the approximated version (from cv2.approxPolyDP) of the
         contour to be checked to avoid recalculation
@@ -338,6 +325,12 @@ def filter_contour(
     returns
     -------
     true if the contour is (probably) an ODLC shape, false o.w.
+
+    notes
+    -----
+    possibly in future could modifiy the filter_contour() function to return two booleans
+    one to determine if there is a shape, another to determine if the detected shape was circular
+    (or an integer could be used, ie: 0=no shape, 1=shape, 2=circular shape)
     """
     # test hierarchy, bounding_box, min_area_box, and spikiness
     if (
