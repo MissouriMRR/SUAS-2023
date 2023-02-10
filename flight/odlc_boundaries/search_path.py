@@ -2,6 +2,9 @@
 Functions for generating search paths to cover an area for finding the standard odlc objects
 """
 
+# pylint: disable=C0200
+# NOTE: removes "consider using enumerate" error
+
 import logging
 import asyncio
 import utm
@@ -39,12 +42,12 @@ def all_latlon_to_utm(list_of_coords: list[dict[str, float]]) -> list[dict[str, 
 
     Parameters
     ----------
-    list_of_coords : list[dict[str | float | int | str]]
+    list_of_coords : list[dict[str, float | int | str]]
         A list of dictionaries that contain lat long data
 
     Returns
     -------
-    list_of_coords : [dict[str | float | int | str]]
+    list_of_coords : [dict[str, float | int | str]]
         An updated list of dictionaries with added utm data
     """
     coord: int
