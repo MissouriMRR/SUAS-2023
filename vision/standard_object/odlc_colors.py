@@ -10,10 +10,10 @@ from nptyping import NDArray, Shape, UInt8, Float32, Int32, Float64
 
 from vision.common.bounding_box import BoundingBox
 from vision.common.constants import Image
-from vision.common.odlc_characteristics import ODLCColors, COLOR_RANGES
+from vision.common.odlc_characteristics import ODLCColor, COLOR_RANGES
 
 
-def find_colors(image: Image, text_bounds: BoundingBox) -> tuple[ODLCColors, ODLCColors]:
+def find_colors(image: Image, text_bounds: BoundingBox) -> tuple[ODLCColor, ODLCColor]:
     """
     Finds the colors of the shape and text based on the portion of the image bounded
     by the text bounds.
@@ -27,11 +27,11 @@ def find_colors(image: Image, text_bounds: BoundingBox) -> tuple[ODLCColors, ODL
 
     Returns
     -------
-    colors : tuple[ODLCColors, ODLCColors]
+    colors : tuple[ODLCColor, ODLCColor]
         the colors of the standard object
-        shape_color : ODLCColors
+        shape_color : ODLCColor
             the color of the shape
-        text_color : ODLCColors
+        text_color : ODLCColor
             the color of the text on the object
     """
     # slice image around bounds of text
@@ -45,9 +45,9 @@ def find_colors(image: Image, text_bounds: BoundingBox) -> tuple[ODLCColors, ODL
     text_color_val: NDArray[Shape["3"], UInt8]
     shape_color_val, text_color_val = get_color_vals(kmeans_img)
 
-    # match colors to closest color in ODLCColors
-    shape_color: ODLCColors = parse_color(shape_color_val)
-    text_color: ODLCColors = parse_color(text_color_val)
+    # match colors to closest color in ODLCColor
+    shape_color: ODLCColor = parse_color(shape_color_val)
+    text_color: ODLCColor = parse_color(text_color_val)
 
     # return the 2 colors
     return shape_color, text_color
@@ -215,7 +215,7 @@ def get_color_vals(
     return shape_color_val, text_color_val
 
 
-def parse_color(color_val: NDArray[Shape["3"], UInt8]) -> ODLCColors:
+def parse_color(color_val: NDArray[Shape["3"], UInt8]) -> ODLCColor:
     """
     Parse an BGR color value to determine what color it is.
 
@@ -226,7 +226,7 @@ def parse_color(color_val: NDArray[Shape["3"], UInt8]) -> ODLCColors:
 
     Returns
     -------
-    color : ODLCColors
+    color : ODLCColor
         the color that the value is closest to
     """
     # Convert color to HSV
@@ -236,9 +236,9 @@ def parse_color(color_val: NDArray[Shape["3"], UInt8]) -> ODLCColors:
     hsv_color_val: NDArray[Shape["3"], UInt8] = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV_FULL)
 
     # Determine which ranges color value falls in
-    matched: list[ODLCColors] = []  # colors matched to the value
+    matched: list[ODLCColor] = []  # colors matched to the value
 
-    col: ODLCColors
+    col: ODLCColor
     ranges: NDArray[Shape["*, 2, 3"], UInt8]
     for col, ranges in COLOR_RANGES.items():  # for each color and its set of ranges
         col_range: NDArray[Shape["2, 3"], UInt8]
@@ -257,8 +257,8 @@ def parse_color(color_val: NDArray[Shape["3"], UInt8]) -> ODLCColors:
 
 
 def best_color_range(
-    color_val: NDArray[Shape["3"], UInt8], possible_colors: list[ODLCColors]
-) -> ODLCColors:
+    color_val: NDArray[Shape["3"], UInt8], possible_colors: list[ODLCColor]
+) -> ODLCColor:
     """
     Find the closest color to the value from the possible colors.
 
@@ -266,19 +266,19 @@ def best_color_range(
     ----------
     color_val : NDArray[Shape["3"], UInt8]
         the color value in HSV space
-    possible_colors : list[ODLCColors]
+    possible_colors : list[ODLCColor]
         the possible colors to check
 
     Returns
     -------
-    color : ODLCColors
+    color : ODLCColor
         the closest color to the value
     """
     # find matched color with min dist to color value
     best_dist: float = float("inf")
-    best_col: ODLCColors = possible_colors[0]
+    best_col: ODLCColor = possible_colors[0]
 
-    col: ODLCColors
+    col: ODLCColor
     for col in possible_colors:
         dist: float = float("inf")
 
