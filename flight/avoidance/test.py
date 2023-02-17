@@ -5,7 +5,6 @@ Test code for our drone in obstacle avoidance
 import asyncio
 import dataclasses
 import random
-from threading import Lock
 from typing import AsyncIterator
 
 import mavsdk
@@ -14,11 +13,6 @@ import mavsdk.telemetry
 
 from .avoidance_goto import goto_with_avoidance
 from .point import InputPoint, Point
-
-# pylint: disable=invalid-name, global-statement
-
-position_updates: AsyncIterator[list[InputPoint]] | None = None
-position_updates_lock: Lock = Lock()
 
 TAKEOFF_ALTITUDE: float = 20.0
 DEFAULT_SPREAD_LATLON: float = 5e-5
@@ -55,13 +49,46 @@ async def random_position(
     )
 
 
-async def avoiding_drone_test() -> None:
+async def drone_positions(drone: mavsdk.System) -> AsyncIterator[list[InputPoint]]:
+    """
+    Gives periodic position updates for a drone;
+    in actual use, the camera and vision code would
+    be used to determine the position of the drone
+    to avoid
+
+    Parameters
+    ----------
+    drone : mavsdk.System
+        The drone to get position updates from
+
+    Returns
+    -------
+    An async iterator yielding the drone's previous
+    and current positions as a list of UTM coordinates with time
+    """
+
+    positions: list[InputPoint] = []
+
+    while True:
+        point: Point = Point.from_mavsdk_position(await anext(drone.telemetry.position()))
+        in_point: InputPoint = dataclasses.asdict(point)
+
+        if len(positions) > 4:
+            positions = positions[1:]
+
+        positions.append(in_point)
+
+        print(positions)
+        yield positions[:]
+        await asyncio.sleep(1.0)
+
+
+async def avoiding_drone_test(
+    drone: mavsdk.System, position_updates: AsyncIterator[list[InputPoint]]
+) -> None:
     """
     Runs test code for the drone trying to avoid the other drone
     """
-
-    drone: mavsdk.System = mavsdk.System(port=50051)
-    await drone.connect(system_address="udp://:14540")
 
     asyncio.ensure_future(print_status_text(drone))
 
@@ -79,23 +106,13 @@ async def avoiding_drone_test() -> None:
     await drone.action.set_takeoff_altitude(TAKEOFF_ALTITUDE)
     await drone.action.takeoff()
 
-    # Wait for position_updates to be set
-    while True:
-        with position_updates_lock:
-            if position_updates is not None:
-                break
-        await asyncio.sleep(0.5)
-
     await goto_with_avoidance(drone, 0.0, 0.0, 100.0, 0.0, position_updates)
 
 
-async def drone_to_avoid_test() -> None:
+async def drone_to_avoid_test(drone: mavsdk.System) -> None:
     """
     Runs test code for the drone which the other drone should avoid
     """
-
-    drone: mavsdk.System = mavsdk.System(port=50052)
-    await drone.connect(system_address="udp://:14541")
 
     asyncio.ensure_future(print_status_text(drone))
 
@@ -108,28 +125,6 @@ async def drone_to_avoid_test() -> None:
     async for health in drone.telemetry.health():
         if health.is_global_position_ok and health.is_home_position_ok:
             break
-
-    # Get position updates directly from the drone object
-    # In actual use, vision code would determine the position of the obstacle drone
-    async def position() -> AsyncIterator[list[InputPoint]]:
-        positions: list[InputPoint] = []
-
-        while True:
-            point: Point = Point.from_mavsdk_position(await anext(drone.telemetry.position()))
-            in_point: InputPoint = dataclasses.asdict(point)
-
-            if len(positions) > 4:
-                positions = positions[1:]
-
-            positions.append(in_point)
-
-            yield positions[:]
-            await asyncio.sleep(1.0)
-
-    # Set position_updates
-    global position_updates
-    with position_updates_lock:
-        position_updates = position()
 
     await drone.action.arm()
     await drone.action.set_takeoff_altitude(TAKEOFF_ALTITUDE)
@@ -144,20 +139,6 @@ async def drone_to_avoid_test() -> None:
         await asyncio.sleep(4.0 * random.random() * random.random())
 
 
-async def run() -> None:
-    """
-    Runs test code
-    """
-
-    asyncio.ensure_future(avoiding_drone_test())
-    asyncio.ensure_future(drone_to_avoid_test())
-
-    # Sleep forever
-    # The tests won't run if we don't
-    while True:
-        await asyncio.sleep(60.0)
-
-
 async def print_status_text(drone: mavsdk.System) -> None:
     """
     Prints status text
@@ -169,3 +150,25 @@ async def print_status_text(drone: mavsdk.System) -> None:
             print(f"Status: {status_text.type}: {status_text.text}")
     except asyncio.CancelledError:
         return
+
+
+async def run() -> None:
+    """
+    Runs test code
+    """
+
+    avoiding_drone: mavsdk.System = mavsdk.System(port=50051)
+    await avoiding_drone.connect(system_address="udp://:14540")
+
+    drone_to_avoid: mavsdk.System = mavsdk.System(port=50052)
+    await drone_to_avoid.connect(system_address="udp://:14541")
+
+    drone_position_updates: AsyncIterator[list[InputPoint]] = drone_positions(drone_to_avoid)
+
+    asyncio.ensure_future(avoiding_drone_test(avoiding_drone, drone_position_updates))
+    asyncio.ensure_future(drone_to_avoid_test(drone_to_avoid))
+
+    # Sleep forever
+    # The tests won't run if we don't
+    while True:
+        await asyncio.sleep(60.0)
