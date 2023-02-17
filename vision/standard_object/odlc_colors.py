@@ -6,7 +6,7 @@ Functions relating to finding the colors of the text and shape on the standard O
 import cv2
 import numpy as np
 
-from nptyping import NDArray, Shape, UInt8, Float32, Int32
+from nptyping import NDArray, Shape, UInt8, Float32, Int32, Float64
 
 from vision.common.bounding_box import BoundingBox
 from vision.common.constants import Image
@@ -45,11 +45,12 @@ def find_colors(image: Image, text_bounds: BoundingBox) -> tuple[ODLCColors, ODL
     text_color_val: NDArray[Shape["3"], UInt8]
     shape_color_val, text_color_val = get_color_vals(kmeans_img)
 
-    # determine which color is shape and which is text
-
     # match colors to closest color in ODLCColors
+    shape_color: ODLCColors = parse_color(shape_color_val)
+    text_color: ODLCColors = parse_color(text_color_val)
 
     # return the 2 colors
+    return shape_color, text_color
 
 
 def crop_image(image: Image, bounds: BoundingBox) -> Image:
@@ -212,6 +213,89 @@ def get_color_vals(
     )
 
     return shape_color_val, text_color_val
+
+
+def parse_color(color_val: NDArray[Shape["3"], UInt8]) -> ODLCColors:
+    """
+    Parse an BGR color value to determine what color it is closest to.
+
+    Parameters
+    ----------
+    color_val : NDArray[Shape["3"], UInt8]
+        the BGR color value
+
+    Returns
+    -------
+    color : ODLCColors
+        the color that the value is closest to
+    """
+    # Convert color to HSV
+    frame: NDArray[Shape["1, 1, 3"], UInt8] = np.reshape(
+        color_val, (1, 1, 3)
+    )  # store as single-pixel image
+    hsv_color_val: NDArray[Shape["3"], UInt8] = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV_FULL)
+
+    # Determine which ranges color value falls in
+    matched: list[ODLCColors] = []  # colors matched to the value
+
+    col: ODLCColors
+    ranges: NDArray[Shape["*, 2, 3"], UInt8]
+    for col, ranges in COLOR_RANGES.items():  # for each color and its set of ranges
+        col_range: NDArray[Shape["2, 3"], UInt8]
+        for col_range in ranges:  # for each range of the color
+            if cv2.inRange(hsv_color_val, col_range[1], col_range[0])[0, 0] == 255:
+                matched.append(col)
+
+    if len(matched) == 0:  # no matches
+        # find the color with min dist to color value
+        best_dist: float = float("inf")
+        best_col: ODLCColors = ODLCColors.BLACK  # default, will be overwritten
+
+        col_name: ODLCColors
+        for col_name in COLOR_RANGES.keys():
+            dist: float = float("inf")
+
+            col_range: NDArray[Shape["2, 3"], UInt8]
+            for col_range in COLOR_RANGES[col_name]:  # for each range of the color
+                mid: NDArray[Shape["3"], Float64] = np.array(
+                    [np.mean(col_range[:, 0]), np.mean(col_range[:, 1]), np.mean(col_range[:, 2])]
+                )  # midpoint of range
+                dist: float = np.sum(np.abs(hsv_color_val - mid)).astype(
+                    float
+                )  # dist of color to range mid
+
+                if dist < best_dist:  # color with min distance is the color chosen
+                    best_dist = dist
+                    best_col = col_name
+
+        return best_col  # return color with lowest distance
+
+    if len(matched) > 1:  # more than 1 match
+        # find matched color with min dist to color value
+        best_dist: float = float("inf")
+        best_col: ODLCColors = matched[0]
+
+        matched_col: ODLCColors
+        for matched_col in matched:
+            dist: float = float("inf")
+
+            col_range: NDArray[Shape["2, 3"], UInt8]
+            for col_range in COLOR_RANGES[matched_col]:  # for each range of the color
+                mid: NDArray[Shape["3"], Float64] = np.array(
+                    [np.mean(col_range[:, 0]), np.mean(col_range[:, 1]), np.mean(col_range[:, 2])]
+                )  # midpoint of range
+                dist: float = np.sum(np.abs(hsv_color_val - mid)).astype(
+                    float
+                )  # dist of color to range mid
+
+                if dist < best_dist:  # color with min distance is the color chosen
+                    best_dist = dist
+                    best_col = matched_col
+
+        return best_col  # return color with lowest distance
+
+    # only 1 matched color (perfection)
+    return matched[0]
 
 
 if __name__ == "__main__":
