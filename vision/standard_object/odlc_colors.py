@@ -2,17 +2,18 @@
 Functions relating to finding the colors of the text and shape on the standard ODLC objects.
 """
 
+
 import cv2
 import numpy as np
 
-from nptyping import NDArray, Shape, UInt8, Float32
+from nptyping import NDArray, Shape, UInt8, Float32, Int32
 
 from vision.common.bounding_box import BoundingBox
 from vision.common.constants import Image
 from vision.common.odlc_characteristics import ODLCColors, COLOR_RANGES
 
 
-def find_colors(image: Image, text_bounds: BoundingBox) -> NDArray[Shape["2"], ODLCColors]:
+def find_colors(image: Image, text_bounds: BoundingBox) -> tuple[ODLCColors, ODLCColors]:
     """
     Finds the colors of the shape and text based on the portion of the image bounded
     by the text bounds.
@@ -26,7 +27,7 @@ def find_colors(image: Image, text_bounds: BoundingBox) -> NDArray[Shape["2"], O
 
     Returns
     -------
-    colors : NDArray[Shape["2"], ODLCColors]
+    colors : tuple[ODLCColors, ODLCColors]
         the colors of the standard object
         shape_color : ODLCColors
             the color of the shape
@@ -45,7 +46,6 @@ def find_colors(image: Image, text_bounds: BoundingBox) -> NDArray[Shape["2"], O
     # match colors to closest color in ODLCColors
 
     # return the 2 colors
-    pass
 
 
 def crop_image(image: Image, bounds: BoundingBox) -> Image:
@@ -102,7 +102,9 @@ def run_kmeans(cropped_img: Image) -> Image:
     # of kmeans choosing a ground color if bounds are loose
     blurred_img: Image = cv2.medianBlur(cropped_img, ksize=9)
 
-    kernel: NDArray[Shape["5, 5"], UInt8]  # 5x5 kernal for use in dilation/erosion
+    kernel: NDArray[Shape["5, 5"], UInt8] = np.ones(
+        (5, 5), np.uint8
+    )  # 5x5 kernal for use in dilation/erosion
     eroded_img: Image = cv2.erode(blurred_img, kernel=kernel, iterations=1)
     dilated_img: Image = cv2.dilate(eroded_img, kernel=kernel, iterations=1)
 
@@ -121,16 +123,39 @@ def run_kmeans(cropped_img: Image) -> Image:
     )
     k_val: int = 2
 
-    label: NDArray[str]
-    center: NDArray[Float32]
+    label: NDArray[Shape["*, *"], Int32]
+    center: NDArray[Shape["2, 5"], Float32]
     _, label, center = cv2.kmeans(
         np.float32(vectorized), K=k_val, bestLabels=None, criteria=term_crit, attempts=10, flags=0
     )
 
-    center_int: NDArray[UInt8] = center.astype(np.uint8)[:, :3]
+    center_int: NDArray[Shape["2, 3"], UInt8] = center.astype(np.uint8)[:, :3]
 
     # Convert back to BGR
-    kmeans_img: Image = center_int[label.flatten()]
-    kmeans_img = kmeans_img.reshape((dilated_img.shape))
+    kmeans_flat: NDArray[Shape["*, 3"], UInt8] = center_int[label.flatten()]
+    kmeans_img: Image = kmeans_flat.reshape((dilated_img.shape))
 
     return kmeans_img
+
+
+if __name__ == "__main__":
+    import argparse
+
+    # parse arguments
+    parser: argparse.ArgumentParser = argparse.ArgumentParser("Find ODLC colors.")
+
+    parser.add_argument(
+        "-f", "--file_name", type=str, help="Name and path to the image file. Required argument."
+    )
+
+    args: argparse.Namespace = parser.parse_args()
+
+    if not args.file_name:
+        raise RuntimeError("No image file specified.")
+    file_name: str = args.file_name
+
+    # read in the image and run algorithm
+    img: Image = cv2.imread(file_name)
+
+    ## TODO: change to actual call
+    run_kmeans(img)
