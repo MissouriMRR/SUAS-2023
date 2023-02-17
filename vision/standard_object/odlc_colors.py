@@ -217,7 +217,7 @@ def get_color_vals(
 
 def parse_color(color_val: NDArray[Shape["3"], UInt8]) -> ODLCColors:
     """
-    Parse an BGR color value to determine what color it is closest to.
+    Parse an BGR color value to determine what color it is.
 
     Parameters
     ----------
@@ -247,59 +247,59 @@ def parse_color(color_val: NDArray[Shape["3"], UInt8]) -> ODLCColors:
                 matched.append(col)
 
     if len(matched) == 0:  # no matches
-        # find the color with min dist to color value
-        best_dist: float = float("inf")
-        best_col: ODLCColors = ODLCColors.BLACK  # default, will be overwritten
-
-        col_name: ODLCColors
-        for col_name in COLOR_RANGES.keys():
-            dist: float = float("inf")
-
-            col_range: NDArray[Shape["2, 3"], UInt8]
-            for col_range in COLOR_RANGES[col_name]:  # for each range of the color
-                mid: NDArray[Shape["3"], Float64] = np.array(
-                    [np.mean(col_range[:, 0]), np.mean(col_range[:, 1]), np.mean(col_range[:, 2])]
-                )  # midpoint of range
-                dist: float = np.sum(np.abs(hsv_color_val - mid)).astype(
-                    float
-                )  # dist of color to range mid
-
-                if dist < best_dist:  # color with min distance is the color chosen
-                    best_dist = dist
-                    best_col = col_name
-
-        return best_col  # return color with lowest distance
+        return best_color_range(hsv_color_val, list(COLOR_RANGES.keys()))
 
     if len(matched) > 1:  # more than 1 match
-        # find matched color with min dist to color value
-        best_dist: float = float("inf")
-        best_col: ODLCColors = matched[0]
-
-        matched_col: ODLCColors
-        for matched_col in matched:
-            dist: float = float("inf")
-
-            col_range: NDArray[Shape["2, 3"], UInt8]
-            for col_range in COLOR_RANGES[matched_col]:  # for each range of the color
-                mid: NDArray[Shape["3"], Float64] = np.array(
-                    [np.mean(col_range[:, 0]), np.mean(col_range[:, 1]), np.mean(col_range[:, 2])]
-                )  # midpoint of range
-                dist: float = np.sum(np.abs(hsv_color_val - mid)).astype(
-                    float
-                )  # dist of color to range mid
-
-                if dist < best_dist:  # color with min distance is the color chosen
-                    best_dist = dist
-                    best_col = matched_col
-
-        return best_col  # return color with lowest distance
+        return best_color_range(hsv_color_val, matched)
 
     # only 1 matched color (perfection)
     return matched[0]
 
 
+def best_color_range(
+    color_val: NDArray[Shape["3"], UInt8], possible_colors: list[ODLCColors]
+) -> ODLCColors:
+    """
+    Find the closest color to the value from the possible colors.
+
+    Parameters
+    ----------
+    color_val : NDArray[Shape["3"], UInt8]
+        the color value in HSV space
+    possible_colors : list[ODLCColors]
+        the possible colors to check
+
+    Returns
+    -------
+    color : ODLCColors
+        the closest color to the value
+    """
+    # find matched color with min dist to color value
+    best_dist: float = float("inf")
+    best_col: ODLCColors = possible_colors[0]
+
+    col: ODLCColors
+    for col in possible_colors:
+        dist: float = float("inf")
+
+        col_range: NDArray[Shape["2, 3"], UInt8]
+        for col_range in COLOR_RANGES[col]:  # for each range of the color
+            mid: NDArray[Shape["3"], Float64] = np.array(
+                [np.mean(col_range[:, 0]), np.mean(col_range[:, 1]), np.mean(col_range[:, 2])]
+            )  # midpoint of range
+            dist = np.sum(np.abs(color_val - mid)).astype(float)  # dist of color to range mid
+
+            if dist < best_dist:  # color with min distance is the color chosen
+                best_dist = dist
+                best_col = col
+
+    return best_col  # return color with lowest distance
+
+
 if __name__ == "__main__":
     import argparse
+
+    from vision.common.bounding_box import ObjectType
 
     # parse arguments
     parser: argparse.ArgumentParser = argparse.ArgumentParser("Find ODLC colors.")
@@ -317,5 +317,7 @@ if __name__ == "__main__":
     # read in the image and run algorithm
     img: Image = cv2.imread(file_name)
 
-    ## TODO: change to actual call
-    run_kmeans(img)
+    bbox = BoundingBox(vertices=((0, 0), (10, 0), (10, 10), (0, 10)), obj_type=ObjectType.TEXT)
+
+    # run algorithm
+    print(find_colors(img, bbox))
