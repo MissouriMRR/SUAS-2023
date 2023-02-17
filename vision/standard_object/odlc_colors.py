@@ -35,11 +35,15 @@ def find_colors(image: Image, text_bounds: BoundingBox) -> tuple[ODLCColors, ODL
             the color of the text on the object
     """
     # slice image around bounds of text
-    cropped_img = crop_image(image, text_bounds)
+    cropped_img: Image = crop_image(image, text_bounds)
 
     # kmeans clustering with k=2
+    kmeans_img: Image = run_kmeans(cropped_img)
 
     # get the 2 color values
+    shape_color_val: NDArray[Shape["3"], UInt8]
+    text_color_val: NDArray[Shape["3"], UInt8]
+    shape_color_val, text_color_val = get_color_vals(kmeans_img)
 
     # determine which color is shape and which is text
 
@@ -136,6 +140,78 @@ def run_kmeans(cropped_img: Image) -> Image:
     kmeans_img: Image = kmeans_flat.reshape((dilated_img.shape))
 
     return kmeans_img
+
+
+def get_color_vals(
+    kmeans_img: Image,
+) -> tuple[NDArray[Shape["3"], UInt8], NDArray[Shape["3"], UInt8]]:
+    """
+    Get the two unique color values in the kmeans image and determines which is the
+    shape and which is the text.
+
+    Parameters
+    ----------
+    kmeans_img : Image
+        the cropped image of the text after kmeans has been performed
+
+    Returns
+    -------
+    color_vals : tuple[NDArray[Shape["3"], UInt8], NDArray[Shape["3"], UInt8]]
+        the color values of the shape and the text
+        shape_color_val : NDArray[Shape["3"], UInt8]
+            RGB value of the shape color
+        text_color_val : NDArray[Shape["3"], UInt8]
+            RGB value of the text color
+    """
+    # Find the two colors in the image
+    color_vals: NDArray[Shape["2, 3"], UInt8] = np.unique(
+        kmeans_img.reshape(-1, kmeans_img.shape[2]), axis=0
+    )
+
+    # Mask of Color 1
+    color_1_r: NDArray[Shape["*, *"], UInt8] = np.where(
+        kmeans_img[:, :, 0] == color_vals[0][0], 1, 0
+    )
+    color_1_g: NDArray[Shape["*, *"], UInt8] = np.where(
+        kmeans_img[:, :, 1] == color_vals[0][1], 1, 0
+    )
+    color_1_b: NDArray[Shape["*, *"], UInt8] = np.where(
+        kmeans_img[:, :, 2] == color_vals[0][2], 1, 0
+    )
+
+    color_1_mat: NDArray[Shape["*, *"], UInt8] = np.bitwise_and(
+        color_1_r, color_1_g, color_1_b
+    ).astype(np.uint8)
+    color_1_adj_mat: NDArray[Shape["*, *"], UInt8] = np.where(color_1_mat == 1, 255, 128).astype(
+        np.uint8
+    )
+
+    # Mask of Color 2
+    color_2_mat: NDArray[Shape["*, *"], UInt8] = np.where(color_1_mat == 1, 0, 1).astype(np.uint8)
+
+    # Set middle pixel of adj mat to 0
+    dimensions: tuple[int, int] = color_1_adj_mat.shape
+    center_pt: tuple[int, int] = (int(dimensions[0] / 2), int(dimensions[1] / 2))
+    color_1_adj_mat[center_pt] = 0
+
+    # calculate distance of each pixel to center pixel
+    distance_mat: NDArray[Shape["*, *"], Float32] = cv2.distanceTransform(
+        color_1_adj_mat, cv2.DIST_L2, 3
+    )
+
+    # average distance for each color
+    dist_1: float = cv2.mean(distance_mat, color_1_mat)[0]
+    dist_2: float = cv2.mean(distance_mat, color_2_mat)[0]
+
+    # sort color values, assumes that text color value is closer to the center
+    text_color_val: NDArray[Shape["3"], UInt8] = (
+        color_vals[0] if min(dist_1, dist_2) == dist_1 else color_vals[1]
+    )
+    shape_color_val: NDArray[Shape["3"], UInt8] = (
+        color_vals[0] if text_color_val == color_vals[1] else color_vals[1]
+    )
+
+    return shape_color_val, text_color_val
 
 
 if __name__ == "__main__":
