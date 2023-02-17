@@ -12,7 +12,7 @@ import vision.common.bounding_box as bbox
 
 def test_heirarchy(hierarchy: consts.Hierarchy, contour_index: int) -> bool:
     """
-    Function to test whether the contour at the given index contains another contour in it
+    Tests whether the contour at the given index contains another contour in it
 
     Parameters
     ----------
@@ -53,13 +53,11 @@ def test_min_area_box(contour: consts.Contour, max_box_ratio_range: float = 0.5)
     acceptable_ratio : bool
         Returns true if the aspect ratio of the min area box is inbetween the min and max
     """
-    # NDArray[Shape["4, 2"], Float32] is the return type of cv2.boxPoints()
     min_area_box: NDArray[Shape["4, 2"], Float32] = cv2.boxPoints(cv2.minAreaRect(contour))
     # either length/width or width/length, does not matter
     aspect_ratio: float = (cv2.norm(min_area_box[0] - min_area_box[1])) / (
         cv2.norm(min_area_box[1] - min_area_box[2])
     )
-    # pylint made me format the comparison like this
     return 1 - max_box_ratio_range < aspect_ratio < 1 + max_box_ratio_range
 
 
@@ -125,7 +123,7 @@ def test_spikiness(contour: consts.Contour) -> bool:
         True unless there is a statistical outlier point that is uniquely far away (or close ig)
 
     References
-    -----
+    ----------
     This function uses a concept called the "Image moment" to calculate the center of a given
     contour. More information can be found here: https://en.wikipedia.org/wiki/Image_moment
     """
@@ -137,8 +135,7 @@ def test_spikiness(contour: consts.Contour) -> bool:
         ((moments["m01"] / moments["m00"]), (moments["m10"] / moments["m00"])), dtype=np.float64
     )
 
-    # numpy array that will hold the distance of each point in the contour to the center of the
-    # contour
+    # Holds the distance of each point in the contour to the center of the contour
     dists_com: NDArray[Shape["*"], Float32] = np.ndarray(contour.shape[0], Float32)
     for i in range(contour.shape[0]):
         dists_com[i] = cv2.norm(contour[i] - com)
@@ -151,7 +148,6 @@ def test_spikiness(contour: consts.Contour) -> bool:
 
     # if all of the points are within 3 standard deviations of the avg distance to the center of
     # the contour, then there are no statistical outliers
-    # Also pylint made me format the comparison like this
     if np.all(dists_com < dists_mean + dists_outlier_range):
         return True
     return False
@@ -164,7 +160,7 @@ def min_common_bounding_box(contours: list[consts.Contour]) -> bbox.BoundingBox:
 
     Parameters
     ----------
-    contours : tuple[consts.Contour]
+    contours : list[consts.Contour]
         Tuple of contours as formatted in cv2.findContour to find the minimum common bounding box
 
     Returns
@@ -276,11 +272,11 @@ def test_roughness(
     non_overlap_cnts, _ = cv2.findContours(non_overlap_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     # sums the area of all of the non-overlapping portions of the shapes
-    non_overlap_area_sum = 0
+    non_overlap_area_sum: float = 0
     for cnt in non_overlap_cnts:
         non_overlap_area_sum += cv2.contourArea(cnt)
 
-    contour_area = cv2.contourArea(contour)
+    contour_area: float = cv2.contourArea(contour)
     if (
         len(non_overlap_cnts) == 0
         or non_overlap_area_sum == 0
@@ -315,7 +311,6 @@ def test_circleness(img: consts.ScImage) -> bool:
     # (kernel size and sigmaX are both parameters of cv2.GaussianBlur())
     # the number should not be very important because the input image is a binarized image
     modded = cv2.GaussianBlur(img, (5, 5), 5)
-    # NDArray[Shape["1, *, 3"], Float32] is return type of cv2.HoughCircles()
     # format is [[[center_x_1, center_y_1, radius_1], [center_x_2, center_y_2, radius_2], ...]]
     circles: NDArray[Shape["1, *, 3"], Float32] | None = cv2.HoughCircles(
         modded,
@@ -333,6 +328,7 @@ def test_circleness(img: consts.ScImage) -> bool:
 
     # circles[0] is the actual array of circles because for some reason opencv puts this inside of
     # another list as the only element
+    circle: NDArray[Shape["3"], Float32]
     for circle in circles[0]:
         if int(max(img.shape[0], img.shape[1]) / 1.6) <= circle[2] and circle[2] <= int(
             min(img.shape[0], img.shape[1]) * 1.1
@@ -447,7 +443,7 @@ if __name__ == "__main__":
     test_image: consts.ScImage = cv2.cvtColor(test_image1, cv2.COLOR_BGR2GRAY)
 
     # a variable length tuple is not good practice, but that is what opencv does here
-    # cnts_tmp: tuple(consts.Contour, ...) # also this gives a TypeError for some reason
+    cnts_tmp: tuple[consts.Contour, ...]
     hier_tmp: consts.Hierarchy
     cnts_tmp, hier_tmp = cv2.findContours(test_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     print("contours1:", type(cnts_tmp), len(cnts_tmp), cnts_tmp)
@@ -458,8 +454,8 @@ if __name__ == "__main__":
     cv2.imshow("cnts1-0", img2)
     cv2.waitKey(0)
 
-    # find the contours for "real" my code doesnt do that, this is just to generate test contours
-    # cnts: tuple(consts.Contour, ...)
+    # find the contours for "real." My code doesnt do that, this is just to generate test contours
+    cnts: tuple[consts.Contour, ...]
     hier: consts.Hierarchy
     cnts, hier = cv2.findContours(test_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
