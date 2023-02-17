@@ -1,5 +1,5 @@
 """
-Tests this package
+Tests this package using PX4 Autopilot and the Gazebo simulator
 """
 
 import asyncio
