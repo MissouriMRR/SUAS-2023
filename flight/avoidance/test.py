@@ -88,6 +88,13 @@ async def avoiding_drone_test(
 ) -> None:
     """
     Runs test code for the drone trying to avoid the other drone
+
+    Parameters
+    ----------
+    drone : mavsdk.System
+        The drone this test will control
+    position_updates : AsyncIterator[list[InputPoint]]
+        Position updates for the drone this drone should avoid
     """
 
     asyncio.ensure_future(print_status_text(drone))
@@ -112,6 +119,11 @@ async def avoiding_drone_test(
 async def drone_to_avoid_test(drone: mavsdk.System) -> None:
     """
     Runs test code for the drone which the other drone should avoid
+
+    Parameters
+    ----------
+    drone : mavsdk.System
+        The drone this test will control
     """
 
     asyncio.ensure_future(print_status_text(drone))
