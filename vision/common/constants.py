@@ -8,9 +8,11 @@ Image: TypeAlias = NDArray[Shape["*, *, 3"], UInt8]
 ScImage: TypeAlias = NDArray[Shape["*, *"], UInt8]
 # single channel image of booleans
 Mask: TypeAlias = NDArray[Shape["*, *"], Bool]
+
 Point: TypeAlias = NDArray[Shape["2"], Float64]
 Vector: TypeAlias = NDArray[Shape["3"], Float64]
-# return types for cv2.findContours() -> (Tuple[contours], hierarchy)
+
+# return types for cv2.findContours() -> tuple[tuple[Contour, ...], Hierarchy]
 Contour: TypeAlias = NDArray[Shape["*, 1, 2"], IntC]
 Hierarchy: TypeAlias = NDArray[Shape["1, *, 4"], IntC]
 

@@ -3,16 +3,11 @@ This file contains functions to filter contours to identify the odlc shapes from
 processed image. The only function that should be needed is filter_contour(), the rest are helper
 functions.
 """
-from typing import TypeAlias
 import numpy as np
 from nptyping import NDArray, Shape, UInt8, IntC, Float32
 import cv2
 import vision.common.constants as consts
-
-# import vision.common.bounding_box as bbox
-
-# type for return value of cv2.boundingRect()
-BoundBoxType: TypeAlias = tuple[int, int, int, int]
+import vision.common.bounding_box as bbox
 
 
 def test_heirarchy(hierarchy: consts.Hierarchy, contour_index: int) -> bool:
@@ -21,7 +16,7 @@ def test_heirarchy(hierarchy: consts.Hierarchy, contour_index: int) -> bool:
 
     Parameters
     ----------
-    hierarchy : hierarchy_type
+    hierarchy : consts.Hierarchy
         The 2nd value returned from cv2.findContours(), describes how contours are inside of
         other contours
     contour_index : int
@@ -45,7 +40,7 @@ def test_min_area_box(contour: consts.Contour, max_box_ratio_range: float = 0.5)
 
     Parameters
     ----------
-    contour : contour_type
+    contour : consts.Contour
         The individual contour to be evaluated (as returned from cv2.findContours)
     max_box_ratio_range : float = 0.5
         The maximum acceptable range of aspect ratios (centered on a 1:1 ratio), so if 0.5 is the
@@ -77,7 +72,7 @@ def test_bounding_box(
 
     Parameters
     ----------
-    contour : contour_type
+    contour : consts.Contour
         The individual contour to be evaluated (as returned from cv2.findContours)
     dims : tuple[int, int]
         The dimensions of the image the contour is from
@@ -94,11 +89,18 @@ def test_bounding_box(
         Returns true if the bounding box area is less than the image area by a factor of
         test_area_ratio or more
     """
-    bounding_box: BoundBoxType = cv2.boundingRect(contour)
-
-    box_area: float = abs(bounding_box[2] - bounding_box[0]) * abs(
-        bounding_box[3] - bounding_box[1]
+    bounding_box_retval: tuple[int, int, int, int] = cv2.boundingRect(contour)
+    bounding_box: bbox.BoundingBox = bbox.BoundingBox(
+        bbox.tlwh_to_vertices(
+            bounding_box_retval[1],
+            bounding_box_retval[0],
+            bounding_box_retval[3] - bounding_box_retval[1],
+            bounding_box_retval[2] - bounding_box_retval[0],
+        ),
+        bbox.ObjectType.STD_OBJECT,
     )
+
+    box_area: float = bounding_box.get_height() * bounding_box.get_width()
     img_area: float = dims[0] * dims[1]
 
     return box_area * test_area_ratio <= img_area
@@ -114,7 +116,7 @@ def test_spikiness(contour: consts.Contour) -> bool:
 
     Parameters
     ----------
-    contour : contour_type
+    contour : consts.Contour
         The individual contour to be evaluated (as returned from cv2.findContours)
 
     Returns
@@ -150,63 +152,77 @@ def test_spikiness(contour: consts.Contour) -> bool:
     # if all of the points are within 3 standard deviations of the avg distance to the center of
     # the contour, then there are no statistical outliers
     # Also pylint made me format the comparison like this
-    if np.all(dists_mean - dists_outlier_range < dists_com < dists_mean + dists_outlier_range):
+    if np.all(dists_com < dists_mean + dists_outlier_range):
         return True
     return False
 
 
-def min_common_bounding_box(contours: list[consts.Contour]) -> BoundBoxType:
+def min_common_bounding_box(contours: list[consts.Contour]) -> bbox.BoundingBox:
     """
     Takes a set of contours and returns the smallest bounding
     box that encloses all of them
 
     Parameters
     ----------
-    contours : tuple[contour_type]
+    contours : tuple[consts.Contour]
         Tuple of contours as formatted in cv2.findContour to find the minimum common bounding box
 
     Returns
     -------
-    minimum_commom_bounding_box : BoundBoxType
+    minimum_commom_bounding_box : bbox.BoundingBox
         The smallest bounding box that encompases all of the given contours
     """
 
-    boxes: list[BoundBoxType] = []
+    boxes: list[bbox.BoundingBox] = []
     for contour in contours:
-        boxes += [
-            cv2.boundingRect(contour),
-        ]
+        # tuple[int, int, int, int] is the return type of cv2.boundingRect()
+        # the first two are the (y, x) of top left corner
+        # the last two are the (y, x) of the bottom right corner
+        contour_box: tuple[int, int, int, int] = cv2.boundingRect(contour)
 
-    min_box: BoundBoxType = (
-        min(box[0] for box in boxes),
-        min(box[1] for box in boxes),
-        max(box[2] for box in boxes),
-        max(box[3] for box in boxes),
+        boxes.append(
+            bbox.BoundingBox(
+                bbox.tlwh_to_vertices(
+                    contour_box[1],
+                    contour_box[0],
+                    contour_box[3] - contour_box[1],
+                    contour_box[2] - contour_box[0],
+                ),
+                bbox.ObjectType.STD_OBJECT,
+            )
+        )
+
+    min_x: int = np.min(np.array([box.get_x_extremes()[0] for box in boxes]))
+    max_x: int = np.max(np.array([box.get_x_extremes()[1] for box in boxes]))
+    min_y: int = np.min(np.array([box.get_y_extremes()[0] for box in boxes]))
+    max_y: int = np.max(np.array([box.get_y_extremes()[1] for box in boxes]))
+    min_box: bbox.BoundingBox = bbox.BoundingBox(
+        ((min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, max_y)), bbox.ObjectType.STD_OBJECT
     )
     return min_box
 
 
-def generate_mask(contour: consts.Contour, box: BoundBoxType) -> consts.Mask:
+def generate_mask(contour: consts.Contour, box: bbox.BoundingBox) -> consts.Mask:
     """
     Will create a mask with the dimensions of the given bounding box that is true for any point
-    that is inside the contour
+    that is inside the contour.
 
     Parameters
     ----------
-    contour : contour_type
+    contour : consts.Contour
         The individual contour to be evaluated (as returned from cv2.findContours)
-    box : bound_box_type
+    box : bbox.BoundingBox
         The bounding box that will be used to create the mask image, the mask will be the size of
         box and will offset the contour so that it is inside of the box
 
     Returns
     -------
-    contour_mask : MaskType
+    contour_mask : consts.Mask
         A MaskType that is the dimensions of the input bounding box and is true wherever is
         inside of the input contour
     """
-    dims: tuple[int, int] = (box[2] - box[0], box[3] - box[1])
-    shifted_cnt: consts.Contour = contour - np.array((box[0], box[2]))
+    dims: tuple[int, int] = box.get_width_height()[::-1]
+    shifted_cnt: consts.Contour = contour - np.array(box.vertices[0][::-1])
 
     mask: consts.Mask = np.zeros(dims)
     mask = cv2.drawContours(mask, [shifted_cnt], -1, True, cv2.FILLED)
@@ -224,9 +240,9 @@ def test_roughness(
 
     Parameters
     ----------
-    contour : contour_type
+    contour : consts.Contour
         The originally found contour to be evaluated (as returned from cv2.findContours)
-    approx : contour_type
+    approx : consts.Contour
         The contour (same as contour param) but run through an approximation algoritm
         such as cv2.approxPolyDP(contour, 0.05*cv2.arcLength(contour, True), True)
                                           ^^^^can be tweaked
@@ -240,7 +256,7 @@ def test_roughness(
         specified percentage of the original contour's area, false otherwise
     """
     # finds one box that will fit both shapes
-    box: BoundBoxType = min_common_bounding_box([contour, approx])
+    box: bbox.BoundingBox = min_common_bounding_box([contour, approx])
 
     # generates masks (single channel binary images/matricies) for both shapes with white being
     # any point that is in the shape and black being everywhere else
@@ -281,7 +297,7 @@ def test_circleness(img: consts.ScImage) -> bool:
 
     Parameters
     ----------
-    img : sc_image_type
+    img : consts.ScImage
         Img should be grayscale cropped box around contour and PROCESSED ALREADY
         as in the image is binary with the contour filled in as white
         NOTE: sc_image_type denotes a single channel image
@@ -339,10 +355,10 @@ def filter_contour(
 
     Parameters
     ----------
-    contours : list[ContourType]
+    contours : list[consts.Contour]
         The list of contours returned by the contour detection algorithm
         NOTE: cv2.findContours() returns as a tuple of arbitrary length, so first convert to list
-    hierarchy : HierarchyType
+    hierarchy : consts.Hierarchy
         The contour hierarchy list returned by the contour detection algorithm
         (the 2nd value returned by cv2.findContours())
     index : int
@@ -355,7 +371,7 @@ def filter_contour(
             The height dimension of the image
         image_dim_width : int
             The width dimension of the image
-    approx_contour : ContourType | None = None
+    approx_contour : consts.Contour | None = None
         Optional parameter to provide the approximated version (from cv2.approxPolyDP) of the
         contour to be checked to avoid recalculation
         This is None by default, it is only not None when the approximated contour is provided
@@ -388,7 +404,20 @@ def filter_contour(
     # run polygon specific test
     if not test_roughness(contours[index], approx_contour):
         # if polygon test fails run circle test
-        cnt_bound_box: BoundBoxType = cv2.boundingRect(contours[index])
+
+        # tuple[int, int, int, int] is the return type of cv2.boundingRect()
+        # the first two are the (y, x) of top left corner
+        # the last two are the (y, x) of the bottom right corner
+        cnt_bound_box_retval: tuple[int, int, int, int] = cv2.boundingRect(contours[index])
+        cnt_bound_box: bbox.BoundingBox = bbox.BoundingBox(
+            bbox.tlwh_to_vertices(
+                cnt_bound_box_retval[1],
+                cnt_bound_box_retval[0],
+                cnt_bound_box_retval[3] - cnt_bound_box_retval[1],
+                cnt_bound_box_retval[2] - cnt_bound_box_retval[0],
+            ),
+            bbox.ObjectType.STD_OBJECT,
+        )
         # use _generate_mask to get a mask of the shape then cvt bool image to UInt8
         cnt_mask: consts.Mask = generate_mask(contours[index], cnt_bound_box)
         cnt_sc_img: consts.ScImage = np.where(cnt_mask, 255, 0).astype(np.uint8)
@@ -399,34 +428,61 @@ def filter_contour(
     return True
 
 
+# All of main is some basic testing code
 if __name__ == "__main__":
-    # All of main is some basic testing code
-    test_image = np.zeros([500, 500, 3], dtype=UInt8)
+    # create a blank image
+    test_image1: consts.Image = np.zeros([5000, 5000, 3], dtype=UInt8)
 
-    raw_pts = np.array([[249, 0], [499, 249], [249, 499], [0, 249]], IntC)
-
+    # define some points to make a polygon, there is some draw circle function to try circles also
+    raw_pts: NDArray[Shape["*, 2"], IntC] = np.array(
+        [[249, 0], [499, 249], [249, 499], [0, 249]], IntC
+    )
     pts: consts.Contour = raw_pts.reshape((-1, 1, 2))
-    test_image = cv2.polylines(test_image, [pts], True, (255, 255, 255))
+    # put the points on the image
+    test_image1 = cv2.polylines(test_image1, [pts], True, (255, 255, 255))
 
-    cv2.imshow("pic", test_image)
+    cv2.imshow("pic", test_image1)
     cv2.waitKey(0)
-    test_image = cv2.cvtColor(test_image, cv2.COLOR_BGR2GRAY)
+    # make single channel to do contour stuff
+    test_image: consts.ScImage = cv2.cvtColor(test_image1, cv2.COLOR_BGR2GRAY)
 
+    # a variable length tuple is not good practice, but that is what opencv does here
+    # cnts_tmp: tuple(consts.Contour, ...) # also this gives a TypeError for some reason
+    hier_tmp: consts.Hierarchy
     cnts_tmp, hier_tmp = cv2.findContours(test_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     print("contours1:", type(cnts_tmp), len(cnts_tmp), cnts_tmp)
-    img2 = np.dstack((test_image, test_image, test_image))
+    img2: consts.Image = np.dstack((test_image, test_image, test_image))
 
+    # paint a filled in shape
     img2 = cv2.drawContours(img2, cnts_tmp, 0, (255, 255, 255), thickness=cv2.FILLED)
     cv2.imshow("cnts1-0", img2)
     cv2.waitKey(0)
 
+    # find the contours for "real" my code doesnt do that, this is just to generate test contours
+    # cnts: tuple(consts.Contour, ...)
+    hier: consts.Hierarchy
     cnts, hier = cv2.findContours(test_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
+    # for each contour run all of the tests on it
+    ind: int
+    cntr: consts.Contour
     for ind, cntr in enumerate(cnts):
-        cntr_bbox: BoundBoxType = cv2.boundingRect(cntr)
+        # the next 4 "lines" of code create a cropped ScImage around the contour to pass to
+        # circle detection function
+        cntr_bbox_retval: tuple[int, int, int, int] = cv2.boundingRect(cntr)
+        cntr_bbox: bbox.BoundingBox = bbox.BoundingBox(
+            bbox.tlwh_to_vertices(
+                cntr_bbox_retval[1],
+                cntr_bbox_retval[0],
+                cntr_bbox_retval[3] - cntr_bbox_retval[1],
+                cntr_bbox_retval[2] - cntr_bbox_retval[0],
+            ),
+            bbox.ObjectType.STD_OBJECT,
+        )
         cntr_msk: consts.Mask = generate_mask(cntr, cntr_bbox)
         cntr_sc_img: consts.ScImage = np.where(cntr_msk, 255, 0).astype(np.uint8)
         print(type(cntr_sc_img), type(cntr_sc_img[0]), type(cntr_sc_img[0, 0]))
+        # actually running each test individually and printing results for testing/debugging
         print("\nHierarchy Test:", test_heirarchy(hier, ind))
         print("Min Area Box Test:", test_min_area_box(cntr))
         print(
@@ -434,7 +490,9 @@ if __name__ == "__main__":
             test_bounding_box(cntr, (test_image.shape[0], test_image.shape[1])),
         )
         print("Jaggedness Test:", test_spikiness(cntr))
-        peri = cv2.arcLength(cntr, True)
-        approximate = cv2.approxPolyDP(cntr, 0.05 * peri, True)
+        # generates an arbitrary polygon approximation of the contour (tries to remove redundant
+        # points that do not make the contour much different)
+        peri: float = cv2.arcLength(cntr, True)
+        approximate: consts.Contour = cv2.approxPolyDP(cntr, 0.05 * peri, True)
         print("Polygonness Test:", test_roughness(cntr, approximate))
         print("Circleness Test:", test_circleness(img2[:, :, 0]))
