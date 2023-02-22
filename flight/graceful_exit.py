@@ -13,7 +13,7 @@ async def run():
         print("Returning to launch...")
         # Use the MAVSDK's `return_to_launch` method to return to launch
         await drone.action.return_to_launch()
-        
+
 try:
     asyncio.run(run())
 except KeyboardInterrupt:
