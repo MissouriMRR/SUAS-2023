@@ -2,7 +2,7 @@ import asyncio
 from mavsdk import System
 
 
-async def run():
+async def run() -> None:
     # Connect to the drone
     drone: System = System()
     await drone.connect(system_address="udp://:14540")
