@@ -78,7 +78,7 @@ def crop_image(image: Image, bounds: BoundingBox) -> Image:
     max_x: int
     min_x, max_x = bounds.get_x_extremes()
 
-    cropped_img: Image = image[min_y:max_y, min_x, max_x, :]
+    cropped_img: Image = image[min_y:max_y, min_x:max_x, :]
     return cropped_img
 
 
@@ -125,16 +125,16 @@ def run_kmeans(cropped_img: Image) -> Image:
         cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER,
         10,
         1.0,
-    )
-    k_val: int = 2
+    )  # specifies termination criteria of kmeans algorithm (maximum iterations/desired accuracy)
+    k_val: int = 2  # K=2 yields 2 clusters from kmeans
 
-    label: NDArray[Shape["*, *"], Int32]
-    center: NDArray[Shape["2, 5"], Float32]
+    label: NDArray[Shape["*, *"], Int32]  # label array for the clusters
+    center: NDArray[Shape["2, 5"], Float32]  # cluster centers
     _, label, center = cv2.kmeans(
         np.float32(vectorized), K=k_val, bestLabels=None, criteria=term_crit, attempts=10, flags=0
     )
 
-    center_int: NDArray[Shape["2, 3"], UInt8] = center.astype(np.uint8)[:, :3]
+    center_int: NDArray[Shape["2, 3"], UInt8] = center.astype(np.uint8)[:, :3]  # xy removed
 
     # Convert back to BGR
     kmeans_flat: NDArray[Shape["*, 3"], UInt8] = center_int[label.flatten()]
