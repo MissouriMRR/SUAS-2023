@@ -9,14 +9,37 @@ from typing import AsyncIterator
 
 import mavsdk
 import mavsdk.core
+import mavsdk.offboard
 import mavsdk.telemetry
 
 from .avoidance_goto import goto_with_avoidance
 from .point import InputPoint, Point
 
-TAKEOFF_ALTITUDE: float = 20.0
-DEFAULT_SPREAD_LATLON: float = 5e-5
-DEFAULT_SPREAD_ALTITUDE: float = 8.0
+TAKEOFF_ALTITUDE: float = 100.0
+DEFAULT_SPREAD_LATLON: float = 1e-4
+DEFAULT_SPREAD_ALTITUDE: float = 10.0
+
+
+async def takeoff(drone: mavsdk.System, altitude: float) -> None:
+    """
+    Makes a drone take off and waits until it reaches the desired altitude
+
+    Parameters
+    ----------
+    drone : mavsdk.System
+        The drone that will take off
+    altitude : float
+        The minimum altitude, in meters, above the ground to take off to;
+        the actual altitude might be slightly higher
+    """
+
+    await drone.action.set_takeoff_altitude(altitude + 2.0)
+    await drone.action.takeoff()
+
+    # Temporary solution
+    # Originally attempted to use telemetry to detect when the desired
+    #   altitude was reached, but telemetry is broken in Gazebo
+    await asyncio.sleep(15.0)
 
 
 async def random_position(
@@ -78,7 +101,6 @@ async def drone_positions(drone: mavsdk.System) -> AsyncIterator[list[InputPoint
 
         positions.append(in_point)
 
-        print(positions)
         yield positions[:]
         await asyncio.sleep(1.0)
 
@@ -110,10 +132,16 @@ async def avoiding_drone_test(
             break
 
     await drone.action.arm()
-    await drone.action.set_takeoff_altitude(TAKEOFF_ALTITUDE)
-    await drone.action.takeoff()
+    await takeoff(drone, TAKEOFF_ALTITUDE)
+    await drone.offboard.set_velocity_ned(mavsdk.offboard.VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
 
-    await goto_with_avoidance(drone, 0.0, 0.0, 100.0, 0.0, position_updates)
+    # Randomly move drone
+    while True:
+        pos: tuple[float, float, float] = await random_position(
+            drone, DEFAULT_SPREAD_LATLON, DEFAULT_SPREAD_ALTITUDE
+        )
+        await goto_with_avoidance(drone, *pos, 0.0, position_updates)
+        await asyncio.sleep(4.0 * random.random() * random.random())
 
 
 async def drone_to_avoid_test(drone: mavsdk.System) -> None:
@@ -139,8 +167,9 @@ async def drone_to_avoid_test(drone: mavsdk.System) -> None:
             break
 
     await drone.action.arm()
-    await drone.action.set_takeoff_altitude(TAKEOFF_ALTITUDE)
-    await drone.action.takeoff()
+    await takeoff(drone, TAKEOFF_ALTITUDE)
+    await drone.offboard.set_velocity_ned(mavsdk.offboard.VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await drone.offboard.start()
 
     # Randomly move drone
     while True:

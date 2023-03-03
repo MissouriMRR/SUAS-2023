@@ -11,7 +11,7 @@ from . import test
 def main() -> None:
     """Run tests"""
 
-    with subprocess.Popen(["bash", "avoidance/opensitlmultiple.sh"]) as _:
+    with subprocess.Popen(["bash", "avoidance/opensitlmultiple.sh"]):
         pass
 
     asyncio.run(test.run())

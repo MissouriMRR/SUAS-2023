@@ -1,5 +1,6 @@
 """
-Import relevant functions and classes from this module
+This package implements obstacle avoidance functions
+for a MAVSDK drone
 """
 
 from .avoidance_goto import goto_with_avoidance

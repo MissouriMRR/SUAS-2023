@@ -5,13 +5,12 @@ Defines and implements the Velocity class used in obstacle_avoidance.py
 from __future__ import annotations
 from dataclasses import dataclass
 import math
-from typing import overload
 
 import mavsdk.offboard
 import mavsdk.telemetry
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class Velocity:
     """
     A velocity in 3D space
@@ -61,12 +60,11 @@ class Velocity:
 
         return mavsdk.offboard.VelocityNedYaw(self.north_vel, self.east_vel, self.down_vel, yaw_deg)
 
+    def __neg__(self) -> Velocity:
+        return Velocity(-self.north_vel, -self.east_vel, -self.down_vel)
+
     def __add__(self, rhs: Velocity) -> Velocity:
-        return Velocity(
-            self.north_vel + rhs.north_vel,
-            self.east_vel + rhs.east_vel,
-            self.down_vel + rhs.down_vel,
-        )
+        return self + -rhs
 
     def __sub__(self, rhs: Velocity) -> Velocity:
         return Velocity(
@@ -75,44 +73,28 @@ class Velocity:
             self.down_vel - rhs.down_vel,
         )
 
-    @overload
-    def __mul__(self, rhs: float) -> Velocity:
-        ...
-
-    @overload
-    def __mul__(self, rhs: Velocity) -> Velocity:
-        ...
-
     def __mul__(self, rhs: float | Velocity) -> Velocity:
-        if isinstance(rhs, float):
-            rhs = Velocity(rhs, rhs, rhs)
+        if isinstance(rhs, Velocity):
+            return Velocity(
+                self.north_vel * rhs.north_vel,
+                self.east_vel * rhs.east_vel,
+                self.down_vel * rhs.down_vel,
+            )
 
-        return Velocity(
-            self.north_vel * rhs.north_vel,
-            self.east_vel * rhs.east_vel,
-            self.down_vel * rhs.down_vel,
-        )
+        return Velocity(self.north_vel * rhs, self.east_vel * rhs, self.down_vel * rhs)
 
     def __rmul__(self, lhs: float) -> Velocity:
-        return self.__mul__(lhs)
-
-    @overload
-    def __truediv__(self, rhs: float) -> Velocity:
-        ...
-
-    @overload
-    def __truediv__(self, rhs: Velocity) -> Velocity:
-        ...
+        return self * lhs
 
     def __truediv__(self, rhs: float | Velocity) -> Velocity:
-        if isinstance(rhs, float):
-            rhs = Velocity(rhs, rhs, rhs)
+        if isinstance(rhs, Velocity):
+            return Velocity(
+                self.north_vel / rhs.north_vel,
+                self.east_vel / rhs.east_vel,
+                self.down_vel / rhs.down_vel,
+            )
 
-        return Velocity(
-            self.north_vel / rhs.north_vel,
-            self.east_vel / rhs.east_vel,
-            self.down_vel / rhs.down_vel,
-        )
+        return Velocity(self.north_vel / rhs, self.east_vel / rhs, self.down_vel / rhs)
 
     def speed(self) -> float:
         """

@@ -14,7 +14,7 @@ import utm
 InputPoint = dict[str, float | str]
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class Point:
     """
     A point in 3D space

@@ -19,7 +19,6 @@ async def calculate_avoidance_velocity(
     obstacle_data: list[InputPoint],
     avoidance_radius: float = 10.0,
     avoidance_speed: float = 5.0,
-    change_down_vel: bool = False,
 ) -> Velocity | None:
     """
     Given a drone and a moving obstacle, calculates a velocity at which the
@@ -36,8 +35,6 @@ async def calculate_avoidance_velocity(
         obstacle avoidance will activate
     avoidance_speed : float = 5.0
         The speed, in m/s, at which we should move away from the obstacle
-    change_down_vel : bool = False
-        Whether to change the vertical velocity
 
     Returns
     -------
@@ -141,10 +138,6 @@ async def calculate_avoidance_velocity(
 
     # Get the amount by which we should correct the drone's velocity
     correction_velocity: Velocity = desired_relative_velocity - relative_velocity
-    if not change_down_vel:
-        correction_velocity = Velocity(
-            correction_velocity.north_vel, correction_velocity.east_vel, 0.0
-        )
 
     # Get the velocity at which the drone should move to avoid the obstacle
     avoidance_velocity: Velocity = drone_velocity + correction_velocity

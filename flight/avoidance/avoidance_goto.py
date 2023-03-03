@@ -7,6 +7,7 @@ import asyncio
 from asyncio import Task
 from typing import AsyncIterator
 
+import mavsdk
 import mavsdk.telemetry
 
 from .obstacle_avoidance import calculate_avoidance_velocity
@@ -26,7 +27,8 @@ async def goto_with_avoidance(
 ) -> None:
     """
     A goto function with obstacle avoidance intended to replace
-    goto_location from mavsdk
+    goto_location from MAVSDK. Unlike goto_location, this function
+    uses offboard methods.
 
     Parameters
     ----------
@@ -69,7 +71,7 @@ async def goto_with_avoidance(
 
             # Calculate avoidance velocity
             avoidance_velocity: Velocity | None = await calculate_avoidance_velocity(
-                drone, obstacle_positions, avoidance_radius, avoidance_speed, False
+                drone, obstacle_positions, avoidance_radius, avoidance_speed
             )
 
             # If no avoidance is needed, restart goto and continue
