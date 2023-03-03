@@ -10,6 +10,7 @@ from nptyping import NDArray, Shape, UInt8, Float32, Int32, Float64
 
 from vision.common.bounding_box import BoundingBox
 from vision.common.constants import Image
+from vision.common.crop import crop_image
 from vision.common.odlc_characteristics import ODLCColor, COLOR_RANGES
 
 
@@ -51,35 +52,6 @@ def find_colors(image: Image, text_bounds: BoundingBox) -> tuple[ODLCColor, ODLC
 
     # return the 2 colors
     return shape_color, text_color
-
-
-def crop_image(image: Image, bounds: BoundingBox) -> Image:
-    """
-    Crop an image around the given bounds. Will slice around
-    the bound's extremes as an upright rectangle.
-
-    Parameters
-    ----------
-    image : Image
-        the image to slice
-    bounds : BoundingBox
-        the bounds to slice from the image
-
-    Returns
-    -------
-    cropped_img : Image
-        the image cropped around the given bounds
-    """
-    min_y: int
-    max_y: int
-    min_y, max_y = bounds.get_y_extremes()
-
-    min_x: int
-    max_x: int
-    min_x, max_x = bounds.get_x_extremes()
-
-    cropped_img: Image = image[min_y:max_y, min_x:max_x, :]
-    return cropped_img
 
 
 def run_kmeans(cropped_img: Image) -> Image:
