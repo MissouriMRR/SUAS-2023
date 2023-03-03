@@ -102,7 +102,7 @@ class FlightManager:
         logging_process = init_logger(log_queue)
         logging_process.start()
 
-        #connect to the drone
+        # connect to the drone
         drone: System = System()
         drone.connect(system_address="udp://:14540")
 
