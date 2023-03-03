@@ -1,18 +1,53 @@
+"""Contains things related to loading competition bottle data."""
 import json
 
-# G J 2-7-2023
-# Opens and imports JSON File 'BottleJSON.json' as a list
-f = open("competition_inputs/BottleJSON.json")
-data = json.load(f)
+from typing import TypedDict
 
-# Defines Array of Bottles from the list from the JSON file
-Bottles = [
-    data["Bottle1"][0],
-    data["Bottle2"][0],
-    data["Bottle3"][0],
-    data["Bottle4"][0],
-    data["Bottle5"][0],
-]
+class BottleData(TypedDict):
+    """
+    BottleData sets fixed keys for the dicts found in list bottle_list.
 
-# Closes the Json File
-f.close()
+    Attributes
+    ----------
+    letter : str
+        The letter present on the bottle.
+    letter_color : str
+        The color of the letter present on the bottle.
+    shape : str
+        The shape surrounding the letter present on the bottle.
+    shape_color : str
+        The color of the shape peresent on the bottle.
+    """
+
+    letter: str
+    letter_color: str
+    shape: str
+    shape_color: str
+
+
+def load_bottle_info(file_path: str = "vision/competition_inputs/bottle.json") -> list[BottleData]:
+    """
+    Opens and Imports bottle.json and turns it into a list of dictionaries,
+    listing each bottle feature for 5 bottles with IDs '0' through '4'.
+
+    Parameters
+    ----------
+    file_path : str
+        Is the project location of the json file that is desired to be opened.
+        By default 'vision/competition_inputs/bottle.json'.
+
+    Returns
+    -------
+    bottle_list : list[BottleData]
+        Returns Dict of DictType BottleData containing values for 5 different bottles.
+        Bottle ids are strings 0 through 4.
+    """
+    # Opens and imports JSON File 'Bottle.json' as a list
+    with open(file_path, encoding="utf-8") as file:
+        bottle_list: list[BottleData] = json.load(file)
+
+    return bottle_list
+
+
+if __name__ == "__main__":
+    print(load_bottle_info())
