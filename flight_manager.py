@@ -2,6 +2,8 @@
 import argparse
 import logging
 
+from mavsdk import System
+
 from multiprocessing import Process, Queue
 from multiprocessing.managers import BaseManager
 
@@ -100,6 +102,10 @@ class FlightManager:
         logging_process = init_logger(log_queue)
         logging_process.start()
 
+        #connect to the drone
+        drone: System = System()
+        drone.connect(system_address="udp://:14540")
+
         worker_configurer(log_queue)
 
         # Create new processes
@@ -125,10 +131,7 @@ class FlightManager:
         except KeyboardInterrupt:
             # Ctrl-C was pressed
             logging.info("Ctrl-C Pressed, forcing drone to land")
-            comm_obj.state = StateEnum.Land
-            flight_process = self.init_flight(flight_args)
-            flight_process.start()
-
+            drone.action.return_to_launch()
         # Join flight process before exiting function
         flight_process.join()
 
