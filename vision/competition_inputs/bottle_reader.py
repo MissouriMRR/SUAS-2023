@@ -3,6 +3,7 @@ import json
 
 from typing import TypedDict
 
+
 class BottleData(TypedDict):
     """
     BottleData sets fixed keys for the dicts found in list bottle_list.
