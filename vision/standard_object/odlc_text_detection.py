@@ -2,15 +2,42 @@
 Method for reading the text on the odlc standard objects.
 """
 
-from typing import Any
+from typing import Any, Tuple
 
 import cv2
 import numpy as np
-import numpy.typing as npt
 import pytesseract
 
 from vision.common.bounding_box import ObjectType, BoundingBox
 from vision.common.constants import Image
+
+
+def get_odlc_text(starting_image: Image, odlc_bounds: BoundingBox) -> BoundingBox:
+    """
+    Detects text in the passed image at the location specified by the passed bounding box.
+
+    Parameters
+    ----------
+    starting_image: Image
+        The image to detect the text on.
+    text_bounds: BoundingBox
+        The bounding box specifying where in the image to look for text.
+
+    Returns
+    -------
+    detected_text: BoundingBox
+        A BoundingBox object containing the detected character as an attribute and its bounds.
+        If no text is detected, the character will be a blank string and
+        the bounds will all be zeros.
+    """
+
+    cropped_img: Image = crop_image(starting_image, odlc_bounds)
+
+    preprocessed_img: Image = text_detection_pre_processing(cropped_img)
+
+    detected_text: BoundingBox = text_detection(preprocessed_img)
+
+    return detected_text
 
 
 def text_detection_pre_processing(unprocessed_img: Image) -> Image:
@@ -35,14 +62,72 @@ def text_detection_pre_processing(unprocessed_img: Image) -> Image:
     grayscale_img: Image = cv2.cvtColor(contrast_img, cv2.COLOR_RGB2GRAY)
 
     # Blur
-    blured_img: Image = cv2.medianBlur(grayscale_img, ksize=3)
+    blurred_img: Image = cv2.medianBlur(grayscale_img, ksize=3)
 
     # Erode and dilate
     kernel: Image = np.ones((5, 5), np.uint8)
-    eroded_img: Image = cv2.erode(blured_img, kernel=kernel, iterations=1)
+    eroded_img: Image = cv2.erode(blurred_img, kernel=kernel, iterations=1)
     final_img: Image = cv2.dilate(eroded_img, kernel=kernel, iterations=1)
 
     return final_img
+
+
+def text_detection(base_img: Image) -> BoundingBox:
+    """
+    Detects text on the passed image.
+
+    Parameters
+    ----------
+    base_img: Image
+        The image that you want to detect the text on.
+
+    Returns
+    -------
+    found_text: BoundingBox
+        A BoundingBox object containing the detected character as an attribute and its bounds.
+        If no text is detected, the character will be a blank string and
+        the bounds will all be zeros.
+    """
+
+    found_text: str = ""  # Text to be returned, one character
+    text_x: int = 0
+    text_y: int = 0
+    text_width: int = 0
+    text_height: int = 0
+
+    found_text_info: dict[str, list[Any]] = pytesseract.image_to_data(
+        base_img, output_type=pytesseract.Output.DICT, config="--psm 10"
+    )
+
+    text: str
+
+    for i, text in enumerate(found_text_info["text"]):
+        character: str
+        for character in text:
+            if (
+                character.isalnum() and character.isupper()
+            ):  # Text needs to be upercase and alphanumeric
+                found_text = character
+
+                # Bounding box of text in cropped image
+                text_x = found_text_info["left"][i]
+                text_y = found_text_info["top"][i]
+                text_width = found_text_info["width"][i]
+                text_height = found_text_info["height"][i]
+
+    text_bounds: Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]] = (
+        (text_x, text_y),
+        (text_x + text_width, text_y),
+        (text_x + text_width, text_y + text_height),
+        (text_x, text_y + text_height),
+    )
+
+    text_attributes: dict[str, Any] = {"text": found_text}
+    text_with_bounds: BoundingBox = BoundingBox(
+        vertices=text_bounds, attributes=text_attributes, obj_type=ObjectType.TEXT
+    )
+
+    return text_with_bounds
 
 
 def crop_image(uncropped_img: Image, bounds: BoundingBox) -> Image:
@@ -54,7 +139,7 @@ def crop_image(uncropped_img: Image, bounds: BoundingBox) -> Image:
     uncropped_img: Image
         The image to be cropped.
     bounds: BoundingBox
-        The bounding box that has the cords to crop around.
+        The bounding box that has the coords to crop around.
 
     Returns
     -------
@@ -75,70 +160,10 @@ def crop_image(uncropped_img: Image, bounds: BoundingBox) -> Image:
     return crop_img
 
 
-def text_detection(base_img: Image) -> str:
-    """
-    Detects text on the passed image.
-
-    Parameters
-    ----------
-    base_img: Image
-        The image that you want to detect the text on.
-
-    Returns
-    -------
-    found_text: str
-        A single character string with the character detected in the image.
-    """
-
-    found_text: str  # Text to be returned, one character
-
-    found_text_info: dict[str, list[Any]] = pytesseract.image_to_data(
-        base_img, output_type=pytesseract.Output.DICT, config="--psm 10"
-    )
-
-    text: str
-    character: str
-
-    for text in found_text_info["text"]:
-        for character in text:
-            if (
-                character.isalnum() and character.isupper()
-            ):  # Text needs to be upercase and alphanumeric
-                found_text = character
-
-    return found_text
-
-
-def get_odlc_text(starting_image: Image, text_bounds: BoundingBox) -> str:
-    """
-    Detects text in the passed image at the location specified by the passed bounding box.
-
-    Parameters
-    ----------
-    starting_image: Image
-        The image to detect the text on.
-    text_bounds: BoundingBox
-        The bounding box specifying were in the image to look for text.
-
-    Returns
-    -------
-    detected_text: str
-        A string containing the character that was detected.
-    """
-
-    cropped_img: Image = crop_image(starting_image, text_bounds)
-
-    preprocessed_img: Image = text_detection_pre_processing(cropped_img)
-
-    detected_text: str = text_detection(preprocessed_img)
-
-    return detected_text
-
-
 if __name__ == "__main__":
     import sys
 
-    img: npt.NDArray[np.uint8] = cv2.imread(
+    img: Image = cv2.imread(
         sys.argv[1]
     )  # Run with something like 'python3 odlc_text_detection.py image.jpg'
 
@@ -147,9 +172,7 @@ if __name__ == "__main__":
         ((740, 440), (820, 440), (820, 500), (740, 500)), ObjectType.STD_OBJECT
     )  # Coords for the A in the star of the 2022 image
 
-    read_text: str = get_odlc_text(img, test_bounds)
+    read_text: BoundingBox = get_odlc_text(img, test_bounds)
 
-    print("The following character was detected:")
-
-    for i in enumerate(read_text):
-        print(i[1])
+    print("The following character was detected: " + read_text.get_attribute("text"))
+    print("Text bounds are: " + str(read_text.vertices))
