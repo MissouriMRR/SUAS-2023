@@ -10,6 +10,7 @@ import pytesseract
 
 from vision.common.bounding_box import ObjectType, BoundingBox
 from vision.common.constants import Image
+from vision.common.crop import crop_image
 
 
 def get_odlc_text(starting_image: Image, odlc_bounds: BoundingBox) -> BoundingBox:
@@ -128,36 +129,6 @@ def text_detection(base_img: Image) -> BoundingBox:
     )
 
     return text_with_bounds
-
-
-def crop_image(uncropped_img: Image, bounds: BoundingBox) -> Image:
-    """
-    Crops the passed image according to the passed bounding box.
-
-    Parameters
-    ----------
-    uncropped_img: Image
-        The image to be cropped.
-    bounds: BoundingBox
-        The bounding box that has the coords to crop around.
-
-    Returns
-    -------
-    cropped_img: Image
-        The image after it has been cropped.
-    """
-
-    x_min: int
-    x_max: int
-    x_min, x_max = bounds.get_x_extremes()
-
-    y_min: int
-    y_max: int
-    y_min, y_max = bounds.get_y_extremes()
-
-    crop_img: Image = uncropped_img[y_min:y_max, x_min:x_max, :]
-
-    return crop_img
 
 
 if __name__ == "__main__":
