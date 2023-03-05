@@ -1,11 +1,20 @@
 """Constant variables and common type aliases for Vision"""
 
 from typing import TypeAlias
-from nptyping import NDArray, Shape, UInt8, Float64
+from nptyping import NDArray, Shape, UInt8, Float64, IntC, Bool
 
-Image: TypeAlias = NDArray[Shape["1080, 1920, 3"], UInt8]
+Image: TypeAlias = NDArray[Shape["*, *, 3"], UInt8]
+# single channel image type
+ScImage: TypeAlias = NDArray[Shape["*, *"], UInt8]
+# single channel image of booleans
+Mask: TypeAlias = NDArray[Shape["*, *"], Bool]
+
 Point: TypeAlias = NDArray[Shape["2"], Float64]
 Vector: TypeAlias = NDArray[Shape["3"], Float64]
+
+# return types for cv2.findContours() -> tuple[tuple[Contour, ...], Hierarchy]
+Contour: TypeAlias = NDArray[Shape["*, 1, 2"], IntC]
+Hierarchy: TypeAlias = NDArray[Shape["1, *, 4"], IntC]
 
 # Format of Corners is: (top left, top right, bottom right, bottom left), or
 #     1--2
