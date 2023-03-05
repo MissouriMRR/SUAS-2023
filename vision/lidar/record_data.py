@@ -1,25 +1,28 @@
-from contextlib import closing
-from ouster import client
-from ouster.sdk import viz
-from ouster.sdk.examples.client import record_pcap
-from ouster.sdk.examples.pcap import pcap_to_csv
-from ouster.sdk.examples.pcap import pcap_display_xyz_points
-from ouster.sdk.examples.pcap import pcap_3d_one_scan
-from ouster import pcap
-import cv2
-import numpy as np
+#!/usr/bin/python3
+""" Record data from Ouster OS-1-32-U LiDAR sensor to pcap file."""
+
+import os
+import sys
+import argparse
 import time
+from contextlib import closing
+from datetime import datetime
+from more_itertools import time_limited
+
+from ouster import client, pcap
 
 HOSTNAME = "os-122229001687.local"
 LIDAR_PORT = 7502
 IMU_PORT = 7503
 
-FILENAME = "ouster_recording"
 
-def record_pcap(hostname: str,
-                lidar_port: int = 7502,
-                imu_port: int = 7503,
-                n_seconds: int = 10) -> None:
+def record_pcap(
+    hostname: str,
+    lidar_port: int = 7502,
+    imu_port: int = 7503,
+    fname_base: str | None = None,
+    n_seconds: int = 10,
+) -> None:
     """Record data from live sensor to pcap file.
 
     Note that pcap files recorded this way only preserve the UDP data stream and
@@ -29,71 +32,86 @@ def record_pcap(hostname: str,
     See the API docs of :py:func:`.pcap.record` for additional options for
     writing pcap files.
 
-    Args:
-        hostname: hostname of the sensor
-        lidar_port: UDP port to listen on for lidar data
-        imu_port: UDP port to listen on for imu data
-        n_seconds: max seconds of time to record. (Ctrl-Z correctly closes
-                   streams)
+    Parameters
+    ----------
+    hostname : str
+        hostname of the sensor
+    lidar_port : int
+        UDP port to listen on for lidar data
+    imu_port : int
+        UDP port to listen on for imu data
+    fname_base : str, optional
+        base filename to write to (without extension)
+        If not specified, a filename will be generated
+    n_seconds : int, optional, default=10
+        max seconds of time to record. (Ctrl-Z correctly closes streams)
     """
-    import ouster.pcap as pcap
-    from datetime import datetime
-
-    # [doc-stag-pcap-record]
-    from more_itertools import time_limited
     # connect to sensor and record lidar/imu packets
-    with closing(client.Sensor(hostname, lidar_port, imu_port,
-                               buf_size=640)) as source:
-
+    with closing(client.Sensor(hostname, lidar_port, imu_port, buf_size=640)) as source:
         # make a descriptive filename for metadata/pcap files
-        time_part = datetime.now().strftime("%Y%m%d_%H%M%S")
-        meta = source.metadata
-        # fname_base = f"{meta.prod_line}_{meta.sn}_{meta.mode}_{time_part}"
+        if not fname_base:
+            print("\nNo output filename given, using default format.")
+            time_part = datetime.now().strftime("%Y%m%d_%H%M%S")
+            meta = source.metadata
+            fname_base = f"{meta.prod_line}_{meta.sn}_{meta.mode}_{time_part}"
 
-        print(f"Saving sensor metadata to: {FILENAME}.json")
-        source.write_metadata(f"{FILENAME}.json")
+        print(f"Saving sensor metadata to: {fname_base}.json")
+        source.write_metadata(f"{fname_base}.json")
 
-        print(f"Writing to: {FILENAME}.pcap (Ctrl-C to stop early)")
+        print(f"Writing to: {fname_base}.pcap for {n_seconds} seconds (Ctrl-C to stop early)")
         source_it = time_limited(n_seconds, source)
-        n_packets = pcap.record(source_it, f"{FILENAME}.pcap")
+        n_packets = pcap.record(source_it, f"{fname_base}.pcap")
 
         print(f"Captured {n_packets} packets")
 
-    # [doc-etag-pcap-record]
 
-record_pcap(hostname=HOSTNAME, lidar_port=LIDAR_PORT, imu_port=IMU_PORT, n_seconds=10)
-
-meta = None
-with open(f"{FILENAME}.json", "r") as f:
-    meta = client.SensorInfo(f.read())
-
-source = pcap.Pcap(pcap_path=f"{FILENAME}.pcap", info=meta)
-
-# pcap_3d_one_scan(source, meta, num=0)
-
-# create an iterator of LidarScans from pcap and bound it if num is specified
-scans = iter(client.Scans(source))
-
-scan: client.core.Scans
-for scan in scans:
-    HSCALE = 2  # image viewer horizontal scale
-    VSCALE = 8  # image viewer vertical scale
-    # uncomment if you'd like to see frame id printed
-    # print("frame id: {} ".format(scan.frame_id))
-
-    # print(chr(27) + "[2J") # clear terminal
-
-    # Range visualization
-    range_field = scan.field(client.ChanField.RANGE)
-    range_img = client.destagger(meta, range_field)  # destagger the range field
-    range_img = (range_img / np.max(range_img) * 255).astype(np.uint8)  # convert to 8-bit viewable image
-
-    cv2.imshow(
-        f"Range Image, (Upscale: {HSCALE}x width, {VSCALE}x height)",
-        cv2.resize(  # resize image to fit screen
-            range_img,
-            (range_img.shape[1] * HSCALE, range_img.shape[0] * VSCALE),
-            interpolation=cv2.INTER_AREA,
-        ),
+def main() -> None:
+    """Main driver function, parses arguments and calls record_pcap."""
+    # parse input argument for pcap file as -i and output argument as -o
+    parser: argparse.ArgumentParser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        required=False,
+        help="output file (without file extension)",
     )
-    
+    parser.add_argument(
+        "-t",
+        "--time",
+        type=int,
+        required=False,
+        help="recording time (s) (default: 10)",
+    )
+    parser.add_argument(
+        "-c",
+        "--precount",
+        type=int,
+        required=False,
+        help="pre-count time (s) (default: 0)",
+    )
+
+    args: argparse.Namespace = parser.parse_args()
+    record_time: int = args.time if args.time else 10
+
+    # check if output file exists
+    if args.output and os.path.exists(f"{args.output}.pcap"):
+        print("Output file already exists, overwrite? (y/n)")
+        if input().lower() not in ("y", "yes"):
+            print("Exiting...")
+            sys.exit(1)
+
+    output_dir: str | None = None
+    if args.output:
+        output_dir = args.output
+
+    if args.precount:
+        for i in range(args.precount):
+            print(f"Recording data in {args.precount-i} seconds...")
+            time.sleep(1)
+
+    record_pcap(HOSTNAME, LIDAR_PORT, IMU_PORT, fname_base=output_dir, n_seconds=record_time)
+
+
+if __name__ == "__main__":
+    main()
