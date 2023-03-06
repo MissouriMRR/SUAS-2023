@@ -13,8 +13,8 @@ from ouster import client, pcap
 from ouster.sdk.examples.pcap import pcap_3d_one_scan
 
 
-HSCALE_DEFAULT = 2  # horizontal scale of image viewer
-VSCALE_DEFAULT = 8  # vertical scale of image viewer
+HSCALE_DEFAULT: int = 2  # horizontal scale of image viewer
+VSCALE_DEFAULT: int = 8  # vertical scale of image viewer
 
 
 def view_recording(
@@ -24,7 +24,8 @@ def view_recording(
     vscale: int = VSCALE_DEFAULT,
     **viz_flags: bool,
 ) -> None:
-    """View a pcap file recorded with `record_data.py`.
+    """
+    View a pcap file recorded with `record_data.py`.
 
     Parameters
     ----------
@@ -45,17 +46,16 @@ def view_recording(
             "nearir": Near infrared visualization
             "pointcloud": 3D point cloud visualization of first frame
     """
+    viz_frame_delay: int = 50  # ms, modify this if the visualization video is too fast or too slow
 
     metadata: client.SensorInfo | None = None
-    with open(meta_file, mode="r", encoding="UTF-8") as json:
-        metadata = client.SensorInfo(json.read())
+    with open(meta_file, mode="r", encoding="UTF-8") as json_file:
+        metadata = client.SensorInfo(json_file.read())
 
     source: pcap.Pcap = pcap.Pcap(pcap_path=pcap_file, info=metadata)
 
     if viz_flags.get("pointcloud"):
-        pcap_3d_one_scan(
-            source, metadata, num=0
-        )  # uncomment to view 3d point cloud of first frame of recording
+        pcap_3d_one_scan(source, metadata, num=0)  # view 3d point cloud of first frame of recording
 
     scan: client.core.Scans
     for scan in client.Scans(source):
@@ -124,7 +124,7 @@ def view_recording(
                 ),
             )
 
-        cv2.waitKey(25)  # modify this delay (in ms) if the visualization is too fast or too slow
+        cv2.waitKey(viz_frame_delay)  # ms of additional delay between frames
 
 
 def main() -> None:
