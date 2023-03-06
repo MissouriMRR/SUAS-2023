@@ -11,56 +11,60 @@ from more_itertools import time_limited
 
 from ouster import client, pcap
 
-HOSTNAME = "os-122229001687.local"
-LIDAR_PORT = 7502
-IMU_PORT = 7503
+## Sensor identification and network configuration constants
+HOSTNAME: str = "os-122229001687.local"  # sensor hostname, set as os-<serial number>.local
+LIDAR_PORT: int = 7502  # UDP port to listen on for lidar data
+IMU_PORT: int = 7503  # UDP port to listen on for imu data
 
 
 def record_pcap(
     hostname: str,
-    lidar_port: int = 7502,
-    imu_port: int = 7503,
+    lidar_port: int = LIDAR_PORT,
+    imu_port: int = IMU_PORT,
     fname_base: str | None = None,
     n_seconds: int = 10,
 ) -> None:
-    """Record data from live sensor to pcap file.
+    """
+    Record data from live sensor to pcap file.
 
-    Note that pcap files recorded this way only preserve the UDP data stream and
+    NOTE: Pcap files recorded this way only preserve the UDP data stream and
     not networking information, unlike capturing packets directly from a network
     interface with tools like tcpdump or wireshark.
 
-    See the API docs of :py:func:`.pcap.record` for additional options for
+    See the Ouster API docs of :py:func:`.pcap.record` for additional options for
     writing pcap files.
 
     Parameters
     ----------
     hostname : str
         hostname of the sensor
-    lidar_port : int
+    lidar_port : int, optional, default=LIDAR_PORT
         UDP port to listen on for lidar data
-    imu_port : int
+    imu_port : int, optional, default=IMU_PORT
         UDP port to listen on for imu data
-    fname_base : str, optional
+    fname_base : str, optional, default=None
         base filename to write to (without extension)
-        If not specified, a filename will be generated
+        If None, a filename will be auto-generated based on datetime and sensor metadata
     n_seconds : int, optional, default=10
         max seconds of time to record. (Ctrl-Z correctly closes streams)
     """
+    out_fname_base: str | None = fname_base
+
     # connect to sensor and record lidar/imu packets
     with closing(client.Sensor(hostname, lidar_port, imu_port, buf_size=640)) as source:
         # make a descriptive filename for metadata/pcap files
-        if not fname_base:
+        if not out_fname_base:
             print("\nNo output filename given, using default format.")
-            time_part = datetime.now().strftime("%Y%m%d_%H%M%S")
-            meta = source.metadata
-            fname_base = f"{meta.prod_line}_{meta.sn}_{meta.mode}_{time_part}"
+            time_part: str = datetime.now().strftime("%Y%m%d_%H%M%S")
+            meta: client.SensorInfo = source.metadata
+            out_fname_base = f"{meta.prod_line}_{meta.sn}_{meta.mode}_{time_part}"
 
-        print(f"Saving sensor metadata to: {fname_base}.json")
-        source.write_metadata(f"{fname_base}.json")
+        print(f"Saving sensor metadata to: {out_fname_base}.json")
+        source.write_metadata(f"{out_fname_base}.json")
 
-        print(f"Writing to: {fname_base}.pcap for {n_seconds} seconds (Ctrl-C to stop early)")
-        source_it = time_limited(n_seconds, source)
-        n_packets = pcap.record(source_it, f"{fname_base}.pcap")
+        print(f"Writing to: {out_fname_base}.pcap for {n_seconds} seconds (Ctrl-C to stop early)")
+        source_it: time_limited[client.Packet] = time_limited(n_seconds, source)
+        n_packets: int = pcap.record(source_it, f"{out_fname_base}.pcap")
 
         print(f"Captured {n_packets} packets")
 
