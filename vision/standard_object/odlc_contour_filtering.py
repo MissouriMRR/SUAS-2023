@@ -4,10 +4,23 @@ processed image. The only function that should be needed is filter_contour(), th
 functions.
 """
 import numpy as np
-from nptyping import NDArray, Shape, UInt8, IntC, Float32
+from nptyping import NDArray, Shape, UInt8, IntC, Float32, Bool8
 import cv2
 import vision.common.constants as consts
 import vision.common.bounding_box as bbox
+
+
+# constants
+MIN_AREA_BOX_RATIO_RANGE: float = 0.5
+# The maximum acceptable range of aspect ratios (centered on a 1:1 ratio), so if 0.5 is the
+# given parameter then the aspect ratio between the length and width must be between 0.5 and
+# 1.5 (1 - 0.5 and 1 + 0.5). The default would correspond to a 2:1 or 1:2 aspect ratio range
+# the length/width vs. width/length does not matter. in test_min_area_box()
+BOX_AREA_RATIO_RANGE: float = 10.0
+# The minimum acceptable ratio of image area to contour bounding box area in test_bounding_box()
+ROUGHNESS_PERCENT_DIFF: float = 0.05
+# The max percent difference in area allowed between the original and approximaed contour
+# in test_roughness()
 
 
 def test_heirarchy(hierarchy: consts.Hierarchy, contour_index: int) -> bool:
@@ -33,7 +46,7 @@ def test_heirarchy(hierarchy: consts.Hierarchy, contour_index: int) -> bool:
     return True
 
 
-def test_min_area_box(contour: consts.Contour, max_box_ratio_range: float = 0.5) -> bool:
+def test_min_area_box(contour: consts.Contour) -> bool:
     """
     Will create a box around the given contour that has the smallest possible area
     (not necessarily upright) and check if the box's aspect ratio is within the given range
@@ -42,11 +55,6 @@ def test_min_area_box(contour: consts.Contour, max_box_ratio_range: float = 0.5)
     ----------
     contour : consts.Contour
         The individual contour to be evaluated (as returned from cv2.findContours)
-    max_box_ratio_range : float = 0.5
-        The maximum acceptable range of aspect ratios (centered on a 1:1 ratio), so if 0.5 is the
-        given parameter then the aspect ratio between the length and width must be between 0.5 and
-        1.5 (1 - 0.5 and 1 + 0.5). The default would correspond to a 2:1 or 1:2 aspect ratio range
-        the length/width vs. width/length does not matter
 
     Returns
     -------
@@ -58,12 +66,10 @@ def test_min_area_box(contour: consts.Contour, max_box_ratio_range: float = 0.5)
     aspect_ratio: float = (cv2.norm(min_area_box[0] - min_area_box[1])) / (
         cv2.norm(min_area_box[1] - min_area_box[2])
     )
-    return 1 - max_box_ratio_range < aspect_ratio < 1 + max_box_ratio_range
+    return 1 - MIN_AREA_BOX_RATIO_RANGE < aspect_ratio < 1 + MIN_AREA_BOX_RATIO_RANGE
 
 
-def test_bounding_box(
-    contour: consts.Contour, dims: tuple[int, int], test_area_ratio: float = 10.0
-) -> bool:
+def test_bounding_box(contour: consts.Contour, dims: tuple[int, int]) -> bool:
     """
     Calculates the area of an upright bounding box around the given contour
     and compares it to the rectangle (image) of the given dimensions
@@ -78,8 +84,6 @@ def test_bounding_box(
             The height of the image
         dim_width : int
             The width of the image
-    test_area_ratio : float = 10.0
-        The minimum acceptable ratio of image area to contour bounding box area
 
     Returns
     -------
@@ -101,7 +105,7 @@ def test_bounding_box(
     box_area: float = bounding_box.get_height() * bounding_box.get_width()
     img_area: float = dims[0] * dims[1]
 
-    return box_area * test_area_ratio <= img_area
+    return box_area * BOX_AREA_RATIO_RANGE <= img_area
 
 
 def test_spikiness(contour: consts.Contour) -> bool:
@@ -218,21 +222,22 @@ def generate_mask(contour: consts.Contour, box: bbox.BoundingBox) -> consts.Mask
         inside of the input contour
     """
     dims: tuple[int, int] = box.get_width_height()[::-1]
-    shifted_cnt: consts.Contour = contour - np.array(box.vertices[0][::-1])
+    shifted_cnt: consts.Contour = contour - np.array([box.vertices[0][::-1]])
 
     mask: consts.Mask = np.zeros(dims)
-    mask = cv2.drawContours(mask, [shifted_cnt], -1, True, cv2.FILLED)
+    mask = cv2.drawContours(mask, [shifted_cnt], -1, True, cv2.FILLED).astype(Bool8)
+
     return mask
 
 
-def test_roughness(
-    contour: consts.Contour, approx: consts.Contour, test_percent_diff: float = 0.05
-) -> bool:
+def test_roughness(contour: consts.Contour, approx: consts.Contour) -> bool:
     """
     Will check how rough the sides of a shape are. If the contour is an actual shape, then it will
     have relatively smooth sides, and the approximated contour will not have a lot of change. If
     the contour is not actually a shape (ie a patch of grass), then its sides will be less
     straight, and the polygon approximation will be very different from the original.
+    Also this should return false if the shape is circular (with appropriate threshold) because
+    a circle does not work well when ran through polygon approximation (should test extensively).
 
     Parameters
     ----------
@@ -242,8 +247,6 @@ def test_roughness(
         The contour (same as contour param) but run through an approximation algoritm
         such as cv2.approxPolyDP(contour, 0.05*cv2.arcLength(contour, True), True)
                                           ^^^^can be tweaked
-    test_percent_diff : float = 0.05
-        The max percent difference in area allowed between the original and approximaed contour
 
     Returns
     -------
@@ -280,7 +283,9 @@ def test_roughness(
     if (
         len(non_overlap_cnts) == 0
         or non_overlap_area_sum == 0
-        or 1 - test_percent_diff < contour_area / non_overlap_area_sum < 1 + test_percent_diff
+        or 1 - ROUGHNESS_PERCENT_DIFF
+        < contour_area / non_overlap_area_sum
+        < 1 + ROUGHNESS_PERCENT_DIFF
     ):
         return True
     return False
@@ -302,15 +307,19 @@ def test_circleness(img: consts.ScImage) -> bool:
     -------
     is_circular : bool
         Returns true if circle of appropriate size is found (to reduce chance of false positives)
+
+    References
+    ----------
+    Blur kernel and sigmaX cv2.GaussianBlur() parameters recommended by opencv documentation
+    see: ( i couldnt fit it on one line with the https:// :[ )
+    docs.opencv.org/4.x/dd/d1a/group__imgproc__feature.html#ga47849c3be0d0406ad3ca45db65a25d2d
     """
     padding: int = int(img.shape[0] * 0.05)
     modded: consts.ScImage = cv2.copyMakeBorder(
         img, padding, padding, padding, padding, cv2.BORDER_CONSTANT, None, 0
     )
-    # 5 chosen arbitrarily as the kernel size and sigmaX params for the blur function
-    # (kernel size and sigmaX are both parameters of cv2.GaussianBlur())
-    # the number should not be very important because the input image is a binarized image
-    modded = cv2.GaussianBlur(img, (5, 5), 5)
+
+    modded = cv2.GaussianBlur(img, (7, 7), 1.5)
     # format is [[[center_x_1, center_y_1, radius_1], [center_x_2, center_y_2, radius_2], ...]]
     circles: NDArray[Shape["1, *, 3"], Float32] | None = cv2.HoughCircles(
         modded,
@@ -319,23 +328,14 @@ def test_circleness(img: consts.ScImage) -> bool:
         minDist=int(max(img.shape[0], img.shape[1])),
         param1=50,
         param2=30,
-        minRadius=4,
-        maxRadius=int(min(img.shape[0], img.shape[1]) * 1.1),
+        minRadius=int(min((img.shape[0], img.shape[1])) * 0.4),
+        maxRadius=int(min((img.shape[0], img.shape[1])) * 0.6),
     )
 
     if circles is None:
         return False
 
-    # circles[0] is the actual array of circles because for some reason opencv puts this inside of
-    # another list as the only element
-    circle: NDArray[Shape["3"], Float32]
-    for circle in circles[0]:
-        if int(max(img.shape[0], img.shape[1]) / 1.6) <= circle[2] and circle[2] <= int(
-            min(img.shape[0], img.shape[1]) * 1.1
-        ):
-            return True
-
-    return False
+    return True
 
 
 def filter_contour(
@@ -343,8 +343,8 @@ def filter_contour(
     hierarchy: consts.Hierarchy,
     index: int,
     image_dims: tuple[int, int],
-    approx_contour: consts.Contour | None = None,
-) -> bool:
+    approx_contour: consts.Contour,
+) -> tuple[bool, bool]:
     """
     Runs all created test functions and handles logic to determine if a given contour (from the
     tuple of contours) is an ODLC shape or not
@@ -367,21 +367,16 @@ def filter_contour(
             The height dimension of the image
         image_dim_width : int
             The width dimension of the image
-    approx_contour : consts.Contour | None = None
-        Optional parameter to provide the approximated version (from cv2.approxPolyDP) of the
-        contour to be checked to avoid recalculation
-        This is None by default, it is only not None when the approximated contour is provided
+    approx_contour : consts.Contour
+        Parameter to provide the approximated version (from cv2.approxPolyDP) of the contour
 
     Returns
     -------
-    is_odlc : bool
-        True if the contour is (probably) an ODLC shape, False o.w.
-
-    Notes
-    -----
-    Possibly in future could modifiy the filter_contour() function to return two booleans
-    one to determine if there is a shape, another to determine if the detected shape was circular
-    (or an integer could be used, ie: 0=no shape, 1=shape, 2=circular shape)
+    shape_attrs : tuple[bool, bool, consts.Contour]
+        is_odlc : bool
+            True if the contour is (probably) an ODLC shape, False o.w.
+        is_circular : bool
+            True if is_odlc is true and the shape was detected to be circular
     """
     # test hierarchy, bounding_box, min_area_box, and spikiness
     if (
@@ -390,12 +385,7 @@ def filter_contour(
         or (not test_min_area_box(contours[index]))
         or (not test_spikiness(contours[index]))
     ):
-        return False
-    # then calculate approxPolyDP if above all pass (maybe change depending on test results)
-    if approx_contour is None:
-        approx_contour = cv2.approxPolyDP(
-            contours[index], cv2.arcLength(contours[index], True) * 0.05, True
-        )
+        return (False, False)
 
     # run polygon specific test
     if not test_roughness(contours[index], approx_contour):
@@ -407,10 +397,10 @@ def filter_contour(
         cnt_bound_box_retval: tuple[int, int, int, int] = cv2.boundingRect(contours[index])
         cnt_bound_box: bbox.BoundingBox = bbox.BoundingBox(
             bbox.tlwh_to_vertices(
-                cnt_bound_box_retval[1],
                 cnt_bound_box_retval[0],
-                cnt_bound_box_retval[3] - cnt_bound_box_retval[1],
-                cnt_bound_box_retval[2] - cnt_bound_box_retval[0],
+                cnt_bound_box_retval[1],
+                cnt_bound_box_retval[2],
+                cnt_bound_box_retval[3],
             ),
             bbox.ObjectType.STD_OBJECT,
         )
@@ -419,15 +409,17 @@ def filter_contour(
         cnt_sc_img: consts.ScImage = np.where(cnt_mask, 255, 0).astype(np.uint8)
 
         if not test_circleness(cnt_sc_img):
-            return False
+            return (False, False)
 
-    return True
+        return (True, True)
+
+    return (True, False)
 
 
 # All of main is some basic testing code
 if __name__ == "__main__":
     # create a blank image
-    test_image1: consts.Image = np.zeros([5000, 5000, 3], dtype=UInt8)
+    test_image1: consts.Image = np.zeros([500, 500, 3], dtype=UInt8)
 
     # define some points to make a polygon, there is some draw circle function to try circles also
     raw_pts: NDArray[Shape["*, 2"], IntC] = np.array(
@@ -435,7 +427,8 @@ if __name__ == "__main__":
     )
     pts: consts.Contour = raw_pts.reshape((-1, 1, 2))
     # put the points on the image
-    test_image1 = cv2.polylines(test_image1, [pts], True, (255, 255, 255))
+    # test_image1 = cv2.polylines(test_image1, [pts], True, (255, 255, 255))
+    test_image1 = cv2.circle(test_image1, (249, 249), 245, (255, 255, 255))
 
     cv2.imshow("pic", test_image1)
     cv2.waitKey(0)
@@ -468,15 +461,17 @@ if __name__ == "__main__":
         cntr_bbox_retval: tuple[int, int, int, int] = cv2.boundingRect(cntr)
         cntr_bbox: bbox.BoundingBox = bbox.BoundingBox(
             bbox.tlwh_to_vertices(
-                cntr_bbox_retval[1],
                 cntr_bbox_retval[0],
-                cntr_bbox_retval[3] - cntr_bbox_retval[1],
-                cntr_bbox_retval[2] - cntr_bbox_retval[0],
+                cntr_bbox_retval[1],
+                cntr_bbox_retval[2],
+                cntr_bbox_retval[3],
             ),
             bbox.ObjectType.STD_OBJECT,
         )
         cntr_msk: consts.Mask = generate_mask(cntr, cntr_bbox)
         cntr_sc_img: consts.ScImage = np.where(cntr_msk, 255, 0).astype(np.uint8)
+        cv2.imshow(f"cntr{ind}_sc_img", np.dstack((cntr_sc_img, cntr_sc_img, cntr_sc_img)))
+        cv2.waitKey(0)
         print(type(cntr_sc_img), type(cntr_sc_img[0]), type(cntr_sc_img[0, 0]))
         # actually running each test individually and printing results for testing/debugging
         print("\nHierarchy Test:", test_heirarchy(hier, ind))
