@@ -420,7 +420,9 @@ def filter_contour(
 
 # All of main is some basic testing code
 if __name__ == "__main__":
-    TESTING_POLYGON: bool = False  # set to True and add points to raw_pts to test a polygon instead
+    # set to True and add points to raw_pts to test a polygon instead
+    TESTING_POLYGON: bool = False
+
     # create a blank image
     test_image1: consts.Image = np.zeros([500, 500, 3], dtype=UInt8)
 
