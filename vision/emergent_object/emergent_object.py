@@ -1,4 +1,6 @@
 import torch
+from vision.common.constants import Image
+from typing import Callable, Any
 
 # You may have to install:
 #   pandas
@@ -10,23 +12,52 @@ MODEL_PATH = "vision/emergent_object/best.pt"
 
 
 # Function to do detection / classification
-def emergent_object_detection(image, model):
+def detect_emergent_object(image: Image, model: Callable):
+    """
+    Detects an emergent object within an image
+
+    Parameters
+    ----------
+    image
+        The image being analyzed by the model.
+    
+    model
+        The model which is being used for object detection/classification
+
+    Returns
+    -------
+    output
+        A dataframe containing the xy coordinates of
+        the detected object within the image
+    """
     # Convert to RGB
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image: Image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     # Run the model on the image. Both a file path and a numpy image work, but
     #   we want to use a numpy image
-    results = model(image)
+    model_prediction = model(image)
 
     # Retrieve the output from the model
-    output = results.pandas().xyxy[0]
+    object_location: Any = model_prediction.pandas().xyxy[0]
 
-    return output
+    return object_location
 
 
 # Load the model from the file
-def emergent_object_model():
-    model = torch.hub.load("ultralytics/yolov5", "custom", path=MODEL_PATH)
+def create_emergent_model():
+    """
+    Creates the model used for object detection/classification
+    
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    model : callable
+        The model used for object detection/classification
+    """
+    model: Callable = torch.hub.load("ultralytics/yolov5", "custom", path=MODEL_PATH)
     return model
 
 
@@ -38,13 +69,13 @@ if __name__ == "__main__":
     image = cv2.imread(image_path)
 
     # Create model
-    model = emergent_object_model()
+    model = create_emergent_model()
 
     # Use model for detection / classification
-    output = emergent_object_detection(image, model)
+    output = detect_emergent_object(image, model)
 
     # Convert the Pandas Dataframe to a dictionary - this will be necessary and
-    #   should eventually be done in `emergent_object_detection()`
+    #   should eventually be done in `detect_emergent_object()`
     output_dict = output.to_dict("index")
 
     # Draw the bounding boxes to the original image
