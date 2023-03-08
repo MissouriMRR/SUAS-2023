@@ -96,12 +96,13 @@ def text_detection(base_img: Image) -> BoundingBox:
         base_img, output_type=pytesseract.Output.DICT, config="--psm 10"
     )
 
-    text: str
     text_x: int = 0
     text_y: int = 0
     text_width: int = 0
     text_height: int = 0
 
+    i: int
+    text: str
     for i, text in enumerate(found_text_info["text"]):
         character: str
         for character in text:
