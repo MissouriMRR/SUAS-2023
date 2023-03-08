@@ -20,7 +20,7 @@ def detect_emergent_object(image: Image, model: Callable):
     ----------
     image
         The image being analyzed by the model.
-    
+
     model
         The model which is being used for object detection/classification
 
@@ -47,7 +47,7 @@ def detect_emergent_object(image: Image, model: Callable):
 def create_emergent_model():
     """
     Creates the model used for object detection/classification
-    
+
     Parameters
     ----------
     None
