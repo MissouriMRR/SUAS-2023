@@ -31,3 +31,8 @@ def preprocess_std_odlc(image: Image) -> Image:
     )  # best one for image DJI_0470
 
     return edges
+
+
+# Runs preprocessing on specified image and displays results.
+if __name__ == "__main__":
+    pass
