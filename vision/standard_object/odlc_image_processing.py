@@ -1,11 +1,6 @@
-from PIL import Image, ImageFilter
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-from skimage import data, filters
 
 import cv2
+import numpy as np
 
 # unable to process tiny object
 # Read the original image
