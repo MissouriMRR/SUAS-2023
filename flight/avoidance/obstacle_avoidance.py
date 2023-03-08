@@ -11,7 +11,7 @@ import mavsdk
 import mavsdk.telemetry
 
 from .point import Point, InputPoint
-from .velocity import Velocity
+from .vector import Vector3
 
 
 async def calculate_avoidance_velocity(
@@ -19,7 +19,7 @@ async def calculate_avoidance_velocity(
     obstacle_data: list[InputPoint],
     avoidance_radius: float = 10.0,
     avoidance_speed: float = 5.0,
-) -> Velocity | None:
+) -> Vector3 | None:
     """
     Given a drone and a moving obstacle, calculates a velocity at which the
     drone should move to avoid the obstacle
@@ -38,7 +38,7 @@ async def calculate_avoidance_velocity(
 
     Returns
     -------
-    avoidance_velocity : Velocity | None
+    avoidance_velocity : Vector3 | None
         The velocity the drone should move at to avoid the obstacle
         if obstacle avoidance should activate, otherwise None
     """
@@ -98,12 +98,12 @@ async def calculate_avoidance_velocity(
     # Get velocity of drone
     drone_velocity: mavsdk.telemetry.VelocityNed = await anext(drone.telemetry.velocity_ned())
 
-    # Convert drone velocity to Velocity object
+    # Convert drone velocity to Vector3 object
     # Units don't change, only the type of the object
-    drone_velocity: Velocity = Velocity.from_mavsdk_velocityned(drone_velocity)  # type: ignore
+    drone_velocity: Vector3 = Vector3.from_mavsdk_velocityned(drone_velocity)  # type: ignore
 
     # Estimate obstacle velocity
-    obstacle_velocity: Velocity = Velocity(
+    obstacle_velocity: Vector3 = Vector3(
         obstacle_positions[-1].utm_y - obstacle_positions[-2].utm_y,
         obstacle_positions[-1].utm_x - obstacle_positions[-2].utm_x,
         obstacle_positions[-2].altitude - obstacle_positions[-1].altitude
@@ -111,24 +111,24 @@ async def calculate_avoidance_velocity(
     ) / (obstacle_positions[-1].time - obstacle_positions[-2].time)
 
     # Get velocity of our drone relative to the obstacle
-    relative_velocity: Velocity = drone_velocity - obstacle_velocity
+    relative_velocity: Vector3 = drone_velocity - obstacle_velocity
 
     # Extrapolate current obstacle position based on last known position and estimated velocity
     current_time: float = time.time()
     elapsed_time: float = current_time - obstacle_positions[-1].time
     estimated_obstacle_position: Point = Point(
-        utm_x=obstacle_positions[-1].utm_x + elapsed_time * drone_velocity.east_vel,
-        utm_y=obstacle_positions[-1].utm_y + elapsed_time * drone_velocity.north_vel,
+        utm_x=obstacle_positions[-1].utm_x + elapsed_time * drone_velocity.east,
+        utm_y=obstacle_positions[-1].utm_y + elapsed_time * drone_velocity.north,
         utm_zone_number=obstacle_positions[-1].utm_zone_number,
         utm_zone_letter=obstacle_positions[-1].utm_zone_letter,
-        altitude=obstacle_positions[-1].altitude - elapsed_time * drone_velocity.down_vel,
+        altitude=obstacle_positions[-1].altitude - elapsed_time * drone_velocity.down,
         time=current_time,
     )
 
     # Get the relative velocity we want
     desired_relative_velocity = (
         avoidance_speed
-        * Velocity(
+        * Vector3(
             drone_position.utm_y - estimated_obstacle_position.utm_y,
             drone_position.utm_x - estimated_obstacle_position.utm_x,
             estimated_obstacle_position.altitude - drone_position.altitude
@@ -137,9 +137,9 @@ async def calculate_avoidance_velocity(
     )
 
     # Get the amount by which we should correct the drone's velocity
-    correction_velocity: Velocity = desired_relative_velocity - relative_velocity
+    correction_velocity: Vector3 = desired_relative_velocity - relative_velocity
 
     # Get the velocity at which the drone should move to avoid the obstacle
-    avoidance_velocity: Velocity = drone_velocity + correction_velocity
+    avoidance_velocity: Vector3 = drone_velocity + correction_velocity
 
     return avoidance_velocity

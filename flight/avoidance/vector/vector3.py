@@ -7,47 +7,93 @@ from dataclasses import dataclass
 import math
 from typing import Iterator, overload
 
+import mavsdk.offboard
+import mavsdk.telemetry
+
 
 @dataclass(slots=True)
 class Vector3:
     """
-    A 3D vector
+    Represents 3D vector in physical space;
+    units depend on context
 
     Attributes
     ----------
-    x : float
-        The x component of this vector
-    y : float
-        The y component of this vector
-    z : float
-        The z component of this vector
+    north : float
+        The north component of this vector
+    east : float
+        The east component of this vector
+    down : float
+        The down component of this vector
     length: float
     """
 
-    x: float
-    y: float
-    z: float
+    north: float
+    east: float
+    down: float
 
     @overload
-    def __init__(self, x: float, y: float, z: float):
+    def __init__(self, north: float, east: float, down: float):
         ...
 
     @overload
-    def __init__(self, x: float):
+    def __init__(self, north: float):
         ...
 
-    def __init__(self, x: float, y: float | None = None, z: float | None = None):
-        self.x = x
-        self.y = x if y is None else y
-        self.z = x if z is None else z
+    def __init__(self, north: float, east: float | None = None, down: float | None = None):
+        self.north = north
+        self.east = north if east is None else east
+        self.down = north if down is None else down
+
+    @classmethod
+    def from_mavsdk_velocityned(cls, velocity: mavsdk.telemetry.VelocityNed) -> Vector3:
+        """
+        Factory method accepting a mavsdk.telemetry.VelocityNed object
+
+        Parameters
+        ----------
+        velocity : mavsdk.telemetry.VelocityNed
+            A velocity (NED) from MAVSDK
+
+        Returns
+        -------
+        A new Vector3 object, using meters for units
+        """
+
+        return cls(velocity.north_m_s, velocity.east_m_s, velocity.down_m_s)
+
+    def to_mavsdk_velocitynedyaw(
+        self, yaw_deg: float | None = None
+    ) -> mavsdk.offboard.VelocityNedYaw:
+        """
+        Converts this Vector3 object to a mavsdk.offboard.VelocityNedYaw
+        object; this vector must use meters for units
+
+        Parameters
+        ----------
+        yaw_deg : float | None = None
+            The yaw, in degrees, of the resulting object; north is 0 degrees,
+            with yaw increasing clockwise looking down; this value will be
+            calculated from the north and east components of this vector
+            if not provided
+
+        Returns
+        -------
+        The equivalent mavsdk.offboard.VelocityNedYaw object
+        """
+
+        if yaw_deg is None:
+            yaw_deg = math.degrees(math.atan2(self.east, self.north))
+
+        return mavsdk.offboard.VelocityNedYaw(self.north, self.east, self.down, yaw_deg)
 
     def __hash__(self) -> int:
-        big_hash: int = ((hash(self.x) * 3) + hash(self.y)) * 3 + hash(self.z)
+        big_hash: int = ((hash(self.north) * 3) + hash(self.east)) * 3 + hash(self.down)
         return big_hash & 0xFFFF_FFFF_FFFF_FFFF
 
     # Implement unpacking
     def __iter__(self) -> Iterator[float]:
-        return iter((self.x, self.y, self.z))
+        return iter((self.north, self.east, self.down))
 
     # Implement **kwargs unpacking
 
@@ -57,18 +103,18 @@ class Vector3:
 
         Returns
         -------
-        The list ['x', 'y', 'z']
+        The list ["north", "east", "down"]
         """
-        return ["x", "y", "z"]
+        return ["north", "east", "down"]
 
     def __getitem__(self, key: str) -> float:
         match key:
-            case "x":
-                return self.x
-            case "y":
-                return self.y
-            case "z":
-                return self.z
+            case "north":
+                return self.north
+            case "east":
+                return self.east
+            case "down":
+                return self.down
             case _:
                 raise KeyError(f"{key} is not a valid key of {type(self).__name__}")
 
@@ -81,7 +127,7 @@ class Vector3:
         -------
         The magnitude of this vector
         """
-        return math.hypot(self.x, self.y, self.z)
+        return math.hypot(self.north, self.east, self.down)
 
     def normalized(self) -> Vector3:
         """
@@ -95,13 +141,13 @@ class Vector3:
         return self / self.length
 
     def __neg__(self) -> Vector3:
-        return Vector3(-self.x, -self.y, -self.z)
+        return Vector3(-self.north, -self.east, -self.down)
 
     def __add__(self, rhs: Vector3) -> Vector3:
         return Vector3(
-            self.x + rhs.x,
-            self.y + rhs.y,
-            self.z + rhs.z,
+            self.north + rhs.north,
+            self.east + rhs.east,
+            self.down + rhs.down,
         )
 
     def __sub__(self, rhs: Vector3) -> Vector3:
@@ -110,11 +156,11 @@ class Vector3:
     def __mul__(self, rhs: Vector3 | float) -> Vector3:
         if isinstance(rhs, Vector3):
             return Vector3(
-                self.x * rhs.x,
-                self.y * rhs.y,
-                self.z * rhs.z,
+                self.north * rhs.north,
+                self.east * rhs.east,
+                self.down * rhs.down,
             )
-        return Vector3(self.x * rhs, self.y * rhs, self.z * rhs)
+        return Vector3(self.north * rhs, self.east * rhs, self.down * rhs)
 
     def __rmul__(self, lhs: float) -> Vector3:
         return self * lhs
@@ -122,8 +168,8 @@ class Vector3:
     def __truediv__(self, rhs: Vector3 | float) -> Vector3:
         if isinstance(rhs, Vector3):
             return Vector3(
-                self.x / rhs.x,
-                self.y / rhs.y,
-                self.z / rhs.z,
+                self.north / rhs.north,
+                self.east / rhs.east,
+                self.down / rhs.down,
             )
-        return Vector3(self.x / rhs, self.y / rhs, self.z / rhs)
+        return Vector3(self.north / rhs, self.east / rhs, self.down / rhs)

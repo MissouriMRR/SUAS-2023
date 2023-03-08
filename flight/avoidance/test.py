@@ -134,6 +134,7 @@ async def avoiding_drone_test(
     await drone.action.arm()
     await takeoff(drone, TAKEOFF_ALTITUDE)
     await drone.offboard.set_velocity_ned(mavsdk.offboard.VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await drone.offboard.start()
 
     # Randomly move drone
     while True:

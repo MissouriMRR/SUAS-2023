@@ -113,5 +113,10 @@ class Point:
 
         # Use time.time() as the time for the point
         return cls(
-            easting, northing, zone_number, zone_letter, position.absolute_altitude_m, time.time()
+            easting,
+            northing,
+            zone_number,
+            zone_letter,
+            position.absolute_altitude_m,
+            time.time(),
         )

@@ -10,9 +10,10 @@ from typing import AsyncIterator
 import mavsdk
 import mavsdk.telemetry
 
+from .movement import goto_location_offboard
 from .obstacle_avoidance import calculate_avoidance_velocity
 from .point import InputPoint
-from .velocity import Velocity
+from .vector import Vector3
 
 
 async def goto_with_avoidance(
@@ -20,7 +21,7 @@ async def goto_with_avoidance(
     latitude_deg: float,
     longitude_deg: float,
     absolute_altitude_m: float,
-    yaw_deg: float,
+    yaw_deg: float | None,
     position_updates: AsyncIterator[list[InputPoint]],
     avoidance_radius: float = 10.0,
     avoidance_speed: float = 5.0,
@@ -40,8 +41,9 @@ async def goto_with_avoidance(
         Same as in goto_location
     absolute_altitude_m : float
         Same as in goto_location
-    yaw_deg : float
-        Same as in goto_location
+    yaw_deg : float | None
+        Same as in goto_location, but if None is passed, a yaw
+        value will be calculated from the calculated velocity
     position_updates : AsyncIterator[list[InputPoint]]
         Position updates for the obstacle to avoid;
         for best results, this should yield frequently
@@ -54,14 +56,13 @@ async def goto_with_avoidance(
 
     # Function to create a goto task for the drone
     async def restart_goto() -> Task[None]:
-        new_yaw: float = await anext(drone.telemetry.heading())
         return asyncio.ensure_future(
-            drone.action.goto_location(latitude_deg, longitude_deg, absolute_altitude_m, new_yaw)
+            goto_location_offboard(drone, latitude_deg, longitude_deg, absolute_altitude_m, yaw_deg)
         )
 
     # Start going to the location
     goto_task: Task[None] = asyncio.ensure_future(
-        drone.action.goto_location(latitude_deg, longitude_deg, absolute_altitude_m, yaw_deg)
+        goto_location_offboard(drone, latitude_deg, longitude_deg, absolute_altitude_m, yaw_deg)
     )
 
     try:
@@ -70,7 +71,7 @@ async def goto_with_avoidance(
             obstacle_positions: list[InputPoint] = await anext(position_updates)
 
             # Calculate avoidance velocity
-            avoidance_velocity: Velocity | None = await calculate_avoidance_velocity(
+            avoidance_velocity: Vector3 | None = await calculate_avoidance_velocity(
                 drone, obstacle_positions, avoidance_radius, avoidance_speed
             )
 
