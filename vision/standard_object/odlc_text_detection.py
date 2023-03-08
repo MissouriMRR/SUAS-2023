@@ -2,13 +2,13 @@
 Method for reading the text on the odlc standard objects.
 """
 
-from typing import Any, Tuple
+from typing import Any
 
 import cv2
 import numpy as np
 import pytesseract
 
-from vision.common.bounding_box import ObjectType, BoundingBox
+from vision.common.bounding_box import ObjectType, BoundingBox, tlwh_to_vertices
 from vision.common.constants import Image
 from vision.common.crop import crop_image
 
@@ -91,16 +91,16 @@ def text_detection(base_img: Image) -> BoundingBox:
     """
 
     found_text: str = ""  # Text to be returned, one character
-    text_x: int = 0
-    text_y: int = 0
-    text_width: int = 0
-    text_height: int = 0
 
     found_text_info: dict[str, list[Any]] = pytesseract.image_to_data(
         base_img, output_type=pytesseract.Output.DICT, config="--psm 10"
     )
 
     text: str
+    text_x: int = 0
+    text_y: int = 0
+    text_width: int = 0
+    text_height: int = 0
 
     for i, text in enumerate(found_text_info["text"]):
         character: str
@@ -116,14 +116,11 @@ def text_detection(base_img: Image) -> BoundingBox:
                 text_width = found_text_info["width"][i]
                 text_height = found_text_info["height"][i]
 
-    text_bounds: Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int]] = (
-        (text_x, text_y),
-        (text_x + text_width, text_y),
-        (text_x + text_width, text_y + text_height),
-        (text_x, text_y + text_height),
-    )
+    text_bounds: tuple[
+        tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]
+    ] = tlwh_to_vertices(text_x, text_y, text_width, text_height)
 
-    text_attributes: dict[str, Any] = {"text": found_text}
+    text_attributes: dict[str, str] = {"text": found_text}
     text_with_bounds: BoundingBox = BoundingBox(
         vertices=text_bounds, attributes=text_attributes, obj_type=ObjectType.TEXT
     )
