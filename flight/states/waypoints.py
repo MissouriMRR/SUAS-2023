@@ -3,7 +3,8 @@
 from mavsdk import System
 from flight.states.state import State
 from flight.states.odlcs import ODLC
-
+from flight.Waypoint.goto import move_to
+from flight import extract_gps
 
 class Waypoints(State):
     """
@@ -29,4 +30,9 @@ class Waypoints(State):
         ODLC : State
             Re-fly the waypoints if we failed to reach a waypoint boundary, or progress to ODLC flight stage
         """
+        waypoints = await extract_gps()[waypoints]
+        
+        async for waypoint in waypoints:
+            await move_to(drone, waypoint[0],waypoint[1],waypoint[2],2/3)
+
         return ODLC(self.state_settings)
