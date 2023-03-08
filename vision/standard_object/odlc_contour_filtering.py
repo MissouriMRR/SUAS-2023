@@ -16,8 +16,10 @@ MIN_AREA_BOX_RATIO_RANGE: float = 0.5
 # given parameter then the aspect ratio between the length and width must be between 0.5 and
 # 1.5 (1 - 0.5 and 1 + 0.5). The default would correspond to a 2:1 or 1:2 aspect ratio range
 # the length/width vs. width/length does not matter. in test_min_area_box()
+
 BOX_AREA_RATIO_RANGE: float = 10.0
 # The minimum acceptable ratio of image area to contour bounding box area in test_bounding_box()
+
 ROUGHNESS_PERCENT_DIFF: float = 0.05
 # The max percent difference in area allowed between the original and approximaed contour
 # in test_roughness()
@@ -311,7 +313,7 @@ def test_circleness(img: consts.ScImage) -> bool:
     References
     ----------
     Blur kernel and sigmaX cv2.GaussianBlur() parameters recommended by opencv documentation
-    see: ( i couldnt fit it on one line with the https:// :[ )
+    see:
     docs.opencv.org/4.x/dd/d1a/group__imgproc__feature.html#ga47849c3be0d0406ad3ca45db65a25d2d
     """
     padding: int = int(img.shape[0] * 0.05)
@@ -319,7 +321,7 @@ def test_circleness(img: consts.ScImage) -> bool:
         img, padding, padding, padding, padding, cv2.BORDER_CONSTANT, None, 0
     )
 
-    modded = cv2.GaussianBlur(img, (7, 7), 1.5)
+    modded = cv2.GaussianBlur(img, ksize=(7, 7), sigmaX=1.5)
     # format is [[[center_x_1, center_y_1, radius_1], [center_x_2, center_y_2, radius_2], ...]]
     circles: NDArray[Shape["1, *, 3"], Float32] | None = cv2.HoughCircles(
         modded,
@@ -418,6 +420,7 @@ def filter_contour(
 
 # All of main is some basic testing code
 if __name__ == "__main__":
+    TESTING_POLYGON: bool = False  # set to True and add points to raw_pts to test a polygon instead
     # create a blank image
     test_image1: consts.Image = np.zeros([500, 500, 3], dtype=UInt8)
 
@@ -427,8 +430,10 @@ if __name__ == "__main__":
     )
     pts: consts.Contour = raw_pts.reshape((-1, 1, 2))
     # put the points on the image
-    # test_image1 = cv2.polylines(test_image1, [pts], True, (255, 255, 255))
-    test_image1 = cv2.circle(test_image1, (249, 249), 245, (255, 255, 255))
+    if TESTING_POLYGON:
+        test_image1 = cv2.polylines(test_image1, [pts], True, (255, 255, 255))
+    else:
+        test_image1 = cv2.circle(test_image1, (249, 249), 245, (255, 255, 255))
 
     cv2.imshow("pic", test_image1)
     cv2.waitKey(0)

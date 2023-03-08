@@ -12,11 +12,23 @@ import vision.standard_object.odlc_contour_filtering as filtering
 # constants
 QUAD_ANG_THRESH: float = 5.0
 # When checking if quadrilateral has right angles the max range of angles allowed (ex 85 to 95)
+
 QUAD_LEN_THRESH: float = 0.05
 # when comparing the side lengths of a quadrilateral, the max diff and it still be a square
+
 APPROX_CNT_THRESH: float = 0.05
 # Value used to calculate epsilon parameter for polygon contour approximation
 # epsilon is the max distance between the approximation's and the original's curves
+
+QUARTER_CIRCLE_RATIO: float = 0.280
+# 0.280 is ratio of radius to total perimeter of quarter circle = r / (r + r + pi*r/2)
+
+SEMICIRCLE_RATIO: float = 0.389
+# 0.388 is ratio of diameter to total perimeter of semi circle = 2r / (2r + pi*r)
+
+CIRCULAR_RATIO_RANGE: float = 0.1
+# The max amount that the calculated ratio in classify_circular() may differ from the exact value
+# NOTE: do not set to above 0.109, this will result in overlap between two ratios
 
 
 def check_concave_shapes(approx: consts.Contour) -> chars.ODLCShape | None:
@@ -34,14 +46,19 @@ def check_concave_shapes(approx: consts.Contour) -> chars.ODLCShape | None:
     concave_shape : chars.ODLCShape | None
         Will return STAR or CROSS from ODLCShape Enum or None if shape is neither of these
     """
+    # cv2.convexHull() will give a new contour that has filled out any concave "dents" in the
+    # given contour. Can be thought of as taking the shape a rubber band makes around the contour
     convex_hull: npt.NDArray[npt.Shape["*, 1"], npt.IntC] = cv2.convexHull(
         approx, returnPoints=False
     )
-    # print(type(convex_hull), convex_hull.shape, convex_hull)
+
+    # cv2.convexityDefects takes result of cv2.convexHull() and original contour and returns all
+    # of the points where the two shapes differ.
+    # in rubber band analogy, counting the number of gaps between the shape and the rubber band
+    # eg. a plus has 4 corners that point inward so the rubber band would not touch it in 4 spots
     defects: npt.NDArray[npt.Shape["*, 1, 4"], npt.IntC] | None = cv2.convexityDefects(
         approx, convex_hull
     )
-    # print(type(defects), defects.shape, defects)
 
     if defects is not None:
         if len(defects) == 5:
@@ -68,6 +85,7 @@ def get_angle(
         npt.NDArray[npt.Shape["1, 2"], npt.IntC],
         npt.NDArray[npt.Shape["1, 2"], npt.IntC]
     ]
+        Three points that make an angle that will be calculated
         pt_a : npt.NDArray[npt.Shape["1, 2"], npt.IntC]
             One of the points that form the angle, 0th index in the tuple.
             All points formatted as done in openCV [[y, x]].
@@ -79,7 +97,7 @@ def get_angle(
     Returns
     -------
     angle : npt.Float64
-        The angle (in deg) of the angle formed by the lines (pt_a, vertex) and (vertex, pt_c)
+        The angle (in deg) of the angle formed by the lines (pt_a, vertex) and (vertex, pt_b)
 
     Notes
     -----
@@ -90,11 +108,12 @@ def get_angle(
     This can be rearranged to:
         t = arccos((a.b) / (||a||*||b||))
     """
+    # vector forms of points a (pts[0]) and b (pts[2]) with vertex (pts[1]) as origin
+    vec_a: npt.NDArray[npt.Shape["1, 2"], npt.IntC] = pts[0] - pts[1]
+    vec_b: npt.NDArray[npt.Shape["1, 2"], npt.IntC] = pts[2] - pts[1]
+
     return np.degrees(
-        np.arccos(
-            np.dot(pts[0] - pts[1], pts[2] - pts[1])
-            / (np.linalg.norm(pts[0] - pts[1]) * np.linalg.norm(pts[2] - pts[1]))
-        )
+        np.arccos(np.dot(vec_a, vec_b) / (np.linalg.norm(vec_a) * np.linalg.norm(vec_b)))
     )
 
 
@@ -113,6 +132,8 @@ def get_angles(approx: consts.Contour) -> npt.NDArray[npt.Shape["*"], npt.Float6
         1d array of angles for each corresponding vertex in the given approximated contour
     """
     angles: npt.NDArray[npt.Shape["*"], npt.Float64] = np.empty(approx.shape[0], npt.Float64)
+    idx: int
+    a_pt: npt.NDArray[npt.Shape["1, 2"], npt.IntC]  # one point of the approx contour
     for idx, a_pt in enumerate(approx):
         angles[idx] = get_angle((approx[idx - 1], a_pt, approx[(idx + 1) % approx.shape[0]]))
 
@@ -120,7 +141,7 @@ def get_angles(approx: consts.Contour) -> npt.NDArray[npt.Shape["*"], npt.Float6
 
 
 def compare_angles(
-    angles: npt.NDArray[npt.Shape["*"], npt.Float64], angle: float, thresh: float
+    angles: npt.NDArray[npt.Shape["*"], npt.Float64], compare_angle: float, thresh: float
 ) -> npt.NDArray[npt.Shape["*"], npt.Bool8]:
     """
     Takes an array, angles, and compares each element against a specific angle.
@@ -130,7 +151,7 @@ def compare_angles(
     angles : npt.NDArray[npt.Shape["*"], npt.Float64]
         An array of angles of some contour (assumed in degrees but would work if all values are
         the same unit)
-    angle : float
+    compare_angle : float
         The value to compare each element of angles to.
     thresh : float
         The range on each side of angle that each element of angles may be and still pass.
@@ -142,8 +163,10 @@ def compare_angles(
         of angle
     """
     are_valid: npt.NDArray[npt.Shape["*"], npt.Bool8] = np.empty(angles.shape[0], npt.Bool8)
-    for idx, elem in enumerate(angles):
-        are_valid[idx] = -thresh < elem - angle < thresh
+    idx: int
+    ang: npt.Float64  # each individual angle in angles
+    for idx, ang in enumerate(angles):
+        are_valid[idx] = -thresh < ang - compare_angle < thresh
 
     return are_valid
 
@@ -165,10 +188,12 @@ def get_lengths(cnt: consts.Contour) -> npt.NDArray[npt.Shape["*"], npt.Float64]
         Or just length between consecutive points in an unapproximated contour
     """
     lengths: npt.NDArray[npt.Shape["*"], npt.Float64] = np.empty(cnt.shape[0], npt.Float64)
-    for idx, a_pt in enumerate(cnt):
+    idx: int
+    cnt_pt: npt.NDArray[npt.Shape["1, 2"], npt.IntC]  # each point in the contour
+    for idx, cnt_pt in enumerate(cnt):
         lengths[idx] = np.sqrt(
-            np.square(a_pt[0, 0] - cnt[(idx + 1) % cnt.shape[0], 0, 0])
-            + np.square(a_pt[0, 1] - cnt[(idx + 1) % cnt.shape[0], 0, 1])
+            np.square(cnt_pt[0, 0] - cnt[(idx + 1) % cnt.shape[0], 0, 0])
+            + np.square(cnt_pt[0, 1] - cnt[(idx + 1) % cnt.shape[0], 0, 1])
         )
 
     return lengths
@@ -197,7 +222,7 @@ def check_polygons(approx: consts.Contour) -> chars.ODLCShape | None:
         case 4:
             angles: npt.NDArray[npt.Shape["*"], npt.Float64] = get_angles(approx)
             if np.all(compare_angles(angles, 90, QUAD_ANG_THRESH)):
-                lengths = get_lengths(approx)
+                lengths: npt.NDArray[npt.Shape["*"], npt.Float64] = get_lengths(approx)
                 if (lengths[0]) / (np.sum(lengths) / 4) < QUAD_LEN_THRESH:
                     shape = chars.ODLCShape.SQUARE
                 else:
@@ -234,17 +259,19 @@ def classify_circular(contour: consts.Contour) -> chars.ODLCShape:
 
     Notes
     -----
-    Alternative
+    Alternative method to determine which circular shape could be to see how many right angles
+    the given shape has a quarter-circle may have 1 or 3 (if corner between straight line and
+    curve show up as a right angle), and a semicircle would have 0 or 2 for same reason. But
+    a regular circle would have 0 right angles, which may conflict with semicircle.
     """
     approx: consts.Contour = cv2.approxPolyDP(contour, cv2.arcLength(contour, True) * 0.01, True)
     max_dist: npt.Float64 = np.max(get_lengths(approx))
     perimeter: npt.Float64 = cv2.arcLength(contour, True)
 
-    # 0.280 is ratio of radius to total perimeter of quarter circle = r/(r + r + pi*r/2)
-    if abs((max_dist / perimeter) - 0.280) < 0.1:
+    if abs((max_dist / perimeter) - QUARTER_CIRCLE_RATIO) < CIRCULAR_RATIO_RANGE:
         return chars.ODLCShape.QUARTER_CIRCLE
-    # 0.388 is ratio of diameter to total perimeter of semi circle = 2r/(2r + pi*2)
-    if abs((max_dist / perimeter) - 0.388) < 0.1:
+
+    if abs((max_dist / perimeter) - SEMICIRCLE_RATIO) < CIRCULAR_RATIO_RANGE:
         return chars.ODLCShape.SEMICIRCLE
     return chars.ODLCShape.CIRCLE
 
@@ -287,6 +314,7 @@ def classify_shape(
     -------
     shape : chars.ODLCShape | None
         Will return one of the ODLC shapes defined in vision/common/odlc_characteristics or None
+        if the given contour is not an ODLC shape (fails filtering or doesnt match any ODLC)
     """
     if approx_contour is None:
         approx_contour = cv2.approxPolyDP(
@@ -303,12 +331,13 @@ def classify_shape(
         return None
 
     shape: chars.ODLCShape | None = None
-    if not is_circular:
+    if is_circular:
+        shape = classify_circular(contours[index])
+    else:
         shape = check_concave_shapes(approx_contour)
         if shape is None:
             shape = check_polygons(approx_contour)
-    else:
-        shape = classify_circular(contours[index])
+
     return shape
 
 
