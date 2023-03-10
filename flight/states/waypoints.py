@@ -4,7 +4,6 @@ from mavsdk import System
 from flight.states.state import State
 from flight.states.odlcs import ODLC
 from flight.Waypoint.goto import move_to
-from flight import extract_gps
 from flight.extract_gps import extract_gps, Waypoint, GPSData
 
 
