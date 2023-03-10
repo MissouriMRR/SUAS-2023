@@ -14,8 +14,8 @@ import mavsdk.telemetry
 @dataclass(slots=True)
 class Vector3:
     """
-    Represents 3D vector in physical space;
-    units depend on context
+    Represents a 3D vector in physical space
+    with arbitrary units
 
     Attributes
     ----------
@@ -26,6 +26,7 @@ class Vector3:
     down : float
         The down component of this vector
     length: float
+        The magnitude of this vector
     """
 
     north: float
@@ -53,11 +54,11 @@ class Vector3:
         Parameters
         ----------
         velocity : mavsdk.telemetry.VelocityNed
-            A velocity (NED) from MAVSDK
+            A velocity (NED) object from MAVSDK telemetry
 
         Returns
         -------
-        A new Vector3 object, using meters for units
+        A new Vector3 object, in meters per second
         """
 
         return cls(velocity.north_m_s, velocity.east_m_s, velocity.down_m_s)
@@ -67,7 +68,7 @@ class Vector3:
     ) -> mavsdk.offboard.VelocityNedYaw:
         """
         Converts this Vector3 object to a mavsdk.offboard.VelocityNedYaw
-        object; this vector must use meters for units
+        object; this vector must be in meters per second
 
         Parameters
         ----------
