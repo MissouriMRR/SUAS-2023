@@ -22,9 +22,10 @@ class Waypoint(NamedTuple):
     altitude : float
         The altitude of the waypoint.
     """
+
     def __aiter__(self):
         return self
-    
+
     async def __anext__(self):
         raise StopAsyncIteration
 
