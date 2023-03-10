@@ -1,5 +1,6 @@
 """Initialization File for state exporting"""
 from typing import Type, Dict
+from enum import Enum
 from flight.states.state import State
 from flight.states.start import Start
 from flight.states.preprocess import PreProcess
@@ -23,3 +24,14 @@ STATES: Dict[
     "Land": Land,
     "Final_State": Final,
 }
+
+
+class StateEnum(str, Enum):
+    Start_State = "Start_State"
+    Pre_Process = "Pre_Process"
+    Takeoff = "Takeoff"
+    Waypoints = "Waypoints"
+    ODLC_Scanning = "ODLC_Scanning"
+    Air_Drop = "Air_Drop"
+    Land = "Land"
+    Final_State = "Final_State"
