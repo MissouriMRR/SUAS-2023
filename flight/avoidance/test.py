@@ -11,13 +11,12 @@ import mavsdk
 import mavsdk.core
 import mavsdk.offboard
 import mavsdk.telemetry
+import utm
 
 from .avoidance_goto import goto_with_avoidance
 from .point import InputPoint, Point
 
 TAKEOFF_ALTITUDE: float = 100.0
-DEFAULT_SPREAD_LATLON: float = 1e-4
-DEFAULT_SPREAD_ALTITUDE: float = 10.0
 
 
 async def takeoff(drone: mavsdk.System, altitude: float) -> None:
@@ -43,7 +42,7 @@ async def takeoff(drone: mavsdk.System, altitude: float) -> None:
 
 
 async def random_position(
-    drone: mavsdk.System, spread_latlon: float, spread_altitude: float
+    drone: mavsdk.System, spread_horizontal: float = 15.0, spread_vertical: float = 10.0
 ) -> tuple[float, float, float]:
     """
     Generates a random position relative to a drone's current position
@@ -52,24 +51,50 @@ async def random_position(
     ----------
     drone : mavsdk.System
         The drone to generate a random position relative to
-    spread_latlon : float
-        The spread, in degrees, from the drone's lat/lon
-        in which a random lat/lon may be generated
-    spread_altitude : float
+    spread_horizontal : float = 15.0
+        The spread, in meters, from the drone's north and east
+        positions in which new, random north and east positions
+        will be generated
+    spread_vertical : float = 10.0
         The spread, in meters, from the drone's altitude
-        in which a random altitude may be generated
+        in which a new, random altitude will be generated
 
     Returns
     -------
     A random, uniformly distributed position relative to the drone's position
+    latitude : float
+        Same as mavsdk.telemetry.Position.latitude_deg
+    longitude : float
+        Same as mavsdk.telemetry.Position.longitude_deg
+    altitude : float
+        Same as mavsdk.telemetry.Position.absolute_altitude_m
     """
 
+    # Get the drone's position
     position: mavsdk.telemetry.Position = await anext(drone.telemetry.position())
-    return (
-        position.latitude_deg + 2 * spread_latlon * (random.random() - 0.5),
-        position.longitude_deg + 2 * spread_latlon * (random.random() - 0.5),
-        position.absolute_altitude_m + 2 * spread_altitude * (random.random() - 0.5),
+
+    # Convert latitude and longitude to UTM
+    utm_easting: float
+    utm_northing: float
+    utm_zone_number: int
+    utm_zone_letter: str
+    utm_easting, utm_northing, utm_zone_number, utm_zone_letter = utm.from_latlon(
+        position.latitude_deg, position.longitude_deg
     )
+
+    # Randomly change UTM coordinates
+    utm_easting += 2 * spread_horizontal * (random.random() - 0.5)
+    utm_northing += 2 * spread_horizontal * (random.random() - 0.5)
+
+    # Randomly change altitude
+    altitude: float = position.absolute_altitude_m + 2 * spread_vertical * (random.random() - 0.5)
+
+    # Convert back to latitude and longitude
+    latitude: float
+    longitude: float
+    latitude, longitude = utm.to_latlon(utm_easting, utm_northing, utm_zone_number, utm_zone_letter)
+
+    return latitude, longitude, altitude
 
 
 async def drone_positions(drone: mavsdk.System) -> AsyncIterator[list[InputPoint]]:
@@ -138,9 +163,7 @@ async def avoiding_drone_test(
 
     # Randomly move drone
     while True:
-        pos: tuple[float, float, float] = await random_position(
-            drone, DEFAULT_SPREAD_LATLON, DEFAULT_SPREAD_ALTITUDE
-        )
+        pos: tuple[float, float, float] = await random_position(drone)
         await goto_with_avoidance(drone, *pos, 0.0, position_updates)
         await asyncio.sleep(4.0 * random.random() * random.random())
 
@@ -174,9 +197,7 @@ async def drone_to_avoid_test(drone: mavsdk.System) -> None:
 
     # Randomly move drone
     while True:
-        pos: tuple[float, float, float] = await random_position(
-            drone, DEFAULT_SPREAD_LATLON, DEFAULT_SPREAD_ALTITUDE
-        )
+        pos: tuple[float, float, float] = await random_position(drone)
         await drone.action.goto_location(*pos, 0.0)
         await asyncio.sleep(4.0 * random.random() * random.random())
 
