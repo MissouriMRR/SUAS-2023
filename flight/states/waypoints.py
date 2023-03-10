@@ -35,6 +35,7 @@ class Waypoints(State):
         waypoints: list[Waypoint] = gps_dict["waypoints"]
 
         for waypoint in waypoints:
+            #2/3 is the fast parameter to make it less accurate so it can fly through the waypoints faster from the default precision
             await move_to(drone, waypoint[0], waypoint[1], waypoint[2], 2 / 3)
 
         return ODLC(self.state_settings)
