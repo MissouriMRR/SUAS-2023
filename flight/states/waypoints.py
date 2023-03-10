@@ -34,7 +34,7 @@ class Waypoints(State):
         gps_dict: GPSData = extract_gps("flight/data/waypoint_data.json")
         waypoints: list[Waypoint] = gps_dict["waypoints"]
 
-        for direction, waypoint in waypoints:
+        for waypoint in waypoints:
             await move_to(drone, waypoint[0], waypoint[1], waypoint[2], 2 / 3)
 
         return ODLC(self.state_settings)
