@@ -1,7 +1,7 @@
 """Safely land the drone after all other tasks have been completed"""
 
-from mavsdk import System
 import logging
+from mavsdk import System
 from flight.states.state import State
 from flight.states.final import Final
 
