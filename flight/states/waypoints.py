@@ -6,6 +6,7 @@ from flight.states.odlcs import ODLC
 from flight.Waypoint.goto import move_to
 from flight.extract_gps import extract_gps
 
+
 class Waypoints(State):
     """
     State to run through waypoint flight path
