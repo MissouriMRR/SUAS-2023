@@ -30,8 +30,8 @@ class Waypoints(State):
         ODLC : State
             Re-fly the waypoints if we failed to reach a waypoint boundary, or progress to ODLC flight stage
         """
-        gps_dict = extract_gps()
-        waypoints = gps_dict[waypoints]
+        gps_dict = extract_gps("flight/data/waypoint_data.json")
+        waypoints = gps_dict["waypoints"]
 
         async for waypoint in waypoints:
             await move_to(drone, waypoint[0], waypoint[1], waypoint[2], 2 / 3)
