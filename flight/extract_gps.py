@@ -28,7 +28,6 @@ class Waypoint(NamedTuple):
     altitude: float
 
 
-
 class BoundaryPoint(NamedTuple):
     """
     NamedTuple storing the data for a single boundary point.
