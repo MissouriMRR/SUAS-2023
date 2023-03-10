@@ -37,8 +37,8 @@ async def takeoff(drone: mavsdk.System, altitude: float) -> None:
 
     # Temporary solution
     # Originally attempted to use telemetry to detect when the desired
-    #   altitude was reached, but telemetry is broken in Gazebo
-    await asyncio.sleep(15.0)
+    #   altitude was reached, but telemetry is broken when taking off
+    await asyncio.sleep(20.0)
 
 
 async def random_position(
