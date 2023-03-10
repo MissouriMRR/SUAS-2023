@@ -1,6 +1,7 @@
 """Safely land the drone after all other tasks have been completed"""
 
 from mavsdk import System
+import logging
 from flight.states.state import State
 from flight.states.final import Final
 
@@ -29,4 +30,7 @@ class Land(State):
         Final : State
             Last state to end state machine
         """
+        logging.debug("Drone returning to launch position...")
+        await drone.action.return_to_launch()
+        logging.debug("Drone landed.")
         return Final(self.state_settings)
