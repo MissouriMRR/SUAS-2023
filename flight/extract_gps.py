@@ -27,11 +27,6 @@ class Waypoint(NamedTuple):
     longitude: float
     altitude: float
 
-    def __aiter__(self) -> NamedTuple:
-        return self
-
-    async def __anext__(self) -> None:
-        raise StopAsyncIteration
 
 
 class BoundaryPoint(NamedTuple):
