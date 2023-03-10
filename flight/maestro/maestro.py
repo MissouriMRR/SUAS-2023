@@ -1,19 +1,25 @@
 import serial
 
+
 class Maestro:
-    def __init__(self, connection_address: str = '/dev/ttyACM0', device_number: int = 12, baud_rate: int = 9600):
+    def __init__(
+        self,
+        connection_address: str = "/dev/ttyACM0",
+        device_number: int = 12,
+        baud_rate: int = 9600,
+    ):
         self.serial = serial.Serial(port=connection_address, baudrate=baud_rate, timeout=0.050)
         self.commandPrefix = chr(0xAA) + chr(device_number)
         self.targets = [-1] * 24
 
     def _sendCommand(self, command: str) -> None:
-        self.serial.write(bytes(self.commandPrefix + command, 'latin-1'))
+        self.serial.write(bytes(self.commandPrefix + command, "latin-1"))
 
     def _getBits(self, integer: int):
         low_bits = integer & 0x7F
         high_bits = (integer >> 7) & 0x7F
         return low_bits, high_bits
-    
+
     def _readBits(self) -> int:
         lsb = ord(self.serial.read())
         msb = ord(self.serial.read())
@@ -52,7 +58,7 @@ class Maestro:
         if response == 0x01:
             return True
         return False
-    
+
     def getErrors(self):
         self._sendCommand(chr(0x21))
         result = self._readBits()
@@ -67,17 +73,15 @@ class Maestro:
             if self.getPosition(channel) != self.targets[channel]:
                 return True
         return False
-                 
+
     # TODO:
     # Stop Script
     # Restart Script
     # Restart Script with Parameter
     # Get Script Status
 
+
 if __name__ == "__main__":
     testMaestro = Maestro()
     testMaestro.getPosition(0)
     testMaestro.setTarget(0, 5000)
-
-
-
