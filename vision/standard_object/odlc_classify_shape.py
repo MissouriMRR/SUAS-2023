@@ -7,6 +7,7 @@ import cv2
 import vision.common.constants as consts
 import vision.common.odlc_characteristics as chars
 import vision.standard_object.odlc_contour_filtering as filtering
+import vision.common.bounding_box as bbox
 
 
 # constants
@@ -86,9 +87,9 @@ def get_angle(
         npt.NDArray[npt.Shape["1, 2"], npt.IntC]
     ]
         Three points that make an angle that will be calculated
+        All points formatted as done in openCV [[y, x]].
         pt_a : npt.NDArray[npt.Shape["1, 2"], npt.IntC]
             One of the points that form the angle, 0th index in the tuple.
-            All points formatted as done in openCV [[y, x]].
         vertex : npt.NDArray[npt.Shape["1, 2"], npt.IntC]
             The point that is in the middle, where the angle is, 1st index in the tuple.
         pt_b : npt.NDArray[npt.Shape["1, 2"], npt.IntC]
@@ -221,9 +222,12 @@ def check_polygons(approx: consts.Contour) -> chars.ODLCShape | None:
             shape = chars.ODLCShape.TRIANGLE
         case 4:
             angles: npt.NDArray[npt.Shape["*"], npt.Float64] = get_angles(approx)
+            # if all angles approximately 90 deg, square or rectangle, else trapezoid
             if np.all(compare_angles(angles, 90, QUAD_ANG_THRESH)):
                 lengths: npt.NDArray[npt.Shape["*"], npt.Float64] = get_lengths(approx)
-                if (lengths[0]) / (np.sum(lengths) / 4) < QUAD_LEN_THRESH:
+                avg_len: npt.Float64 = (np.sum(lengths) / 4).astype(npt.Float64)
+                # if all side lengths are (approximately) equal then square, else rectangle
+                if np.all(np.where(abs((lengths / avg_len) - 1) < QUAD_LEN_THRESH, True, False)):
                     shape = chars.ODLCShape.SQUARE
                 else:
                     shape = chars.ODLCShape.RECTANGLE
@@ -341,15 +345,77 @@ def classify_shape(
     return shape
 
 
+def process_shapes(
+    contours: list[consts.Contour], hierarchy: consts.Hierarchy, image_dims: tuple[int, int]
+) -> list[bbox.BoundingBox]:
+    """
+    Takes all of the contours of an image and will return BoundingBox list w/ shape attributes
+
+    Parameters
+    ----------
+    contours : list[consts.Contour]
+        List of all contours from the image (from cv2.findContours())
+        NOTE: cv2.findContours() returns as a tuple, so convert it to list w/ list(the_tuple)
+
+    hierarchy : consts.Hierarchy
+        The contour hierarchy information returned from cv2.findContours()
+        (The 2nd returned value)
+
+    image_dims : tuple[int, int]
+        The dimensions of the image the contours are from.
+        y_dim : int
+            Image height.
+        x_dim : int
+            Image width.
+
+    Returns
+    -------
+    bounding_boxes : list[bbox.BoundingBox]
+        A list of BoundingBox objects that are the upright bounding box arround each corresponding
+        contour at same index in list and with an attribute that is {"shape": chars.ODLCShape}
+        with the identified shape or {"shape": None} if the contour does not match any.
+    """
+    retval_boxes: list[tuple[int, int, int, int]] = [cv2.boundingRect(cnt) for cnt in contours]
+    verts_lst: list[bbox.Vertices] = [
+        bbox.tlwh_to_vertices(retval_box[0], retval_box[1], retval_box[2], retval_box[3])
+        for retval_box in retval_boxes
+    ]
+    shape_boxes: list[bbox.BoundingBox] = [
+        bbox.BoundingBox(verts, bbox.ObjectType.STD_OBJECT) for verts in verts_lst
+    ]
+
+    idx: int
+    hier: npt.NDArray[npt.Shape["4"], npt.IntC]
+    box: bbox.BoundingBox
+    # for each contour (and corresponding elements in hierarchy array and box list)
+    for idx, (hier, box) in enumerate(zip(hierarchy[0], shape_boxes)):
+        # as long as the contour is not inside another contour that has been classified as a shape
+        if (
+            hier[3] == -1
+            or not shape_boxes[hier[3]].attributes()
+            or shape_boxes[hier[3]].attributes()["shape"] is None
+        ):
+            box.set_attribute("shape", classify_shape(contours, hierarchy, idx, image_dims))
+        else:
+            # if the contour is inside an identified ODLC shape then it should not be recognized
+            box.set_attribute("shape", None)
+
+    return shape_boxes
+
+
 if __name__ == "__main__":
+    # make some test shape
     main_shape: consts.Contour = np.array(
         [[[0, 0]], [[5, 5]], [[0, 10]], [[10, 10]], [[5, 5]], [[10, 0]]]
     )
+    # make an approximation
     main_approx: consts.Contour = cv2.approxPolyDP(
-        main_shape, cv2.arcLength(main_shape, True) * 0.05, True
+        main_shape, cv2.arcLength(main_shape, True) * APPROX_CNT_THRESH, True
     )
+
     print(type(main_shape), main_shape.shape, main_shape)
     print(type(main_approx), main_approx.shape, main_approx)
+    # run each individual internal testing function to check behavior
     print(check_concave_shapes(main_shape))
     print(check_polygons(main_approx))
     print(classify_circular(main_shape))

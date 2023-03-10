@@ -421,7 +421,7 @@ def filter_contour(
 # All of main is some basic testing code
 if __name__ == "__main__":
     # set to True and add points to raw_pts to test a polygon instead
-    TESTING_POLYGON: bool = False
+    TESTING_POLYGON: bool = True
 
     # create a blank image
     test_image1: consts.Image = np.zeros([500, 500, 3], dtype=UInt8)
@@ -447,6 +447,7 @@ if __name__ == "__main__":
     hier_tmp: consts.Hierarchy
     cnts_tmp, hier_tmp = cv2.findContours(test_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     print("contours1:", type(cnts_tmp), len(cnts_tmp), cnts_tmp)
+    print("hierarchy1:", type(hier_tmp), hier_tmp.shape, hier_tmp)
     img2: consts.Image = np.dstack((test_image, test_image, test_image))
 
     # paint a filled in shape
@@ -458,6 +459,8 @@ if __name__ == "__main__":
     cnts: tuple[consts.Contour, ...]
     hier: consts.Hierarchy
     cnts, hier = cv2.findContours(test_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    print("contours2:", type(cnts), len(cnts), cnts)
+    print("hierarchy2:", type(hier), hier.shape, hier)
 
     # for each contour run all of the tests on it
     ind: int
