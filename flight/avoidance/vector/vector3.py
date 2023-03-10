@@ -89,8 +89,7 @@ class Vector3:
         return mavsdk.offboard.VelocityNedYaw(self.north, self.east, self.down, yaw_deg)
 
     def __hash__(self) -> int:
-        big_hash: int = ((hash(self.north) * 3) + hash(self.east)) * 3 + hash(self.down)
-        return big_hash & 0xFFFF_FFFF_FFFF_FFFF
+        return ((hash(self.north) * 3) + hash(self.east)) * 3 + hash(self.down)
 
     # Implement unpacking
     def __iter__(self) -> Iterator[float]:
