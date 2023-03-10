@@ -55,15 +55,13 @@ async def goto_with_avoidance(
     """
 
     # Function to create a goto task for the drone
-    async def restart_goto() -> Task[None]:
+    def start_goto() -> Task[None]:
         return asyncio.ensure_future(
             goto_location_offboard(drone, latitude_deg, longitude_deg, absolute_altitude_m, yaw_deg)
         )
 
     # Start going to the location
-    goto_task: Task[None] = asyncio.ensure_future(
-        goto_location_offboard(drone, latitude_deg, longitude_deg, absolute_altitude_m, yaw_deg)
-    )
+    goto_task: Task[None] = start_goto()
 
     try:
         while not goto_task.done():
@@ -78,7 +76,7 @@ async def goto_with_avoidance(
             # If no avoidance is needed, restart goto and continue
             if avoidance_velocity is None:
                 if goto_task.cancelled():
-                    goto_task = await restart_goto()
+                    goto_task = start_goto()
                 continue
 
             # Cancel goto then change velocity to avoid the obstacle
