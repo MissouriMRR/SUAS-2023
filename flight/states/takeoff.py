@@ -1,5 +1,7 @@
 """Run takeoff function to raise the drone to our desired altitude"""
 
+import asyncio
+import logging
 from mavsdk import System
 from flight.states.state import State
 from flight.states.waypoints import Waypoints
@@ -29,4 +31,18 @@ class Takeoff(State):
         Waypoints : State
             Next state to fly waypoint path
         """
+        # Initialize altitude (convert feet to meters)
+        await drone.action.set_takeoff_altitude(75/3.2808)
+
+        # Arm drone and takeoff
+        logging.info("Arming Drone")
+        await drone.action.arm()
+
+        logging.info("Taking off")
+        await drone.action.takeoff()
+
+        # Wait for drone to take off
+        await asyncio.sleep(2)
+
+        # Go to Waypoint State
         return Waypoints(self.state_settings)
