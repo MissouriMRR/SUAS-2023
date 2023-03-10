@@ -23,15 +23,16 @@ class Waypoint(NamedTuple):
         The altitude of the waypoint.
     """
 
-    def __aiter__(self):
+    def __init__(self) -> None:
+        self.latitude: float
+        self.longitude: float
+        self.altitude: float
+
+    def __aiter__(self) -> NamedTuple:
         return self
 
-    async def __anext__(self):
+    async def __anext__(self) -> None:
         raise StopAsyncIteration
-
-    latitude: float
-    longitude: float
-    altitude: float
 
 
 class BoundaryPoint(NamedTuple):
