@@ -1,4 +1,5 @@
 import serial
+import time
 
 
 class Maestro:
@@ -28,9 +29,12 @@ class Maestro:
     def setTarget(self, channel: int, target: int) -> None:
         low, high = self._getBits(target)
 
+        print(low, high)
+
         command = chr(0x04) + chr(channel) + chr(low) + chr(high)
+        print(command)
         self._sendCommand(command)
-        self.target[channel] = target
+        self.targets[channel] = target
 
     def setSpeed(self, channel: int, speed: int) -> None:
         low, high = self._getBits(speed)
@@ -83,5 +87,17 @@ class Maestro:
 
 if __name__ == "__main__":
     testMaestro = Maestro()
+    # position = testMaestro.getPosition(0)
+    # print(position)
+    testMaestro.setTarget(0, 4000)
+    testMaestro.setTarget(1, 4000)
+    testMaestro.setTarget(2, 4000)
+    testMaestro.setTarget(9, 4000)
+    testMaestro.setTarget(10, 4000)
     testMaestro.getPosition(0)
-    testMaestro.setTarget(0, 5000)
+    time.sleep(2)
+    testMaestro.setTarget(0, 8000)
+    testMaestro.setTarget(1, 8000)
+    testMaestro.setTarget(2, 8000)
+    testMaestro.setTarget(9, 8000)
+    testMaestro.setTarget(10, 8000)
