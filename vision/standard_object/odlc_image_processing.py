@@ -9,7 +9,7 @@ import numpy as np
 from vision.common.constants import Image, Kernel
 
 
-def preprocess_std_odlc(image: Image) -> Image:
+def preprocess_std_odlc(image: Image, thresh_min: int, thresh_max: int) -> Image:
     """
     Preprocesses image for use in detecting the contours of standard objects.
 
@@ -17,6 +17,10 @@ def preprocess_std_odlc(image: Image) -> Image:
     ----------
     image : Image
         image from airdrop area flyover before any processing has occured
+    thresh_min: int
+        The minimum threshold input for the Canny edge detection
+    thresh_max: int
+        The maximum threshold input for the Canny edge detection
 
     Returns
     -------
@@ -25,9 +29,9 @@ def preprocess_std_odlc(image: Image) -> Image:
     """
     grayscaled: Image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert to graycsale
 
-    blurred: Image = cv2.GaussianBlur(grayscaled, ksize=(3, 3), sigmaX=0)  # Blur the image
+    blurred: Image = cv2.GaussianBlur(grayscaled, ksize=(3, 3), sigmaX=1.5)  # Blur the image
 
-    edges: Image = cv2.Canny(image=blurred, threshold1=15, threshold2=500)
+    edges: Image = cv2.Canny(image=blurred, threshold1=thresh_min, threshold2=thresh_max)
 
     # Create the kernel for the dilation
     kernel: Kernel = np.ones((3, 3), np.uint8)
@@ -55,7 +59,7 @@ if __name__ == "__main__":
     cv2.destroyAllWindows()
 
     # run preprocessing
-    processed_image: Image = preprocess_std_odlc(input_image)
+    processed_image: Image = preprocess_std_odlc(input_image, 15, 30)
 
     # show pre-processed image
     cv2.imshow("Preprocessed Image", processed_image)
