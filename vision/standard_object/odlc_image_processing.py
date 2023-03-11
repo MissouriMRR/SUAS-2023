@@ -28,10 +28,10 @@ def preprocess_std_odlc(image: Image) -> Image:
     blurred: Image = cv2.GaussianBlur(grayscaled, ksize=(3, 3), sigmaX=0)  # Blur the image
 
     edges: Image = cv2.Canny(image=blurred, threshold1=15, threshold2=500)
-    
+
     # Create the kernel for the dilation
     kernel = np.ones((3, 3), np.uint8)
-    
+
     dilated = cv2.dilate(edges, kernel, iterations=1)
 
     return dilated
