@@ -6,7 +6,7 @@ use in contour detection for the standard objects.
 import cv2
 import numpy as np
 
-from vision.common.constants import Image
+from vision.common.constants import Image, Kernel
 
 
 def preprocess_std_odlc(image: Image) -> Image:
@@ -30,9 +30,9 @@ def preprocess_std_odlc(image: Image) -> Image:
     edges: Image = cv2.Canny(image=blurred, threshold1=15, threshold2=500)
 
     # Create the kernel for the dilation
-    kernel = np.ones((3, 3), np.uint8)
+    kernel: Kernel = np.ones((3, 3), np.uint8)
 
-    dilated = cv2.dilate(edges, kernel, iterations=1)
+    dilated: Image = cv2.dilate(edges, kernel, iterations=1)
 
     return dilated
 

@@ -9,6 +9,9 @@ ScImage: TypeAlias = NDArray[Shape["*, *"], UInt8]
 # single channel image of booleans
 Mask: TypeAlias = NDArray[Shape["*, *"], Bool]
 
+# A kernel for image processing steps
+Kernel: TypeAlias = NDArray[Shape["*, *"], UInt8]
+
 Point: TypeAlias = NDArray[Shape["2"], Float64]
 Vector: TypeAlias = NDArray[Shape["3"], Float64]
 
