@@ -25,6 +25,84 @@ ROUGHNESS_PERCENT_DIFF: float = 0.05
 # in test_roughness()
 
 
+def filter_contour(
+    contours: list[consts.Contour],
+    hierarchy: consts.Hierarchy,
+    index: int,
+    image_dims: tuple[int, int],
+    approx_contour: consts.Contour,
+) -> tuple[bool, bool]:
+    """
+    Runs all created test functions and handles logic to determine if a given contour (from the
+    tuple of contours) is an ODLC shape or not
+
+    Parameters
+    ----------
+    contours : list[consts.Contour]
+        The list of contours returned by the contour detection algorithm
+        NOTE: cv2.findContours() returns as a tuple of arbitrary length, so first convert to list
+    hierarchy : consts.Hierarchy
+        The contour hierarchy list returned by the contour detection algorithm
+        (the 2nd value returned by cv2.findContours())
+    index : int
+        The index corresponding to the contour in contours and hierarchy to be checked
+        (must be in bounds of contours tuple and hierarchy array)
+    image_dims : tuple[int, int]
+        The dimensions of the original entire image
+        (only height and width as gotten from image.shape[:2], not the color channels)
+        image_dim_height : int
+            The height dimension of the image
+        image_dim_width : int
+            The width dimension of the image
+    approx_contour : consts.Contour
+        Parameter to provide the approximated version (from cv2.approxPolyDP) of the contour
+
+    Returns
+    -------
+    shape_attrs : tuple[bool, bool, consts.Contour]
+        is_odlc : bool
+            True if the contour is (probably) an ODLC shape, False o.w.
+        is_circular : bool
+            True if is_odlc is true and the shape was detected to be circular
+    """
+    # test hierarchy, bounding_box, min_area_box, and spikiness
+    if (
+        (not test_heirarchy(hierarchy, index))
+        or (not test_bounding_box(contours[index], image_dims))
+        or (not test_min_area_box(contours[index]))
+        or (not test_spikiness(contours[index]))
+    ):
+        return (False, False)
+
+    # run polygon specific test
+    if not test_roughness(contours[index], approx_contour):
+        # if polygon test fails run circle test
+
+        # tuple[int, int, int, int] is the return type of cv2.boundingRect()
+        # the first two are the (y, x) of top left corner
+        # the last two are the (y, x) of the bottom right corner
+        cnt_bound_box_retval: tuple[int, int, int, int] = cv2.boundingRect(contours[index])
+        cnt_bound_box: bbox.BoundingBox = bbox.BoundingBox(
+            bbox.tlwh_to_vertices(
+                cnt_bound_box_retval[0],
+                cnt_bound_box_retval[1],
+                cnt_bound_box_retval[2],
+                cnt_bound_box_retval[3],
+            ),
+            bbox.ObjectType.STD_OBJECT,
+        )
+        # use _generate_mask to get a mask of the shape then cvt bool image to UInt8
+        cnt_mask: consts.Mask = generate_mask(contours[index], cnt_bound_box)
+        cnt_sc_img: consts.ScImage = np.where(cnt_mask, 255, 0).astype(np.uint8)
+
+        if not test_circleness(cnt_sc_img):
+            return (False, False)
+
+        return (True, True)
+
+    return (True, False)
+
+
 def test_heirarchy(hierarchy: consts.Hierarchy, contour_index: int) -> bool:
     """
     Tests whether the contour at the given index contains another contour in it
@@ -338,84 +416,6 @@ def test_circleness(img: consts.ScImage) -> bool:
         return False
 
     return True
-
-
-def filter_contour(
-    contours: list[consts.Contour],
-    hierarchy: consts.Hierarchy,
-    index: int,
-    image_dims: tuple[int, int],
-    approx_contour: consts.Contour,
-) -> tuple[bool, bool]:
-    """
-    Runs all created test functions and handles logic to determine if a given contour (from the
-    tuple of contours) is an ODLC shape or not
-
-    Parameters
-    ----------
-    contours : list[consts.Contour]
-        The list of contours returned by the contour detection algorithm
-        NOTE: cv2.findContours() returns as a tuple of arbitrary length, so first convert to list
-    hierarchy : consts.Hierarchy
-        The contour hierarchy list returned by the contour detection algorithm
-        (the 2nd value returned by cv2.findContours())
-    index : int
-        The index corresponding to the contour in contours and hierarchy to be checked
-        (must be in bounds of contours tuple and hierarchy array)
-    image_dims : tuple[int, int]
-        The dimensions of the original entire image
-        (only height and width as gotten from image.shape[:2], not the color channels)
-        image_dim_height : int
-            The height dimension of the image
-        image_dim_width : int
-            The width dimension of the image
-    approx_contour : consts.Contour
-        Parameter to provide the approximated version (from cv2.approxPolyDP) of the contour
-
-    Returns
-    -------
-    shape_attrs : tuple[bool, bool, consts.Contour]
-        is_odlc : bool
-            True if the contour is (probably) an ODLC shape, False o.w.
-        is_circular : bool
-            True if is_odlc is true and the shape was detected to be circular
-    """
-    # test hierarchy, bounding_box, min_area_box, and spikiness
-    if (
-        (not test_heirarchy(hierarchy, index))
-        or (not test_bounding_box(contours[index], image_dims))
-        or (not test_min_area_box(contours[index]))
-        or (not test_spikiness(contours[index]))
-    ):
-        return (False, False)
-
-    # run polygon specific test
-    if not test_roughness(contours[index], approx_contour):
-        # if polygon test fails run circle test
-
-        # tuple[int, int, int, int] is the return type of cv2.boundingRect()
-        # the first two are the (y, x) of top left corner
-        # the last two are the (y, x) of the bottom right corner
-        cnt_bound_box_retval: tuple[int, int, int, int] = cv2.boundingRect(contours[index])
-        cnt_bound_box: bbox.BoundingBox = bbox.BoundingBox(
-            bbox.tlwh_to_vertices(
-                cnt_bound_box_retval[0],
-                cnt_bound_box_retval[1],
-                cnt_bound_box_retval[2],
-                cnt_bound_box_retval[3],
-            ),
-            bbox.ObjectType.STD_OBJECT,
-        )
-        # use _generate_mask to get a mask of the shape then cvt bool image to UInt8
-        cnt_mask: consts.Mask = generate_mask(contours[index], cnt_bound_box)
-        cnt_sc_img: consts.ScImage = np.where(cnt_mask, 255, 0).astype(np.uint8)
-
-        if not test_circleness(cnt_sc_img):
-            return (False, False)
-
-        return (True, True)
-
-    return (True, False)
 
 
 # All of main is some basic testing code

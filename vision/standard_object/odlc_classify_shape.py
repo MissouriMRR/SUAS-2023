@@ -32,6 +32,127 @@ CIRCULAR_RATIO_RANGE: float = 0.1
 # NOTE: do not set to above 0.109, this will result in overlap between two ratios
 
 
+def process_shapes(
+    contours: list[consts.Contour], hierarchy: consts.Hierarchy, image_dims: tuple[int, int]
+) -> list[bbox.BoundingBox]:
+    """
+    Takes all of the contours of an image and will return BoundingBox list w/ shape attributes
+
+    Parameters
+    ----------
+    contours : list[consts.Contour]
+        List of all contours from the image (from cv2.findContours())
+        NOTE: cv2.findContours() returns as a tuple, so convert it to list w/ list(the_tuple)
+    hierarchy : consts.Hierarchy
+        The contour hierarchy information returned from cv2.findContours()
+        (The 2nd returned value)
+    image_dims : tuple[int, int]
+        The dimensions of the image the contours are from.
+        y_dim : int
+            Image height.
+        x_dim : int
+            Image width.
+
+    Returns
+    -------
+    bounding_boxes : list[bbox.BoundingBox]
+        A list of BoundingBox objects that are the upright bounding box arround each corresponding
+        contour at same index in list and with an attribute that is {"shape": chars.ODLCShape}
+        with the identified shape or {"shape": None} if the contour does not match any.
+    """
+    retval_boxes: list[tuple[int, int, int, int]] = [cv2.boundingRect(cnt) for cnt in contours]
+    verts_lst: list[bbox.Vertices] = [
+        bbox.tlwh_to_vertices(retval_box[0], retval_box[1], retval_box[2], retval_box[3])
+        for retval_box in retval_boxes
+    ]
+    shape_boxes: list[bbox.BoundingBox] = [
+        bbox.BoundingBox(verts, bbox.ObjectType.STD_OBJECT) for verts in verts_lst
+    ]
+
+    idx: int
+    hier: npt.NDArray[npt.Shape["4"], npt.IntC]
+    box: bbox.BoundingBox
+    # for each contour (and corresponding elements in hierarchy array and box list)
+    for idx, (hier, box) in enumerate(zip(hierarchy[0], shape_boxes)):
+        # as long as the contour is not inside another contour that has been classified as a shape
+        if (
+            hier[3] == -1
+            or not shape_boxes[hier[3]].attributes()
+            or shape_boxes[hier[3]].attributes()["shape"] is None
+        ):
+            box.set_attribute("shape", classify_shape(contours, hierarchy, idx, image_dims))
+        else:
+            # if the contour is inside an identified ODLC shape then it should not be recognized
+            box.set_attribute("shape", None)
+
+    return shape_boxes
+
+
+def classify_shape(
+    contours: list[consts.Contour],
+    hierarchy: consts.Hierarchy,
+    index: int,
+    image_dims: tuple[int, int],
+    approx_contour: consts.Contour | None = None,
+) -> chars.ODLCShape | None:
+    """
+    Will first determine whether the specified contour is an ODLC shape, then will determine
+    which ODLC shape it is.
+
+    Parameters
+    ----------
+    contours : list[consts.Contour]
+        The list of contours returned by the contour detection algorithm
+        NOTE: cv2.findContours() returns as a tuple of arbitrary length, so first convert to list
+    hierarchy : consts.Hierarchy
+        The contour hierarchy list returned by the contour detection algorithm
+        (the 2nd value returned by cv2.findContours())
+    index : int
+        The index corresponding to the contour in contours and hierarchy to be checked
+        (must be in bounds of contours tuple and hierarchy array)
+    image_dims : tuple[int, int]
+        The dimensions of the original entire image
+        (only height and width as gotten from image.shape[:2], not the color channels)
+        image_dim_height : int
+            The height dimension of the image
+        image_dim_width : int
+            The width dimension of the image
+    approx_contour : consts.Contour | None = None
+        Optional parameter to provide the approximated version (from cv2.approxPolyDP) of the
+        contour to be checked to avoid recalculation
+        This is None by default, it is only not None when the approximated contour is provided
+
+    Returns
+    -------
+    shape : chars.ODLCShape | None
+        Will return one of the ODLC shapes defined in vision/common/odlc_characteristics or None
+        if the given contour is not an ODLC shape (fails filtering or doesnt match any ODLC)
+    """
+    if approx_contour is None:
+        approx_contour = cv2.approxPolyDP(
+            contours[index], cv2.arcLength(contours[index], True) * APPROX_CNT_THRESH, True
+        )
+
+    is_shape: bool
+    is_circular: bool
+    is_shape, is_circular = filtering.filter_contour(
+        contours, hierarchy, index, image_dims, approx_contour
+    )
+
+    if not is_shape:
+        return None
+
+    shape: chars.ODLCShape | None = None
+    if is_circular:
+        shape = classify_circular(contours[index])
+    else:
+        shape = check_concave_shapes(approx_contour)
+        if shape is None:
+            shape = check_polygons(approx_contour)
+
+    return shape
+
+
 def check_concave_shapes(approx: consts.Contour) -> chars.ODLCShape | None:
     """
     Checks if the shape is a plus or star because these are concave shapes and will have inside
@@ -278,129 +399,6 @@ def classify_circular(contour: consts.Contour) -> chars.ODLCShape:
     if abs((max_dist / perimeter) - SEMICIRCLE_RATIO) < CIRCULAR_RATIO_RANGE:
         return chars.ODLCShape.SEMICIRCLE
     return chars.ODLCShape.CIRCLE
-
-
-def classify_shape(
-    contours: list[consts.Contour],
-    hierarchy: consts.Hierarchy,
-    index: int,
-    image_dims: tuple[int, int],
-    approx_contour: consts.Contour | None = None,
-) -> chars.ODLCShape | None:
-    """
-    Will first determine whether the specified contour is an ODLC shape, then will determine
-    which ODLC shape it is.
-
-    Parameters
-    ----------
-    contours : list[consts.Contour]
-        The list of contours returned by the contour detection algorithm
-        NOTE: cv2.findContours() returns as a tuple of arbitrary length, so first convert to list
-    hierarchy : consts.Hierarchy
-        The contour hierarchy list returned by the contour detection algorithm
-        (the 2nd value returned by cv2.findContours())
-    index : int
-        The index corresponding to the contour in contours and hierarchy to be checked
-        (must be in bounds of contours tuple and hierarchy array)
-    image_dims : tuple[int, int]
-        The dimensions of the original entire image
-        (only height and width as gotten from image.shape[:2], not the color channels)
-        image_dim_height : int
-            The height dimension of the image
-        image_dim_width : int
-            The width dimension of the image
-    approx_contour : consts.Contour | None = None
-        Optional parameter to provide the approximated version (from cv2.approxPolyDP) of the
-        contour to be checked to avoid recalculation
-        This is None by default, it is only not None when the approximated contour is provided
-
-    Returns
-    -------
-    shape : chars.ODLCShape | None
-        Will return one of the ODLC shapes defined in vision/common/odlc_characteristics or None
-        if the given contour is not an ODLC shape (fails filtering or doesnt match any ODLC)
-    """
-    if approx_contour is None:
-        approx_contour = cv2.approxPolyDP(
-            contours[index], cv2.arcLength(contours[index], True) * APPROX_CNT_THRESH, True
-        )
-
-    is_shape: bool
-    is_circular: bool
-    is_shape, is_circular = filtering.filter_contour(
-        contours, hierarchy, index, image_dims, approx_contour
-    )
-
-    if not is_shape:
-        return None
-
-    shape: chars.ODLCShape | None = None
-    if is_circular:
-        shape = classify_circular(contours[index])
-    else:
-        shape = check_concave_shapes(approx_contour)
-        if shape is None:
-            shape = check_polygons(approx_contour)
-
-    return shape
-
-
-def process_shapes(
-    contours: list[consts.Contour], hierarchy: consts.Hierarchy, image_dims: tuple[int, int]
-) -> list[bbox.BoundingBox]:
-    """
-    Takes all of the contours of an image and will return BoundingBox list w/ shape attributes
-
-    Parameters
-    ----------
-    contours : list[consts.Contour]
-        List of all contours from the image (from cv2.findContours())
-        NOTE: cv2.findContours() returns as a tuple, so convert it to list w/ list(the_tuple)
-
-    hierarchy : consts.Hierarchy
-        The contour hierarchy information returned from cv2.findContours()
-        (The 2nd returned value)
-
-    image_dims : tuple[int, int]
-        The dimensions of the image the contours are from.
-        y_dim : int
-            Image height.
-        x_dim : int
-            Image width.
-
-    Returns
-    -------
-    bounding_boxes : list[bbox.BoundingBox]
-        A list of BoundingBox objects that are the upright bounding box arround each corresponding
-        contour at same index in list and with an attribute that is {"shape": chars.ODLCShape}
-        with the identified shape or {"shape": None} if the contour does not match any.
-    """
-    retval_boxes: list[tuple[int, int, int, int]] = [cv2.boundingRect(cnt) for cnt in contours]
-    verts_lst: list[bbox.Vertices] = [
-        bbox.tlwh_to_vertices(retval_box[0], retval_box[1], retval_box[2], retval_box[3])
-        for retval_box in retval_boxes
-    ]
-    shape_boxes: list[bbox.BoundingBox] = [
-        bbox.BoundingBox(verts, bbox.ObjectType.STD_OBJECT) for verts in verts_lst
-    ]
-
-    idx: int
-    hier: npt.NDArray[npt.Shape["4"], npt.IntC]
-    box: bbox.BoundingBox
-    # for each contour (and corresponding elements in hierarchy array and box list)
-    for idx, (hier, box) in enumerate(zip(hierarchy[0], shape_boxes)):
-        # as long as the contour is not inside another contour that has been classified as a shape
-        if (
-            hier[3] == -1
-            or not shape_boxes[hier[3]].attributes()
-            or shape_boxes[hier[3]].attributes()["shape"] is None
-        ):
-            box.set_attribute("shape", classify_shape(contours, hierarchy, idx, image_dims))
-        else:
-            # if the contour is inside an identified ODLC shape then it should not be recognized
-            box.set_attribute("shape", None)
-
-    return shape_boxes
 
 
 if __name__ == "__main__":
