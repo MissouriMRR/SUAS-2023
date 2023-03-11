@@ -5,11 +5,12 @@ use in contour detection for the standard objects.
 
 import cv2
 import numpy as np
+from nptyping import NDArray, Shape, UInt8
 
-from vision.common.constants import Image, Kernel
+from vision.common.constants import Image, ScImage
 
 
-def preprocess_std_odlc(image: Image, thresh_min: int, thresh_max: int) -> Image:
+def preprocess_std_odlc(image: Image, thresh_min: int = 50, thresh_max: int = 100) -> ScImage:
     """
     Preprocesses image for use in detecting the contours of standard objects.
 
@@ -18,25 +19,26 @@ def preprocess_std_odlc(image: Image, thresh_min: int, thresh_max: int) -> Image
     image : Image
         image from airdrop area flyover before any processing has occured
     thresh_min: int
-        The minimum threshold input for the Canny edge detection
+        The minimum threshold input for the Canny edge detection. Defaults to 10
     thresh_max: int
-        The maximum threshold input for the Canny edge detection
+        The maximum threshold input for the Canny edge detection. Defaults to 100
 
     Returns
     -------
-    edges : Image
-        the image after preprocessing for use in contour detection/processing
+    edges : ScImage
+        the single channel image after preprocessing for use in contour detection/processing
     """
-    grayscaled: Image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert to graycsale
 
-    blurred: Image = cv2.GaussianBlur(grayscaled, ksize=(3, 3), sigmaX=1.5)  # Blur the image
+    grayscaled: ScImage = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert to graycsale
 
-    edges: Image = cv2.Canny(image=blurred, threshold1=thresh_min, threshold2=thresh_max)
+    blurred: ScImage = cv2.GaussianBlur(grayscaled, ksize=(3, 3), sigmaX=1.5)  # Blur the image
+
+    edges: ScImage = cv2.Canny(image=blurred, threshold1=thresh_min, threshold2=thresh_max)
 
     # Create the kernel for the dilation
-    kernel: Kernel = np.ones((3, 3), np.uint8)
+    kernel: NDArray[Shape["3, 3"], UInt8] = np.ones((3, 3), np.uint8)
 
-    dilated: Image = cv2.dilate(edges, kernel, iterations=1)
+    dilated: ScImage = cv2.dilate(edges, kernel, iterations=1)
 
     return dilated
 
