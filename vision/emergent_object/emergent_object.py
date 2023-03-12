@@ -58,7 +58,8 @@ def create_emergent_model(model_path: str = EMG_MODEL_PATH) -> Callable[[Image],
 
     Parameters
     ----------
-    None
+    model_path : str, by default = EMG_MODEL_PATH
+        the file path to the emergent object model weights file
 
     Returns
     -------
