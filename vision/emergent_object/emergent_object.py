@@ -7,15 +7,13 @@ are totally acurrate. Tried to make good approximations for types where
 possible, or elimnate variables that couldn't be figured out.
 """
 
-## TODO REMOVE
-import sys
 
-sys.path.append("C:/Users/Cameron/Documents/GitHub/SUAS-2023")
+from typing import Any, Callable, TypedDict
 
+import cv2
 import torch
 
-from typing import Callable, Any, TypedDict
-
+from vision.common.bounding_box import BoundingBox, ObjectType, Vertices, tlwh_to_vertices
 from vision.common.constants import Image
 
 
@@ -73,9 +71,7 @@ def create_emergent_model(model_path: str = EMG_MODEL_PATH) -> Callable[[Image],
     return model
 
 
-def detect_emergent_object(
-    image: Image, model: Callable[[Image], Any]
-) -> dict[int, DetectedEmgObj]:
+def detect_emergent_object(image: Image, model: Callable[[Image], Any]) -> list[BoundingBox]:
     """
     Detects emergent object within an image using the selected model.
 
@@ -92,9 +88,9 @@ def detect_emergent_object(
 
     Returns
     -------
-    object_locations : dict[int, DetectedEmgObj]
-        contains the xy coordinates and attributes of
-        the detected objects within the image
+    boxes : list[BoundingBox]
+        bounding boxes of the detected emergent objects,
+        with attributes confidence and name
     """
     # Convert to RGB
     rgb_image: Image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -102,27 +98,58 @@ def detect_emergent_object(
     # Run the model on the image
     object_locations: dict[int, DetectedEmgObj] = model(rgb_image).pandas().xyxy[0].to_dict("index")
 
-    return object_locations
+    # Create BoundingBoxes for the objects
+    boxes: list[BoundingBox] = []
+
+    obj: DetectedEmgObj
+    for obj in object_locations.values():
+        verts: Vertices = tlwh_to_vertices(
+            int(obj["xmin"]),
+            int(obj["ymin"]),
+            int(obj["xmax"] - obj["xmin"]),
+            int(obj["ymax"] - obj["ymin"]),
+        )
+
+        box: BoundingBox = BoundingBox(verts, ObjectType.EMG_OBJECT)
+        box.set_attribute("confidence", obj["confidence"])
+        box.set_attribute("name", obj["name"])
+
+        boxes.append(box)
+
+    return boxes
 
 
 if __name__ == "__main__":
-    import cv2
+    import sys
 
-    # Load the image ## TODO: add command line arg
-    image_path = "vision/emergent_object/people.jpg"
+    if len(sys.argv) != 2:
+        print("Error: Incorrect number of parameters. Please specify an image file path.")
+        sys.exit()
+
+    # Load the image
+    image_path: str = sys.argv[1]
     test_image: Image = cv2.imread(image_path)
 
     # Load model
-    model: Callable[[Image], str] = create_emergent_model()
+    emg_model: Callable[[Image], str] = create_emergent_model()
 
     # Use model for detection / classification
-    output: dict[int, DetectedEmgObj] = detect_emergent_object(test_image, model)
+    detected_emg_objs: list[BoundingBox] = detect_emergent_object(test_image, emg_model)
 
     # Draw the bounding boxes to the original image
-    for row in output.values():
+    emg_obj: BoundingBox
+    for emg_obj in detected_emg_objs:
         # Get the output ranges
-        top_left = (int(row["xmin"]), int(row["ymin"]))
-        bottom_right = (int(row["xmax"]), int(row["ymax"]))
+        min_x: int
+        max_x: int
+        min_x, max_x = emg_obj.get_x_extremes()
+
+        min_y: int
+        max_y: int
+        min_y, max_y = emg_obj.get_y_extremes()
+
+        top_left: tuple[int, int] = (min_x, min_y)
+        bottom_right: tuple[int, int] = (max_x, max_y)
 
         # Draw the bounding box
         cv2.rectangle(test_image, top_left, bottom_right, (255, 0, 0), 4)
