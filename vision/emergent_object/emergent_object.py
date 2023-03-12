@@ -1,11 +1,20 @@
 """
 Contains functions relating to the identification and
 classification of the emergent object within an image.
+
+NOTE: Pytorch types are a bit of a pain, so not all types in here
+are totally acurrate. Tried to make good approximations for types where
+possible, or elimnate variables that couldn't be figured out.
 """
+
+## TODO REMOVE
+import sys
+
+sys.path.append("C:/Users/Cameron/Documents/GitHub/SUAS-2023")
 
 import torch
 
-from typing import Callable, Any
+from typing import Callable, Any, TypedDict
 
 from vision.common.constants import Image
 
@@ -13,8 +22,39 @@ from vision.common.constants import Image
 EMG_MODEL_PATH = "vision/emergent_object/emergent_model.pt"
 
 
-# Load the model from the file
-def create_emergent_model(model_path: str = EMG_MODEL_PATH) -> Callable:
+class DetectedEmgObj(TypedDict):
+    """
+    The output obtained from running the emergent object detection model.
+    Represents the attributes of one detected emergent object
+
+    Attributes
+    ----------
+    xmin: float
+        minimum x value
+    ymin: float
+        minimum y value
+    xmax: float
+        maximum x value
+    ymax: float
+        maximum y value
+    confidence: float
+        confidence in the detection
+    class: int
+        class of object, can't be included because its a Python keyword,
+        but we won't be using this attribute anyway
+    name: str
+        currently only human implemented
+    """
+
+    xmin: float
+    ymin: float
+    xmax: float
+    ymax: float
+    confidence: float
+    name: str
+
+
+def create_emergent_model(model_path: str = EMG_MODEL_PATH) -> Callable[[Image], Any]:
     """
     Loads the model used for emergent object detection/classification.
 
@@ -24,14 +64,18 @@ def create_emergent_model(model_path: str = EMG_MODEL_PATH) -> Callable:
 
     Returns
     -------
-    model : Callable ## TODO: Pretty sure the type isn't a Callable
+    model : Callable[[Image], Any]
         The model used for object detection/classification
+        NOTE: model is not technically a Callable, but can be treated as such
+        for our purposes.
     """
-    model: Callable = torch.hub.load("ultralytics/yolov5", "custom", path=model_path)
+    model: Callable[[Image], Any] = torch.hub.load("ultralytics/yolov5", "custom", path=model_path)
     return model
 
 
-def detect_emergent_object(image: Image, model: Callable) -> Any:
+def detect_emergent_object(
+    image: Image, model: Callable[[Image], Any]
+) -> dict[int, DetectedEmgObj]:
     """
     Detects emergent object within an image using the selected model.
 
@@ -48,18 +92,15 @@ def detect_emergent_object(image: Image, model: Callable) -> Any:
 
     Returns
     -------
-    object_locations : Any ## TODO: what's the type, idk
-        A dataframe containing the xy coordinates of
-        the detected object within the image
+    object_locations : dict[int, DetectedEmgObj]
+        contains the xy coordinates and attributes of
+        the detected objects within the image
     """
     # Convert to RGB
-    image: Image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    rgb_image: Image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     # Run the model on the image
-    model_prediction = model(image)
-
-    # Retrieve the output from the model
-    object_locations: Any = model_prediction.pandas().xyxy[0]
+    object_locations: dict[int, DetectedEmgObj] = model(rgb_image).pandas().xyxy[0].to_dict("index")
 
     return object_locations
 
@@ -68,29 +109,25 @@ if __name__ == "__main__":
     import cv2
 
     # Load the image ## TODO: add command line arg
-    image_path = "vision/emergent_object/people.png"
-    image = cv2.imread(image_path)
+    image_path = "vision/emergent_object/people.jpg"
+    test_image: Image = cv2.imread(image_path)
 
     # Load model
-    model = create_emergent_model()
+    model: Callable[[Image], str] = create_emergent_model()
 
     # Use model for detection / classification
-    output = detect_emergent_object(image, model)
-
-    # Convert the Pandas Dataframe to a dictionary - this will be necessary and
-    #   should eventually be done in `detect_emergent_object()` ## TODO
-    output_dict = output.to_dict("index")
+    output: dict[int, DetectedEmgObj] = detect_emergent_object(test_image, model)
 
     # Draw the bounding boxes to the original image
-    for row in output_dict.values():
+    for row in output.values():
         # Get the output ranges
         top_left = (int(row["xmin"]), int(row["ymin"]))
         bottom_right = (int(row["xmax"]), int(row["ymax"]))
 
         # Draw the bounding box
-        cv2.rectangle(image, top_left, bottom_right, (255, 0, 0), 4)
+        cv2.rectangle(test_image, top_left, bottom_right, (255, 0, 0), 4)
 
     # Display the image
-    cv2.imshow("Detected Emergent Objects", image)
+    cv2.imshow("Detected Emergent Objects", test_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
