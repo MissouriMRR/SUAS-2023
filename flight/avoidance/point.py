@@ -9,6 +9,8 @@ import time
 import mavsdk.telemetry
 import utm
 
+from .vector.vector3 import Vector3
+
 # Input points are dicts with time and UTM coordinate data
 # May change in the future
 InputPoint = dict[str, float | str]
@@ -17,7 +19,7 @@ InputPoint = dict[str, float | str]
 @dataclass(slots=True)
 class Point:
     """
-    A point in 3D space
+    A point in 3D space and time
 
     Attributes
     ----------
@@ -120,3 +122,15 @@ class Point:
             position.absolute_altitude_m,
             time.time(),
         )
+
+    def to_vector3(self) -> Vector3:
+        """
+        Converts a Point object to a Vector3 object
+
+        Returns
+        -------
+        A new Vector3 object in meters, dropping the
+        UTM zone number, UTM zone letter, and time
+        """
+
+        return Vector3(self.utm_y, self.utm_x, -self.altitude)
