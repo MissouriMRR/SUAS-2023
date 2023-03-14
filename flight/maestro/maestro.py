@@ -18,7 +18,7 @@ class Maestro:
     gamma(n=1.0)
         Change the photo's gamma exposure.
     """
-    
+
     def __init__(
         self,
         connection_address: str = "/dev/ttyACM0",
@@ -35,7 +35,7 @@ class Maestro:
 
         device_number: int
             The device number that is used to address the board in Pololu Protocol commands
-        
+
         baud_rate: int
             The rate of communication configured for the board (default 9600)
         """
