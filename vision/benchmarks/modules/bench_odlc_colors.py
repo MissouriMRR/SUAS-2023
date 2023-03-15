@@ -1,0 +1,75 @@
+"""
+Benchmark for the ODLC Colors algorithm.
+"""
+
+from vision.benchmarks.common.dataset import BenchDataset, BenchImage
+from vision.benchmarks.common.benchmark_base import Benchmark
+
+from vision.common.bounding_box import BoundingBox
+from vision.common.constants import Image
+from vision.common.odlc_characteristics import ODLCColor
+
+from vision.standard_object.odlc_colors import find_colors
+
+class BenchODLCColors(Benchmark):
+    """
+    Benchmark utility for the ODLC Colors algorithm.
+
+    Parameters
+    ----------
+    dataset : BenchDataset
+        a set of images to run the benchmark on
+    """
+    def __init__(self, dataset: BenchDataset) -> None:
+        super().__init__(dataset)
+    
+    def run_module(self, image: Image, text_bounds: BoundingBox) -> tuple[ODLCColor, ODLCColor]:
+        """
+        Runs the find_colors function on the image in order to benchmark.
+
+        Parameters
+        ----------
+        image : Image
+            the image containing the standard odlc object
+        text_bounds : BoundingBox
+            the bounds of the text on the odlc object
+
+        Returns
+        -------
+        colors : tuple[ODLCColor, ODLCColor]
+            the colors of the standard object
+            shape_color : ODLCColor
+                the color of the shape
+            text_color : ODLCColor
+                the color of the text on the object
+        """
+        return find_colors(image=image, text_bounds=text_bounds)
+    
+    def accuracy(self, bench_image: BenchImage) -> list[tuple[ODLCColor, bool]]:
+        """
+        Run the benchmark to check accuracy of the algorithm.
+
+        Parameters
+        ----------
+        bench_image : BenchImage
+            the image to test the accuracy of
+
+        Returns
+        -------
+        accuracy_results : list[tuple[ODLCColor, bool]]
+            the accuracy results of running the algorithm on the image
+
+            result : ODLCColor
+                the color found by the algorithm
+            successful : bool
+                whether the algorithm's result was accurate
+        """
+        colors: tuple[ODLCColor, ODLCColor] = self.run_module(image=bench_image.image, text_bounds=bench_image.attributes["text_bounds"])
+
+        pass_color_1: bool = (colors[0] == bench_image.accuracy_goals[0])
+        bench_image.accuracy_results.append(colors[0], pass_color_1)
+        
+        pass_color_2: bool = (colors[1] == bench_image.accuracy_goals[1])
+        bench_image.accuracy_results.append(colors[1], pass_color_2)
+
+        return bench_image.accuracy_results
