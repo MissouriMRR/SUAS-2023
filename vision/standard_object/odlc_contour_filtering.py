@@ -79,8 +79,8 @@ def filter_contour(
         # if polygon test fails run circle test
 
         # tuple[int, int, int, int] is the return type of cv2.boundingRect()
-        # the first two are the (y, x) of top left corner
-        # the last two are the (y, x) of the bottom right corner
+        # the first two are the (x, y) of top left corner
+        # the last two are the (x, y) of the bottom right corner
         cnt_bound_box_retval: tuple[int, int, int, int] = cv2.boundingRect(contours[index])
         cnt_bound_box: bbox.BoundingBox = bbox.BoundingBox(
             bbox.tlwh_to_vertices(
@@ -174,10 +174,10 @@ def test_bounding_box(contour: consts.Contour, dims: tuple[int, int]) -> bool:
     bounding_box_retval: tuple[int, int, int, int] = cv2.boundingRect(contour)
     bounding_box: bbox.BoundingBox = bbox.BoundingBox(
         bbox.tlwh_to_vertices(
-            bounding_box_retval[1],
             bounding_box_retval[0],
-            bounding_box_retval[3] - bounding_box_retval[1],
-            bounding_box_retval[2] - bounding_box_retval[0],
+            bounding_box_retval[1],
+            bounding_box_retval[2],
+            bounding_box_retval[3],
         ),
         bbox.ObjectType.STD_OBJECT,
     )
@@ -263,10 +263,10 @@ def min_common_bounding_box(contours: list[consts.Contour]) -> bbox.BoundingBox:
         boxes.append(
             bbox.BoundingBox(
                 bbox.tlwh_to_vertices(
-                    contour_box[1],
                     contour_box[0],
-                    contour_box[3] - contour_box[1],
-                    contour_box[2] - contour_box[0],
+                    contour_box[1],
+                    contour_box[2],
+                    contour_box[3],
                 ),
                 bbox.ObjectType.STD_OBJECT,
             )
