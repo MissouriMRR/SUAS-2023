@@ -4,7 +4,7 @@ classification of the emergent object within an image.
 
 NOTE: Pytorch types are a bit of a pain, so not all types in here
 are totally acurrate. Tried to make good approximations for types where
-possible, or elimnate variables that couldn't be figured out.
+possible, or eliminate variables that couldn't be figured out.
 """
 
 
