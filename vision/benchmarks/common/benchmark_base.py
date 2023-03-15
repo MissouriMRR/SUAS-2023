@@ -18,7 +18,7 @@ class Benchmark:
     Parameters
     ----------
     dataset : BenchDataset
-        a set of images to run the algorithm on
+        a set of images to run the benchmark on
     """
 
     def __init__(self, dataset: BenchDataset) -> None:
