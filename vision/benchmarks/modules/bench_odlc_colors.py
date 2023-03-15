@@ -2,6 +2,8 @@
 Benchmark for the ODLC Colors algorithm.
 """
 
+import time
+
 from vision.benchmarks.common.dataset import BenchDataset, BenchImage
 from vision.benchmarks.common.benchmark_base import Benchmark
 
@@ -73,3 +75,27 @@ class BenchODLCColors(Benchmark):
         bench_image.accuracy_results.append(colors[1], pass_color_2)
 
         return bench_image.accuracy_results
+    
+    def timings(self, bench_image: BenchImage) -> float:
+        """
+        Run the benchmark to check the timings of the algorithm.
+
+        Parameters
+        ----------
+        bench_image : BenchImage
+            the image to test thhe timeing of
+
+        Returns
+        -------
+        timing_results : float
+            the elapsed time of running the algorithm on the image in seconds
+        """
+        start_time: float = time.time()
+
+        self.run_module(image=bench_image.image, text_bounds=bench_image.attributes["text_bounds"])
+
+        stop_time: float = time.time()
+        elapsed_time: float = start_time - stop_time
+
+        return elapsed_time
+    
