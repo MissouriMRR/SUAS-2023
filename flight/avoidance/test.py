@@ -3,7 +3,6 @@ Test code for our drone in obstacle avoidance
 """
 
 import asyncio
-import dataclasses
 import random
 from typing import AsyncIterator
 
@@ -14,9 +13,10 @@ import mavsdk.telemetry
 import utm
 
 from .avoidance_goto import goto_with_avoidance
+from .movement import goto_location_offboard
 from .point import InputPoint, Point
 
-TAKEOFF_ALTITUDE: float = 100.0
+TAKEOFF_ALTITUDE: float = 40.0
 
 
 async def takeoff(drone: mavsdk.System, altitude: float) -> None:
@@ -38,7 +38,7 @@ async def takeoff(drone: mavsdk.System, altitude: float) -> None:
     # Temporary solution
     # Originally attempted to use telemetry to detect when the desired
     #   altitude was reached, but telemetry is broken when taking off
-    await asyncio.sleep(20.0)
+    await asyncio.sleep(30.0)
 
 
 async def random_position(
@@ -119,7 +119,7 @@ async def drone_positions(drone: mavsdk.System) -> AsyncIterator[list[InputPoint
 
     while True:
         point: Point = Point.from_mavsdk_position(await anext(drone.telemetry.position()))
-        in_point: InputPoint = dataclasses.asdict(point)
+        in_point: InputPoint = point.as_typed_dict()
 
         if len(positions) > 4:
             positions = positions[1:]
@@ -161,10 +161,12 @@ async def avoiding_drone_test(
     await drone.offboard.set_velocity_ned(mavsdk.offboard.VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
     await drone.offboard.start()
 
+    await goto_location_offboard(drone, 10.0, 10.0, 10.0, None)
+
     # Randomly move drone
     while True:
         pos: tuple[float, float, float] = await random_position(drone)
-        await goto_with_avoidance(drone, *pos, 0.0, position_updates)
+        await goto_with_avoidance(drone, *pos, None, position_updates)
         await asyncio.sleep(4.0 * random.random() * random.random())
 
 

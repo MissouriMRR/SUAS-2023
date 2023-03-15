@@ -59,7 +59,7 @@ async def calculate_avoidance_velocity(
 
     # Convert obstacle data to list of Point objects
     obstacle_positions: list[Point] = [
-        Point.from_dict(
+        Point.from_typed_dict(
             in_point,
             force_zone_number=drone_position.utm_zone_number,
             force_zone_letter=drone_position.utm_zone_letter,

@@ -108,7 +108,7 @@ async def move_toward(
     # Calculate target velocity based on time_seconds
     target_velocity: Vector3 = position_diff / time_seconds
 
-    # Create Velocity object
+    # Create VelocityNedYaw object
     result: mavsdk.offboard.VelocityNedYaw = target_velocity.to_mavsdk_velocitynedyaw(yaw_deg)
 
     # Set drone's velocity
@@ -155,7 +155,7 @@ async def goto_location_offboard(
         position_diff = await _difference_vector(
             drone, latitude_deg, longitude_deg, absolute_altitude_m
         )
-        yaw_deg = math.atan2(position_diff.east, position_diff.north)
+        yaw_deg = math.degrees(math.atan2(position_diff.east, position_diff.north))
 
     try:
         while True:

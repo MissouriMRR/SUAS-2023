@@ -5,15 +5,27 @@ Defines and implements the Point class used in obstacle_avoidance.py
 from __future__ import annotations
 from dataclasses import dataclass
 import time
+from typing import TypedDict
 
 import mavsdk.telemetry
 import utm
 
 from .vector.vector3 import Vector3
 
-# Input points are dicts with time and UTM coordinate data
-# May change in the future
-InputPoint = dict[str, float | str]
+
+class InputPoint(TypedDict):
+    """
+    A dict representing a point to be passed to obstacle avoidance
+
+    See the Point class docstring for more info on attributes
+    """
+
+    utm_x: float
+    utm_y: float
+    utm_zone_number: int
+    utm_zone_letter: str
+    altitude: float
+    time: float
 
 
 @dataclass(slots=True)
@@ -33,7 +45,7 @@ class Point:
         The letter of the UTM latitude band
     altitude : float
         The altitude of the point above sea level, in meters
-    time : float | None
+    time : float
         The time at which an object was at this point, in Unix time
     """
 
@@ -45,7 +57,7 @@ class Point:
     time: float
 
     @classmethod
-    def from_dict(
+    def from_typed_dict(
         cls,
         position_data: InputPoint,
         force_zone_number: int | None = None,
@@ -71,8 +83,8 @@ class Point:
 
         utm_x: float = float(position_data["utm_x"])
         utm_y: float = float(position_data["utm_y"])
-        utm_zone_number: int = int(position_data["utm_zone_number"])
-        utm_zone_letter: str = str(position_data["utm_zone_letter"])
+        utm_zone_number: int = position_data["utm_zone_number"]
+        utm_zone_letter: str = position_data["utm_zone_letter"]
         if force_zone_number is not None or force_zone_letter is not None:
             utm_x, utm_y, utm_zone_number, utm_zone_letter = utm.from_latlon(
                 *utm.to_latlon(utm_x, utm_y, utm_zone_number, utm_zone_letter),
@@ -88,6 +100,25 @@ class Point:
             float(position_data["altitude"]),
             float(position_data["time"]),
         )
+
+    def as_typed_dict(self) -> InputPoint:
+        """
+        Converts a Point object to an InputPoint TypedDict
+
+        Returns
+        -------
+        An InputPoint dict object with the same values
+        as this Point object
+        """
+
+        return {
+            "utm_x": self.utm_x,
+            "utm_y": self.utm_y,
+            "utm_zone_number": self.utm_zone_number,
+            "utm_zone_letter": self.utm_zone_letter,
+            "altitude": self.altitude,
+            "time": self.time,
+        }
 
     @classmethod
     def from_mavsdk_position(cls, position: mavsdk.telemetry.Position) -> Point:
