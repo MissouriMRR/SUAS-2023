@@ -13,6 +13,7 @@ from vision.common.odlc_characteristics import ODLCColor
 
 from vision.standard_object.odlc_colors import find_colors
 
+
 class BenchODLCColors(Benchmark):
     """
     Benchmark utility for the ODLC Colors algorithm.
@@ -22,10 +23,13 @@ class BenchODLCColors(Benchmark):
     dataset : BenchDataset
         a set of images to run the benchmark on
     """
+
     def __init__(self, dataset: BenchDataset) -> None:
         super().__init__(dataset)
-    
-    def run_module(self, image: Image, text_bounds: BoundingBox) -> tuple[ODLCColor, ODLCColor]:
+
+    def run_module(
+        self, image: Image, text_bounds: BoundingBox
+    ) -> tuple[ODLCColor, ODLCColor]:
         """
         Runs the find_colors function on the image in order to benchmark.
 
@@ -46,7 +50,7 @@ class BenchODLCColors(Benchmark):
                 the color of the text on the object
         """
         return find_colors(image=image, text_bounds=text_bounds)
-    
+
     def accuracy(self, bench_image: BenchImage) -> list[tuple[ODLCColor, bool]]:
         """
         Run the benchmark to check accuracy of the algorithm.
@@ -66,16 +70,18 @@ class BenchODLCColors(Benchmark):
             successful : bool
                 whether the algorithm's result was accurate
         """
-        colors: tuple[ODLCColor, ODLCColor] = self.run_module(image=bench_image.image, text_bounds=bench_image.attributes["text_bounds"])
+        colors: tuple[ODLCColor, ODLCColor] = self.run_module(
+            image=bench_image.image, text_bounds=bench_image.attributes["text_bounds"]
+        )
 
-        pass_color_1: bool = (colors[0] == bench_image.accuracy_goals[0])
+        pass_color_1: bool = colors[0] == bench_image.accuracy_goals[0]
         bench_image.accuracy_results.append(colors[0], pass_color_1)
-        
-        pass_color_2: bool = (colors[1] == bench_image.accuracy_goals[1])
+
+        pass_color_2: bool = colors[1] == bench_image.accuracy_goals[1]
         bench_image.accuracy_results.append(colors[1], pass_color_2)
 
         return bench_image.accuracy_results
-    
+
     def timings(self, bench_image: BenchImage) -> float:
         """
         Run the benchmark to check the timings of the algorithm.
@@ -92,10 +98,11 @@ class BenchODLCColors(Benchmark):
         """
         start_time: float = time.time()
 
-        self.run_module(image=bench_image.image, text_bounds=bench_image.attributes["text_bounds"])
+        self.run_module(
+            image=bench_image.image, text_bounds=bench_image.attributes["text_bounds"]
+        )
 
         stop_time: float = time.time()
         elapsed_time: float = start_time - stop_time
 
         return elapsed_time
-    

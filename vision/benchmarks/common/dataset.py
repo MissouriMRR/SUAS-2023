@@ -25,7 +25,9 @@ class BenchImage:
         desired result from running an accuracy benchmark
     """
 
-    def __init__(self, image: Image, image_name: str, accuracy_goals: list[Any]) -> None:
+    def __init__(
+        self, image: Image, image_name: str, accuracy_goals: list[Any]
+    ) -> None:
         self.image: Image = image
         self.image_name: str = image_name
         self.accuracy_goals: list[Any] = accuracy_goals
@@ -38,7 +40,7 @@ class BenchImage:
 
         # result of timing run, in seconds
         self.timing_results: list[float]
-    
+
     def set_attribute(self, attribute_name: str, attribute: Any) -> None:
         """
         Sets an attribute of the image.
@@ -89,7 +91,9 @@ class BenchDataset:
         the name of the dataset
     """
 
-    def __init__(self, images: list[BenchImage], headings: list[str], dataset_name: str) -> None:
+    def __init__(
+        self, images: list[BenchImage], headings: list[str], dataset_name: str
+    ) -> None:
         self.images: list[BenchImage] = images
         self.headings: list[str] = headings
         self.dataset_name: str = dataset_name
