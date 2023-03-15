@@ -43,16 +43,16 @@ def evaluate_humanoids(
         0.5, 0.25, 0.2, 0.05
     ])
     
-    evaluations_list: list[NDArray[Shape["[std_dist, emg_dist, bound_area, confidence]"], Float64]] = []
+    evaluations_list: list[tuple[float, float, float, float]] = []
     
+    subject_humanoid: BoundingBox
     for subject_humanoid in humanoids:
         # Get the distance to the closest standard object
         
         min_odlc_distance: float = float("inf")
-        for key in odlcs:
-            odlc = odlcs[key]
-            
-            distance = get_distance(
+        odlc: dict[str, float]
+        for odlc in odlcs.values():
+            distance: float = get_distance(
                 (odlc["latitude"], odlc["longitude"]),
                 (subject_humanoid.attributes["latitude"], subject_humanoid.attributes["longitude"])
             )
@@ -68,49 +68,55 @@ def evaluate_humanoids(
         min_humanoid_distance: float = float("inf")
         for humanoid in humanoids:
             if subject_humanoid.attributes["image_path"] != humanoid.attributes["image_path"]:
-                distance = get_distance(
+                distance: float = get_distance(
                     (humanoid.attributes["latitude"], humanoid.attributes["longitude"]),
                     (subject_humanoid.attributes["latitude"], subject_humanoid.attributes["longitude"])
                 )
                 
                 min_humanoid_distance = min(distance, min_humanoid_distance)
         
-        evaluation = [
+        # invert the humanoid distance to prioritize closest humanoids
+        min_humanoid_distance *= -1
+
+        evaluation: tuple[float, float, float, float] = (
             min_odlc_distance,
             min_humanoid_distance,
             humanoid.attributes["bounding_box_area"],
             humanoid.attributes["confidence"]
-        ]
+        )
         
         evaluations_list.append(evaluation)
-    
-    evaluation_array = np.array(evaluations_list)
+
+    evaluation_array: NDArray[Shape["*, 4"], Float64] = np.array(evaluations_list)
     print(evaluation_array)
     print()
         
     # Get the minimums of each category
-    evaluation_mins = np.amin(evaluation_array, axis=0)
+    evaluation_mins: NDArray[Shape["4"], Float64] = np.amin(evaluation_array, axis=0)
     
     # Repeat the array to match the shape of the original for arithmetic operations
-    evaluation_mins = np.expand_dims(evaluation_mins, axis=0)
-    evaluation_mins = np.repeat(evaluation_mins, evaluation_array.shape[0], axis=0)
+    # evaluation_mins = np.expand_dims(evaluation_mins, axis=0)
+    # evaluation_mins = np.repeat(evaluation_mins, evaluation_array.shape[0], axis=0)
     
     
     print(evaluation_mins)
     print()
     
     # Get the maximums of each category
-    evaluation_maxes = np.amax(evaluation_array, axis=0)
+    evaluation_maxes: NDArray[Shape["4"], Float64] = np.amax(evaluation_array, axis=0)
     
     # Repeat the array to match the shape of the original for arithmetic operations
-    evaluation_maxes = np.expand_dims(evaluation_maxes, axis=0)
-    evaluation_maxes = np.repeat(evaluation_maxes, evaluation_array.shape[0], axis=0)
+    # evaluation_maxes = np.expand_dims(evaluation_maxes, axis=0)
+    # evaluation_maxes = np.repeat(evaluation_maxes, evaluation_array.shape[0], axis=0)
     
     print(evaluation_maxes)
     print()
     
-    normalized_evaluations = (evaluation_array - evaluation_mins) / evaluation_maxes
-    
+    # normalized_evaluations = (evaluation_array - evaluation_mins) / (evaluation_maxes - evaluation_mins)
+    normalized_evaluations = np.dstack((
+        evaluation_array[:, 0]
+    ))
+
     # print(normalized_evaluations)
 
 
