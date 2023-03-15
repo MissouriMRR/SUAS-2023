@@ -49,7 +49,7 @@ class Benchmark:
         Parameters
         ----------
         bench_image : BenchImage
-            the image to test the timing of
+            the image to test the accuracy of
 
         Returns
         -------
