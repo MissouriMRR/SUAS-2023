@@ -30,11 +30,43 @@ class BenchImage:
         self.image_name: str = image_name
         self.accuracy_goals: list[Any] = accuracy_goals
 
+        # any other attributes needed for running the benchmark on the image
+        self.attributes: dict[str, Any] = {}
+
         # result of accuracy run, a pair of output and whether it was an accurate result
         self.accuracy_results: list[tuple[Any, bool]] = []
 
         # result of timing run, in seconds
         self.timing_results: list[float]
+    
+    def set_attribute(self, attribute_name: str, attribute: Any) -> None:
+        """
+        Sets an attribute of the image.
+
+        Parameters
+        ----------
+        attribute_name : str
+            the name of the attribute
+        attribute : Any
+            the value to set the attribute to, which can be of any type
+        """
+        self.attributes[attribute_name] = attribute
+
+    def get_attribute(self, attribute_name: str) -> Any:
+        """
+        Gets an attribute of the image.
+
+        Parameters
+        ----------
+        attribute_name : str
+            the name of the attribute
+
+        Returns
+        -------
+        attribute : Any
+            the value of the attribute, which can be of any type
+        """
+        return self.attributes[attribute_name]
 
 
 class BenchDataset:
