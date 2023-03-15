@@ -2,7 +2,7 @@
 Base class for creating a benchmark module.
 """
 
-import csv, time
+import time
 
 from typing import Any
 
@@ -65,7 +65,7 @@ class Benchmark:
             "Calling base Benchmark class. Function not implemented for module."
         )
 
-    def timings(self, bench_image: BenchImage) -> float:
+    def timings(self, bench_image: BenchImage) -> list[float]:
         """
         Run the benchmark to check the timings of the algorithm.
 
@@ -76,8 +76,8 @@ class Benchmark:
 
         Returns
         -------
-        timing_results : float
-            the elapsed time of running the algorithm on the image in seconds
+        timing_results : list[float]
+            the elapsed timings of running the algorithm on the image in seconds
         """
         raise NotImplementedError(
             "Calling base Benchmark class. Function not implemented for module."
