@@ -1,7 +1,5 @@
 """Functions for calculating locations and distances of objects in an image"""
 
-from typing import Any
-
 import numpy as np
 
 from vision.common.constants import Point, CameraParameters
@@ -164,7 +162,7 @@ def calculate_distance(
         image_shape,
         camera_parameters["focal_length"],
         camera_parameters["rotation_deg"],
-        camera_parameters["altitude"],
+        camera_parameters["altitude_f"],
     )
 
     intersect2: Point | None = vector_utils.pixel_intersect(
@@ -172,7 +170,7 @@ def calculate_distance(
         image_shape,
         camera_parameters["focal_length"],
         camera_parameters["rotation_deg"],
-        camera_parameters["altitude"],
+        camera_parameters["altitude_f"],
     )
 
     # Checks if the intersects were valid
