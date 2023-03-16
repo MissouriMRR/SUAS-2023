@@ -1,6 +1,6 @@
 """Constant variables and common type aliases for Vision"""
 
-from typing import TypeAlias
+from typing import TypeAlias, TypedDict
 from nptyping import NDArray, Shape, UInt8, Float64, IntC, Bool8
 
 Image: TypeAlias = NDArray[Shape["*, *, 3"], UInt8]
@@ -21,6 +21,28 @@ Hierarchy: TypeAlias = NDArray[Shape["1, *, 4"], IntC]
 #     |  |
 #     4--3
 Corners: TypeAlias = NDArray[Shape["4, 2"], Float64]
+
+class CameraParameters(TypedDict):
+    """
+    The details on how and where a photo was taken
+
+    Attributes
+    ----------
+    focal_length : float
+        The camera's focal length in millimeters
+    rotation_deg: list[float]
+        The rotation of the drone/camera
+    drone_coordinates: list[float]
+        The coordinates of the drone in degrees of (latitude, longitude)
+    altitude_f: float
+        The altitude of the drone in feet
+    """
+
+    focal_length: float
+    rotation_deg: list[float]
+    drone_coordinates: list[float]
+    altitude_f: float
+
 
 # Sony RX100 VII sensor size
 SENSOR_WIDTH: float = 13.2

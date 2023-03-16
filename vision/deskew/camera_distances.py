@@ -4,7 +4,7 @@ from typing import Any
 
 import numpy as np
 
-from vision.common.constants import Point
+from vision.common.constants import Point, CameraParameters
 from vision.common.bounding_box import BoundingBox
 
 from vision.deskew import coordinate_lengths
@@ -12,7 +12,7 @@ from vision.deskew import vector_utils
 
 
 def get_coordinates(
-    pixel: tuple[int, int], image_shape: tuple[int, int, int], camera_parameters: dict[str, Any]
+    pixel: tuple[int, int], image_shape: tuple[int, int, int], camera_parameters: CameraParameters
 ) -> tuple[float, float] | None:
     """
     Calculates the coordinates of the given pixel.
@@ -24,7 +24,7 @@ def get_coordinates(
         The coordinates of the pixel in [Y, X] form
     image_shape : tuple[int, int, int]
         The shape of the image (returned by `image.shape` when image is a numpy image array)
-    camera_parameters: dict(str, Any)
+    camera_parameters: CameraParameters
         The details on how and where the photo was taken
         focal_length : float
             The camera's focal length in millimeters
@@ -40,7 +40,6 @@ def get_coordinates(
     -------
     pixel_coordinates : tuple[float, float] | None
         The (latitude, longitude) coordinates of the pixel in degrees.
-
         Equal to None if there is no valid intersect.
     """
 
@@ -78,7 +77,7 @@ def get_coordinates(
 
 
 def bounding_area(
-    box: BoundingBox, image_shape: tuple[int, int, int], camera_parameters: dict[str, Any]
+    box: BoundingBox, image_shape: tuple[int, int, int], camera_parameters: CameraParameters
 ) -> float | None:
     """
     Calculates the area in feet of the bounding box on the ground
@@ -89,7 +88,7 @@ def bounding_area(
         The bounding box of the object
     image_shape : tuple[int, int, int]
         The shape of the image (returned by `image.shape` when image is a numpy image array)
-    camera_parameters: dict(str, Any)
+    camera_parameters: CameraParameters
         The details on how and where the photo was taken
         focal_length : float
             The camera's focal length in millimeters
@@ -105,7 +104,6 @@ def bounding_area(
     -------
     area : float | None
         The area of the bounding box in feet.
-
         Returns None if one or both of the points did not have an intersection
     """
 
@@ -129,7 +127,7 @@ def calculate_distance(
     pixel1: tuple[int, int],
     pixel2: tuple[int, int],
     image_shape: tuple[int, int, int],
-    camera_parameters: dict[str, Any],
+    camera_parameters: CameraParameters
 ) -> float | None:
     """
     Calculates the physical distance between two points on the ground represented by pixel
@@ -158,7 +156,6 @@ def calculate_distance(
     -------
     distance : float | None
         The distance between the two pixels. Units are the same units as `altitude`
-
         Returns None if one or both of the points did not have an intersection
     """
 
