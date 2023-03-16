@@ -22,6 +22,7 @@ Hierarchy: TypeAlias = NDArray[Shape["1, *, 4"], IntC]
 #     4--3
 Corners: TypeAlias = NDArray[Shape["4, 2"], Float64]
 
+
 class CameraParameters(TypedDict):
     """
     The details on how and where a photo was taken

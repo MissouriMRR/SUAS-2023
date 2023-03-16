@@ -127,7 +127,7 @@ def calculate_distance(
     pixel1: tuple[int, int],
     pixel2: tuple[int, int],
     image_shape: tuple[int, int, int],
-    camera_parameters: CameraParameters
+    camera_parameters: CameraParameters,
 ) -> float | None:
     """
     Calculates the physical distance between two points on the ground represented by pixel
