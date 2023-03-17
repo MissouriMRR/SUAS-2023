@@ -19,7 +19,7 @@ def get_coordinates(
     Parameters
     ----------
     pixel: tuple[int, int]
-        The coordinates of the pixel in [Y, X] form
+        The coordinates of the pixel in [X, Y] form
     image_shape : tuple[int, int, int]
         The shape of the image (returned by `image.shape` when image is a numpy image array)
     camera_parameters: CameraParameters
@@ -134,7 +134,7 @@ def calculate_distance(
     Parameters
     ----------
     pixel1, pixel2: tuple[int, int]
-        The two input pixel locations in [Y,X] form. The distance between them will be calculated
+        The two input pixel locations in [X,Y] form. The distance between them will be calculated
 
     image_shape : tuple[int, int, int]
         The shape of the image (returned by `image.shape` when image is a numpy image array)
