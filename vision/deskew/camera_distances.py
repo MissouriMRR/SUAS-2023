@@ -10,7 +10,9 @@ from vision.deskew import vector_utils
 
 
 def get_coordinates(
-    pixel: tuple[int, int], image_shape: tuple[int, int, int], camera_parameters: CameraParameters
+    pixel: tuple[int, int],
+    image_shape: tuple[int, int, int] | tuple[int, int],
+    camera_parameters: CameraParameters,
 ) -> tuple[float, float] | None:
     """
     Calculates the coordinates of the given pixel.
@@ -19,16 +21,16 @@ def get_coordinates(
     Parameters
     ----------
     pixel: tuple[int, int]
-        The coordinates of the pixel in [Y, X] form
-    image_shape : tuple[int, int, int]
+        The coordinates of the pixel in [X, Y] form
+    image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by `image.shape` when image is a numpy image array)
     camera_parameters: CameraParameters
         The details on how and where the photo was taken
         focal_length : float
             The camera's focal length in millimeters
         rotation_deg: list[float]
-            The rotation of the drone/camera. The ROTATION_OFFSET in vector_utils.py will be applied
-            after.
+            The rotation of the drone in degrees. The constant ROTATION_OFFSET of the
+            camera, stored in constants.py, will be applied first
         drone_coordinates: list[float]
             The coordinates of the drone in degrees of (latitude, longitude)
         altitude_f: float
@@ -75,7 +77,9 @@ def get_coordinates(
 
 
 def bounding_area(
-    box: BoundingBox, image_shape: tuple[int, int, int], camera_parameters: CameraParameters
+    box: BoundingBox,
+    image_shape: tuple[int, int, int] | tuple[int, int],
+    camera_parameters: CameraParameters,
 ) -> float | None:
     """
     Calculates the area in feet of the bounding box on the ground
@@ -84,15 +88,15 @@ def bounding_area(
     ----------
     box: BoundingBox
         The bounding box of the object
-    image_shape : tuple[int, int, int]
+    image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by `image.shape` when image is a numpy image array)
     camera_parameters: CameraParameters
         The details on how and where the photo was taken
         focal_length : float
             The camera's focal length in millimeters
         rotation_deg: list[float]
-            The rotation of the drone/camera. The ROTATION_OFFSET in vector_utils.py will be applied
-            after.
+            The rotation of the drone in degrees. The constant ROTATION_OFFSET of the
+            camera, stored in constants.py, will be applied first
         drone_coordinates: list[float]
             The coordinates of the drone. Not used in this function.
         altitude_f: float
@@ -124,7 +128,7 @@ def bounding_area(
 def calculate_distance(
     pixel1: tuple[int, int],
     pixel2: tuple[int, int],
-    image_shape: tuple[int, int, int],
+    image_shape: tuple[int, int, int] | tuple[int, int],
     camera_parameters: CameraParameters,
 ) -> float | None:
     """
@@ -134,17 +138,17 @@ def calculate_distance(
     Parameters
     ----------
     pixel1, pixel2: tuple[int, int]
-        The two input pixel locations in [Y,X] form. The distance between them will be calculated
+        The two input pixel locations in [X,Y] form. The distance between them will be calculated
 
-    image_shape : tuple[int, int, int]
+    image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by `image.shape` when image is a numpy image array)
     camera_parameters: CameraParameters
         The details on how and where the photo was taken
         focal_length : float
             The camera's focal length in millimeters
         rotation_deg: list[float]
-            The rotation of the drone/camera. The ROTATION_OFFSET in vector_utils.py will be applied
-            after.
+            The rotation of the drone in degrees. The constant ROTATION_OFFSET of the
+            camera, stored in constants.py, will be applied first
         drone_coordinates: list[float]
             The coordinates of the drone. Not used in this function.
         altitude_f: float
