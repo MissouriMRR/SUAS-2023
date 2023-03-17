@@ -7,8 +7,8 @@ from nptyping import Float64
 from vision.common.constants import Point, Vector, SENSOR_WIDTH, SENSOR_HEIGHT, ROTATION_OFFSET
 
 
-# Vector pointing toward the +X axis, represents the camera's forward direction when the rotation
-#   on all axes is 0
+# Vector pointing toward the +X axis, represents the camera's forward direction when the
+#   rotation on all axes is 0
 IHAT: Vector = np.array([1, 0, 0], dtype=np.float64)
 
 
@@ -47,12 +47,11 @@ def pixel_intersect(
     # Create the normalized vector representing the direction of the given pixel
     vector: Vector = pixel_vector(pixel, image_shape, focal_length)
 
-    rotation_rad = np.deg2rad(rotation_deg).tolist()
-
-    vector = euler_rotate(vector, rotation_rad)
-
     # Apply the constant rotation offset
-    vector = euler_rotate(vector, ROTATION_OFFSET)
+    vector = rotate_degrees(vector, ROTATION_OFFSET)
+    
+    # Apply the drone rotation
+    vector = rotate_degrees(vector, rotation_deg)
 
     intersect: Point | None = plane_collision(vector, height)
 
@@ -76,21 +75,18 @@ def plane_collision(ray_direction: Vector, height: float) -> Point | None:
     intersect : Point | None
         The ray's intersection with the plane in [X,Y] format
         Returns None if there is no intersect.
-
     """
+    
     # Find the "time" at which the line intersects the plane
     # Line is defined as ray_direction * time + origin.
     # Origin is the point at X, Y, Z = (0, 0, height)
-
-    intersect: Point | None = None
-
     time: Float64 = -height / ray_direction[2]
 
     # Checks if the ray intersects with the plane
     if np.isinf(time) or np.isnan(time) or time < 0:
-        return intersect
+        return None
 
-    intersect = ray_direction[:2] * time
+    intersect: Point = ray_direction[:2] * time
 
     return intersect
 
@@ -169,6 +165,7 @@ def focal_length_to_fovs(focal_length: float) -> tuple[float, float]:
         The fields of view in radians
         Format is [horizontal, vertical]
     """
+    
     return get_fov(focal_length, SENSOR_WIDTH), get_fov(focal_length, SENSOR_HEIGHT)
 
 
@@ -215,13 +212,15 @@ def camera_vector(h_angle: float, v_angle: float) -> Vector:
     # Calculate the vertical rotation needed for the final vector to have the desired direction
     edge: float = edge_angle(v_angle, h_angle)
 
-    return euler_rotate(IHAT, [0, edge, -h_angle])
+    vector: Vector = rotate_radians(IHAT, [0, edge, -h_angle])
+
+    return vector
 
 
 def edge_angle(v_angle: float, h_angle: float) -> float:
     """
-    Finds the angle such that rotating by edge_angle on the Y axis then rotating by h_angle on
-    the Z axis gives a vector an angle v_angle with the Y axis
+    Finds the angle in radians such that rotating by edge_angle on the Y axis then
+    rotating by h_angle on the Z axis gives a vector an angle v_angle with the Y axis
 
     Can be derived using a square pyramid of height 1
 
@@ -235,15 +234,15 @@ def edge_angle(v_angle: float, h_angle: float) -> float:
     Returns
     -------
     edge_angle : float
-        The angle to rotate vertically
+        The angle in radians to rotate vertically
     """
 
     return np.arctan(np.tan(v_angle) * np.cos(h_angle))
 
 
-def euler_rotate(vector: Vector, rotation_rad: list[float]) -> Vector:
+def rotate_degrees(vector: Vector, rotation_deg: list[float]) -> Vector:
     """
-    Rotates a vector based on a given roll, pitch, and yaw.
+    Rotates a vector based on a given roll, pitch, and yaw in degrees.
 
     Follows the MAVSDK.EulerAngle convention - positive roll is banking to the right, positive
     pitch is pitching nose up, positive yaw is clock-wise seen from above.
@@ -253,6 +252,31 @@ def euler_rotate(vector: Vector, rotation_rad: list[float]) -> Vector:
     vector: Vector
         A vector represented by an XYZ coordinate that will be rotated
     rotation_deg: list[float]
+        The [roll, pitch, yaw] rotation in degrees
+
+    Returns
+    -------
+    rotated_vector : Vector
+        The vector which has been rotated
+    """
+
+    rotation_rad: list[float] = np.deg2rad(rotation_deg).tolist()
+
+    return rotate_radians(vector, rotation_rad)
+
+
+def rotate_radians(vector: Vector, rotation_rad: list[float]) -> Vector:
+    """
+    Rotates a vector based on a given roll, pitch, and yaw in radians.
+
+    Follows the MAVSDK.EulerAngle convention - positive roll is banking to the right, positive
+    pitch is pitching nose up, positive yaw is clock-wise seen from above.
+
+    Parameters
+    ----------
+    vector: Vector
+        A vector represented by an XYZ coordinate that will be rotated
+    rotation_rad: list[float]
         The [roll, pitch, yaw] rotation in radians
 
     Returns
