@@ -26,7 +26,7 @@ def pixel_intersect(
     Parameters
     ----------
     pixel : tuple[int, int]
-        The coordinates of the pixel in [Y, X] form
+        The coordinates of the pixel in [X, Y] form
     image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by image.shape when image is a numpy image array)
     focal_length : float
@@ -96,12 +96,12 @@ def pixel_vector(
 ) -> Vector:
     """
     Generates a vector representing the given pixel.
-    Pixels are in row-major form [Y, X] to match numpy indexing.
+    Pixels are in row-major form [X, Y]
 
     Parameters
     ----------
     pixel : tuple[int, int]
-        The coordinates of the pixel in [Y, X] form
+        The coordinates of the pixel in [X, Y] form
     image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by image.shape when image is a numpy image array)
     focal_length : float
@@ -119,8 +119,8 @@ def pixel_vector(
     fov_h, fov_v = focal_length_to_fovs(focal_length)
 
     return camera_vector(
-        pixel_angle(fov_h, pixel[1] / image_shape[1]),
         pixel_angle(fov_v, pixel[0] / image_shape[0]),
+        pixel_angle(fov_h, pixel[1] / image_shape[1]),
     )
 
 

@@ -72,7 +72,7 @@ def perspective_matrix(
     intersects: Corners = np.array(
         [
             pixel_intersect(point, image_shape, focal_length, rotation_deg, 1)
-            for point in np.flip(source_pts, axis=1)  # use np.flip to convert XY to YX
+            for point in source_pts  # use np.flip to convert XY to YX
         ],
         dtype=np.float32,
     )
