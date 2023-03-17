@@ -138,7 +138,7 @@ def calculate_distance(
 
     image_shape : tuple[int, int, int]
         The shape of the image (returned by `image.shape` when image is a numpy image array)
-    camera_parameters: dict(str, Any)
+    camera_parameters: CameraParameters
         The details on how and where the photo was taken
         focal_length : float
             The camera's focal length in millimeters
