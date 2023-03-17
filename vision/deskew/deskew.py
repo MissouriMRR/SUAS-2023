@@ -148,7 +148,6 @@ def deskew(
             4--3
 
             Returns None if no valid image could be generated.
-
     """
 
     matrix: NDArray[Shape["3, 3"], Float64]

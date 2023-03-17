@@ -53,4 +53,4 @@ SENSOR_HEIGHT: float = 8.8
 #   in vision.vector_utils.pixel_intersect()
 # In degrees of [roll, pitch, yaw]
 # Set to [0.0, -90.0, 0.0] when the camera is facing directly downwards
-ROTATION_OFFSET: Vector = [0.0, -90.0, 0.0]
+ROTATION_OFFSET: list[float] = [0.0, -90.0, 0.0]

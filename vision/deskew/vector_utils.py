@@ -2,7 +2,6 @@
 
 import numpy as np
 from scipy.spatial.transform import Rotation
-from nptyping import Float64
 
 from vision.common.constants import Point, Vector, SENSOR_WIDTH, SENSOR_HEIGHT, ROTATION_OFFSET
 
@@ -40,12 +39,19 @@ def pixel_intersect(
     Returns
     -------
     intersect : Point | None
-        The coordinates [X,Y] where the pixel's vector intersects with the ground.
+        The coordinates [X,Y] where the pixel's vector intersects with the ground. Units
+            are the same as `height`
         Returns None if there is no intersect.
     """
 
     # Create the normalized vector representing the direction of the given pixel
-    vector: Vector = pixel_vector(pixel, image_shape, focal_length, rotation_deg)
+    vector: Vector = pixel_vector(pixel, image_shape, focal_length)
+
+    # Apply the constant rotation offset
+    vector = rotate_degrees(vector, ROTATION_OFFSET)
+
+    # Apply the drone rotation
+    vector = rotate_degrees(vector, rotation_deg)
 
     intersect: Point | None = plane_collision(vector, height)
 
@@ -54,7 +60,7 @@ def pixel_intersect(
 
 def plane_collision(ray_direction: Vector, height: float) -> Point | None:
     """
-    Returns the point where a ray intersects the XY plane
+    Returns the point where a ray intersects the XY plane. North is +X
     Returns None if there is no intersect.
 
     Parameters
@@ -67,14 +73,15 @@ def plane_collision(ray_direction: Vector, height: float) -> Point | None:
     Returns
     -------
     intersect : Point | None
-        The ray's intersection with the plane in [X,Y] format
+        The ray's intersection with the plane in [X,Y] format. Units are the same as
+        `height`
         Returns None if there is no intersect.
     """
 
     # Find the "time" at which the line intersects the plane.
     # Line is defined as ray_direction * time + vertex. Vertex is the point at
     #   X, Y, Z = (0, 0, height)
-    time: Float64 = -height / ray_direction[2]
+    time: float = -height / ray_direction[2].item()
 
     # Checks if the ray intersects with the plane - negative `time` means the intersection
     #   is behind the camera
@@ -90,7 +97,6 @@ def pixel_vector(
     pixel: tuple[int, int],
     image_shape: tuple[int, int, int] | tuple[int, int],
     focal_length: float,
-    rotation_deg: list[float],
 ) -> Vector:
     """
     Generates a vector representing the given pixel.
@@ -104,8 +110,6 @@ def pixel_vector(
         The shape of the image (returned by image.shape when image is a numpy image array)
     focal_length : float
         The camera's focal length - used to generate the camera's fields of view
-    rotation_deg : list[float]
-        The [roll, pitch, yaw] rotation of the drone in degrees
 
     Returns
     -------
@@ -119,15 +123,9 @@ def pixel_vector(
     fov_h, fov_v = focal_length_to_fovs(focal_length)
 
     vector: Vector = camera_vector(
-        pixel_angle(fov_v, pixel[0] / image_shape[0]),
-        pixel_angle(fov_h, pixel[1] / image_shape[1]),
+        pixel_angle(fov_h, pixel[0] / image_shape[0]),
+        pixel_angle(fov_v, pixel[1] / image_shape[1]),
     )
-
-    # Apply the constant rotation offset
-    vector = rotate_degrees(vector, ROTATION_OFFSET)
-
-    # Apply the drone rotation
-    vector = rotate_degrees(vector, rotation_deg)
 
     return vector
 
