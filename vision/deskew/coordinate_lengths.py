@@ -1,6 +1,7 @@
 """Functions for calculating coordinate degree lengths"""
 
 import numpy as np
+import geopy.distance
 
 
 def latitude_length(latitude_deg: float) -> float:
@@ -66,3 +67,23 @@ def longitude_length(latitude_deg: float) -> float:
     )
 
     return distance
+
+
+def get_distance(coords_1: tuple[float, float], coords_2: tuple[float, float]) -> float:
+    """
+    Calculates the distance between two coordinate points.
+
+    Parameters
+    ----------
+    coords_1: tuple[float, float]
+        The first coordinate in the format (latitude, longitude)
+    coords_2: tuple[float, float]
+        The second coordinate in the format (latitude, longitude)
+
+    Returns
+    -------
+    distance: float
+        The distance between the two coordinates in feet
+    """
+
+    return geopy.distance.geodesic(coords_1, coords_2).feet

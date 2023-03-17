@@ -1,35 +1,13 @@
 """Picks the most likely emergent object out of the pool of candidates"""
 
-from typing import TypeAlias
 from nptyping import NDArray, Shape, Float64
 
 import numpy as np
-import geopy.distance
 
 from vision.common.bounding_box import BoundingBox, ObjectType, Vertices
+from vision.deskew.coordinate_lengths import get_distance
 
-
-ODLC_Dict: TypeAlias = dict[int, dict[str, float]]
-
-
-def get_distance(coords_1: tuple[float, float], coords_2: tuple[float, float]) -> float:
-    """
-    Calculates the distance between two coordinate points.
-
-    Parameters
-    ----------
-    coords_1: tuple[float, float]
-        The first coordinate in the format (latitude, longitude)
-    coords_2: tuple[float, float]
-        The second coordinate in the format (latitude, longitude)
-
-    Returns
-    -------
-    distance: float
-        The distance between the two coordinates in feet
-    """
-
-    return geopy.distance.geodesic(coords_1, coords_2).feet
+from vision.common.constants import Location, ODLC_Dict
 
 
 def pick_emergent_object(humanoids: list[BoundingBox], odlcs: ODLC_Dict) -> BoundingBox:
@@ -78,7 +56,7 @@ def pick_emergent_object(humanoids: list[BoundingBox], odlcs: ODLC_Dict) -> Boun
     for subject_humanoid in humanoids:
         # Get the distance to the closest standard object
         min_odlc_distance: float = float("inf")
-        odlc: dict[str, float]
+        odlc: Location
         for odlc in odlcs.values():
             odlc_distance: float = get_distance(
                 (odlc["latitude"], odlc["longitude"]),
