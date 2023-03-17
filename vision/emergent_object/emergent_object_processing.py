@@ -1,161 +1,183 @@
-import numpy as np
-from vision.common.bounding_box import BoundingBox, ObjectType
-from nptyping import NDArray, Shape, Float64
-
-
-import geopy.distance
+"""Picks the most likely emergent object out of the pool of candidates"""
 
 from typing import TypeAlias
+from nptyping import NDArray, Shape, Float64
+
+import numpy as np
+import geopy.distance
+
+from vision.common.bounding_box import BoundingBox, ObjectType, Vertices
+
 
 ODLC_Dict: TypeAlias = dict[int, dict[str, float]]
 
-# Placeholder distance function
-def get_distance(coords_1, coords_2):
+
+def get_distance(coords_1: tuple[float, float], coords_2: tuple[float, float]) -> float:
+    """
+    Calculates the distance between two coordinate points.
+
+    Parameters
+    ----------
+    coords_1: tuple[float, float]
+        The first coordinate in the format (latitude, longitude)
+    coords_2: tuple[float, float]
+        The second coordinate in the format (latitude, longitude)
+
+    Returns
+    -------
+    distance: float
+        The distance between the two coordinates in feet
+    """
+
     return geopy.distance.geodesic(coords_1, coords_2).feet
 
 
-def evaluate_humanoids(
-        humanoids: list[BoundingBox],
-        odlcs: ODLC_Dict
-    ):
+def pick_emergent_object(humanoids: list[BoundingBox], odlcs: ODLC_Dict) -> BoundingBox:
     """
     Evaluates all of the potential emergent objects to pick the most likely candidate.
-    The metrics that are used in the evaluation are:
-    
+    The metrics that are used in the evaluation are, in order:
+
     Distance to ODLC Standard Object: 50% of final score
         The judges are more likely to be close to the ODLC Standard Object. Thus, candidates
         that are farther away will be favored.
-    
+
     Distance to Emergent Object (in a DIFFERENT image): 25% of final score
-        This will be smaller for the emergent object - because we have detected it in the same
-        place twice. Judges will be walking around a lot more and will be detected in different
-        places at different times.
-        
+        This will be smaller for the emergent object - because we have detected it in the
+        same place twice. Judges will be walking around a lot more and will be detected in
+        different places at different times.
+
     Bounding Box Area: 20% of final score:
-        The Emergent Object will be placed on the ground and (presumably) not standing up. This means
-        that the area of its bounding box should, in general, be larger than that of the judges.
-    
+        The Emergent Object will be placed on the ground and (presumably) not standing up.
+        This means that the area of its bounding box should, in general, be larger than
+        that of the judges.
+
     AI Confidence Level: 5% of final score:
         Higher confidence levels should be favored
+
+    Parameters
+    ----------
+    humanoids: list[BoundingBox]
+        A list of all candidate emergent objects. Required attributes:
+            latitude, longitude, bounding_box_area, image_path, confidence
+    odlcs: ODLC_Dict
+        A dictionary containing the locations of all discovered ODLCs
+
+    Returns
+    -------
+    emergent_object: BoundingBox
+        The candidate that has scored the highest, and so is probably the actual emergent
+        object
     """
+
     # Weights for each metric
-    category_weights: NDArray[Shape[4], Float64] = np.array([
-        0.5, 0.25, 0.2, 0.05
-    ])
-    
+    category_weights: NDArray[Shape[4], Float64] = np.array([0.5, 0.25, 0.20, 0.05])
+
     evaluations_list: list[tuple[float, float, float, float]] = []
-    
+
     subject_humanoid: BoundingBox
     for subject_humanoid in humanoids:
         # Get the distance to the closest standard object
-        
         min_odlc_distance: float = float("inf")
         odlc: dict[str, float]
         for odlc in odlcs.values():
-            distance: float = get_distance(
+            odlc_distance: float = get_distance(
                 (odlc["latitude"], odlc["longitude"]),
-                (subject_humanoid.attributes["latitude"], subject_humanoid.attributes["longitude"])
+                (subject_humanoid.attributes["latitude"], subject_humanoid.attributes["longitude"]),
             )
-            
-            min_odlc_distance = min(distance, min_odlc_distance)
-        
-        # Invert the odlc distance so that the maximum value will be a low negative value
-        min_odlc_distance *= -1
-        
+
+            min_odlc_distance = min(odlc_distance, min_odlc_distance)
+
         # Get the distance to the closest emergent object that's not in the same image
-        #   In theory, this will be close to zero for the emergent object - because we have detected
-        #   it in the same place twice.
         min_humanoid_distance: float = float("inf")
+        humanoid: BoundingBox
         for humanoid in humanoids:
+            # Don't check candidates that are in the same image
             if subject_humanoid.attributes["image_path"] != humanoid.attributes["image_path"]:
-                distance: float = get_distance(
+                humanoid_distance: float = get_distance(
                     (humanoid.attributes["latitude"], humanoid.attributes["longitude"]),
-                    (subject_humanoid.attributes["latitude"], subject_humanoid.attributes["longitude"])
+                    (
+                        subject_humanoid.attributes["latitude"],
+                        subject_humanoid.attributes["longitude"],
+                    ),
                 )
-                
-                min_humanoid_distance = min(distance, min_humanoid_distance)
-        
+
+                min_humanoid_distance = min(humanoid_distance, min_humanoid_distance)
+
         # invert the humanoid distance to prioritize closest humanoids
         min_humanoid_distance *= -1
 
         evaluation: tuple[float, float, float, float] = (
             min_odlc_distance,
             min_humanoid_distance,
-            humanoid.attributes["bounding_box_area"],
-            humanoid.attributes["confidence"]
+            subject_humanoid.attributes["bounding_box_area"],
+            subject_humanoid.attributes["confidence"],
         )
-        
+
         evaluations_list.append(evaluation)
 
     evaluation_array: NDArray[Shape["*, 4"], Float64] = np.array(evaluations_list)
-    print(evaluation_array)
-    print()
-        
+
     # Get the minimums of each category
     evaluation_mins: NDArray[Shape["4"], Float64] = np.amin(evaluation_array, axis=0)
-    
-    # Repeat the array to match the shape of the original for arithmetic operations
-    # evaluation_mins = np.expand_dims(evaluation_mins, axis=0)
-    # evaluation_mins = np.repeat(evaluation_mins, evaluation_array.shape[0], axis=0)
-    
-    
-    print(evaluation_mins)
-    print()
-    
+
     # Get the maximums of each category
     evaluation_maxes: NDArray[Shape["4"], Float64] = np.amax(evaluation_array, axis=0)
-    
-    # Repeat the array to match the shape of the original for arithmetic operations
-    # evaluation_maxes = np.expand_dims(evaluation_maxes, axis=0)
-    # evaluation_maxes = np.repeat(evaluation_maxes, evaluation_array.shape[0], axis=0)
-    
-    print(evaluation_maxes)
-    print()
-    
-    # normalized_evaluations = (evaluation_array - evaluation_mins) / (evaluation_maxes - evaluation_mins)
-    normalized_evaluations = np.dstack((
-        evaluation_array[:, 0]
-    ))
 
-    # print(normalized_evaluations)
+    # An error here could mean that all candidates were detected in the same image - This
+    #   is okay to ignore
+    with np.errstate(invalid="ignore"):
+        ranges: NDArray[Shape["4"], Float64] = evaluation_maxes - evaluation_mins
+
+    # Suppress warnings when getting 0/0 errors - This is okay because that means that
+    #   all candidates scored the same in that category
+    with np.errstate(invalid="ignore"):
+        normalized_evaluations: NDArray[Shape["*, 4"], Float64] = (
+            evaluation_array - evaluation_mins
+        ) / ranges
+
+    weighted_evaluations: NDArray[Shape["*, 4"], Float64] = (
+        normalized_evaluations * category_weights
+    )
+
+    # Use nansum to ignore categories with divide by zero errors
+    scores: NDArray[Shape["*"], Float64] = np.nansum(weighted_evaluations, axis=1)
+
+    return humanoids[np.argmax(scores)]
 
 
 if __name__ == "__main__":
-    def make_test_bounding(vertices, attributes):
-        # This function is only for testing purposes! Delete when not needed!
-        result = BoundingBox(vertices = vertices, obj_type=ObjectType.EMG_OBJECT)
-        result.attributes = attributes
-        
-        return result
-
-
-    odlcs = {
+    saved_odlcs: ODLC_Dict = {
         0: {"latitude": 52.10025, "longitude": 20.21222},
-        3: {"latitude": 52.80085, "longitude": 21.91021}
+        3: {"latitude": 52.80085, "longitude": 21.91021},
     }
 
     saved_humanoids: list[BoundingBox] = []
 
-    saved_humanoids.append(make_test_bounding(
-        (0,0,0,0), 
-        {
-            "confidence": .5,
-            "bounding_box_area": 2,
-            "latitude": 52.2296756,
-            "longitude": 21.0122287,
-            "image_path": "image21.jpg"
-        }
-    ))
+    empty_vertices: Vertices = (
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+    )
 
-    saved_humanoids.append(make_test_bounding(
-        (0,0,0,0), 
-        {
-            "confidence": .3,
-            "bounding_box_area": 1,
-            "latitude": 52.406374,
-            "longitude": 16.9251681,
-            "image_path": "image1.jpg"
-        }
-    ))
+    emergent_1: BoundingBox = BoundingBox(vertices=empty_vertices, obj_type=ObjectType.EMG_OBJECT)
+    emergent_1.attributes = {
+        "confidence": 0.5,
+        "bounding_box_area": 2,
+        "latitude": 52.2296756,
+        "longitude": 21.0122287,
+        "image_path": "image2.jpg",
+    }
+    saved_humanoids.append(emergent_1)
 
-    evaluate_humanoids(saved_humanoids, odlcs)
+    emergent_2: BoundingBox = BoundingBox(vertices=empty_vertices, obj_type=ObjectType.EMG_OBJECT)
+    emergent_2.attributes = {
+        "confidence": 0.3,
+        "bounding_box_area": 1,
+        "latitude": 52.406374,
+        "longitude": 16.9251681,
+        "image_path": "image1.jpg",
+    }
+    saved_humanoids.append(emergent_2)
+
+    pick_emergent_object(saved_humanoids, saved_odlcs)
