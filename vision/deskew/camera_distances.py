@@ -29,8 +29,8 @@ def get_coordinates(
         focal_length : float
             The camera's focal length in millimeters
         rotation_deg: list[float]
-            The rotation of the drone/camera. The ROTATION_OFFSET in vector_utils.py will be applied
-            after.
+            The rotation of the drone in degrees. The constant ROTATION_OFFSET of the
+            camera, stored in constants.py, will be applied first
         drone_coordinates: list[float]
             The coordinates of the drone in degrees of (latitude, longitude)
         altitude_f: float
@@ -95,8 +95,8 @@ def bounding_area(
         focal_length : float
             The camera's focal length in millimeters
         rotation_deg: list[float]
-            The rotation of the drone/camera. The ROTATION_OFFSET in vector_utils.py will be applied
-            after.
+            The rotation of the drone in degrees. The constant ROTATION_OFFSET of the
+            camera, stored in constants.py, will be applied first
         drone_coordinates: list[float]
             The coordinates of the drone. Not used in this function.
         altitude_f: float
@@ -147,8 +147,8 @@ def calculate_distance(
         focal_length : float
             The camera's focal length in millimeters
         rotation_deg: list[float]
-            The rotation of the drone/camera. The ROTATION_OFFSET in vector_utils.py will be applied
-            after.
+            The rotation of the drone in degrees. The constant ROTATION_OFFSET of the
+            camera, stored in constants.py, will be applied first
         drone_coordinates: list[float]
             The coordinates of the drone. Not used in this function.
         altitude_f: float

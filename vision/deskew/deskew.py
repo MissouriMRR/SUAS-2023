@@ -29,9 +29,11 @@ def perspective_matrix(
     image_shape: tuple[int, int, int] | tuple[int, int],
         The shape of the image to deskew. Aspect ratio should match the camera sensor
     focal_length : float
-        The camera's focal length - used to generate the camera's fields of view
-    rotation_deg : list[float]
-        The [roll, pitch, yaw] rotation in degrees
+        The camera's focal length in millimeters - used to generate the camera's
+        fields of view
+    rotation_deg: list[float]
+        The rotation of the drone in degrees. The constant ROTATION_OFFSET of the
+        camera, stored in constants.py, will be applied first
     scale: float | None
         Scales the resolution of the output. A value of 1 makes the area inside the camera view
         equal to the original image. Defaults to 1.
@@ -122,9 +124,11 @@ def deskew(
     image : Image
         The input image to deskew. Aspect ratio should match the camera sensor
     focal_length : float
-        The camera's focal length - used to generate the camera's fields of view
-    rotation_deg : list[float]
-        The [roll, pitch, yaw] rotation in degrees
+        The camera's focal length in millimeters - used to generate the camera's
+        fields of view
+    rotation_deg: list[float]
+        The rotation of the drone in degrees. The constant ROTATION_OFFSET of the
+        camera, stored in constants.py, will be applied first
     scale: float | None
         Scales the resolution of the output. A value of 1 makes the area inside the camera view
         equal to the original image. Defaults to 1.

@@ -25,11 +25,11 @@ def pixel_intersect(
     Parameters
     ----------
     pixel : tuple[int, int]
-        The coordinates of the pixel in [X, Y] form
+        The location of the pixel in [X, Y] form
     image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by image.shape when image is a numpy image array)
     focal_length : float
-        The camera's focal length
+        The camera's focal length in millimeters
     rotation_deg : list[float]
         The [roll, pitch, yaw] rotation of the drone in degrees
     height : float
@@ -66,7 +66,7 @@ def plane_collision(ray_direction: Vector, height: float) -> Point | None:
     Parameters
     ----------
     ray_direction : Vector
-        XYZ coordinates that represent the direction a ray faces from (0, 0, 0)
+        XYZ coordinates that represent the direction a ray faces
     height : float
         The Z coordinate for the starting height of the ray; can be any units
 
@@ -105,11 +105,12 @@ def pixel_vector(
     Parameters
     ----------
     pixel : tuple[int, int]
-        The coordinates of the pixel in [X, Y] form
+        The pixel location in [X, Y] form
     image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by image.shape when image is a numpy image array)
     focal_length : float
-        The camera's focal length - used to generate the camera's fields of view
+        The camera's focal length in millimeters - used to generate the camera's
+        fields of view
 
     Returns
     -------
@@ -123,8 +124,8 @@ def pixel_vector(
     fov_h, fov_v = focal_length_to_fovs(focal_length)
 
     vector: Vector = camera_vector(
-        pixel_angle(fov_h, pixel[0] / image_shape[0]),
-        pixel_angle(fov_v, pixel[1] / image_shape[1]),
+        pixel_angle(fov_h, pixel[0] / image_shape[1]),
+        pixel_angle(fov_v, pixel[1] / image_shape[0]),
     )
 
     return vector
@@ -258,7 +259,7 @@ def rotate_degrees(vector: Vector, rotation_deg: list[float]) -> Vector:
     vector: Vector
         A vector represented by an XYZ coordinate that will be rotated
     rotation_deg: list[float]
-        The [roll, pitch, yaw] rotation in degrees
+        The [roll, pitch, yaw] in degrees to rotate
 
     Returns
     -------
@@ -283,7 +284,7 @@ def rotate_radians(vector: Vector, rotation_rad: list[float]) -> Vector:
     vector: Vector
         A vector represented by an XYZ coordinate that will be rotated
     rotation_rad: list[float]
-        The [roll, pitch, yaw] rotation in radians
+        The [roll, pitch, yaw] in radians to rotate
 
     Returns
     -------
