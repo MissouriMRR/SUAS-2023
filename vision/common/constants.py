@@ -45,7 +45,7 @@ class CameraParameters(TypedDict):
     altitude_f: float
 
 
-# Sony RX100 VII sensor size
+# Sony RX100 VII sensor size in millimeters
 SENSOR_WIDTH: float = 13.2
 SENSOR_HEIGHT: float = 8.8
 

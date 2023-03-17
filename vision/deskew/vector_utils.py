@@ -32,7 +32,7 @@ def pixel_intersect(
     focal_length : float
         The camera's focal length
     rotation_deg : list[float]
-        The [roll, pitch, yaw] rotation in degrees
+        The [roll, pitch, yaw] rotation of the drone in degrees
     height : float
         The height that the image was taken at. The units of the output will be the units of the
         input.
@@ -45,13 +45,7 @@ def pixel_intersect(
     """
 
     # Create the normalized vector representing the direction of the given pixel
-    vector: Vector = pixel_vector(pixel, image_shape, focal_length)
-
-    # Apply the constant rotation offset
-    vector = rotate_degrees(vector, ROTATION_OFFSET)
-    
-    # Apply the drone rotation
-    vector = rotate_degrees(vector, rotation_deg)
+    vector: Vector = pixel_vector(pixel, image_shape, focal_length, rotation_deg)
 
     intersect: Point | None = plane_collision(vector, height)
 
@@ -76,13 +70,14 @@ def plane_collision(ray_direction: Vector, height: float) -> Point | None:
         The ray's intersection with the plane in [X,Y] format
         Returns None if there is no intersect.
     """
-    
-    # Find the "time" at which the line intersects the plane
-    # Line is defined as ray_direction * time + origin.
-    # Origin is the point at X, Y, Z = (0, 0, height)
+
+    # Find the "time" at which the line intersects the plane.
+    # Line is defined as ray_direction * time + vertex. Vertex is the point at
+    #   X, Y, Z = (0, 0, height)
     time: Float64 = -height / ray_direction[2]
 
-    # Checks if the ray intersects with the plane
+    # Checks if the ray intersects with the plane - negative `time` means the intersection
+    #   is behind the camera
     if np.isinf(time) or np.isnan(time) or time < 0:
         return None
 
@@ -92,7 +87,10 @@ def plane_collision(ray_direction: Vector, height: float) -> Point | None:
 
 
 def pixel_vector(
-    pixel: tuple[int, int], image_shape: tuple[int, int, int] | tuple[int, int], focal_length: float
+    pixel: tuple[int, int],
+    image_shape: tuple[int, int, int] | tuple[int, int],
+    focal_length: float,
+    rotation_deg: list[float],
 ) -> Vector:
     """
     Generates a vector representing the given pixel.
@@ -106,6 +104,8 @@ def pixel_vector(
         The shape of the image (returned by image.shape when image is a numpy image array)
     focal_length : float
         The camera's focal length - used to generate the camera's fields of view
+    rotation_deg : list[float]
+        The [roll, pitch, yaw] rotation of the drone in degrees
 
     Returns
     -------
@@ -118,10 +118,18 @@ def pixel_vector(
     fov_v: float
     fov_h, fov_v = focal_length_to_fovs(focal_length)
 
-    return camera_vector(
+    vector: Vector = camera_vector(
         pixel_angle(fov_v, pixel[0] / image_shape[0]),
         pixel_angle(fov_h, pixel[1] / image_shape[1]),
     )
+
+    # Apply the constant rotation offset
+    vector = rotate_degrees(vector, ROTATION_OFFSET)
+
+    # Apply the drone rotation
+    vector = rotate_degrees(vector, rotation_deg)
+
+    return vector
 
 
 def pixel_angle(fov: float, ratio: float) -> float:
@@ -165,7 +173,7 @@ def focal_length_to_fovs(focal_length: float) -> tuple[float, float]:
         The fields of view in radians
         Format is [horizontal, vertical]
     """
-    
+
     return get_fov(focal_length, SENSOR_WIDTH), get_fov(focal_length, SENSOR_HEIGHT)
 
 

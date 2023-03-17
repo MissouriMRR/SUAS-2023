@@ -10,7 +10,9 @@ from vision.deskew import vector_utils
 
 
 def get_coordinates(
-    pixel: tuple[int, int], image_shape: tuple[int, int, int], camera_parameters: CameraParameters
+    pixel: tuple[int, int],
+    image_shape: tuple[int, int, int] | tuple[int, int],
+    camera_parameters: CameraParameters,
 ) -> tuple[float, float] | None:
     """
     Calculates the coordinates of the given pixel.
@@ -20,7 +22,7 @@ def get_coordinates(
     ----------
     pixel: tuple[int, int]
         The coordinates of the pixel in [X, Y] form
-    image_shape : tuple[int, int, int]
+    image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by `image.shape` when image is a numpy image array)
     camera_parameters: CameraParameters
         The details on how and where the photo was taken
@@ -75,7 +77,9 @@ def get_coordinates(
 
 
 def bounding_area(
-    box: BoundingBox, image_shape: tuple[int, int, int], camera_parameters: CameraParameters
+    box: BoundingBox,
+    image_shape: tuple[int, int, int] | tuple[int, int],
+    camera_parameters: CameraParameters,
 ) -> float | None:
     """
     Calculates the area in feet of the bounding box on the ground
@@ -84,7 +88,7 @@ def bounding_area(
     ----------
     box: BoundingBox
         The bounding box of the object
-    image_shape : tuple[int, int, int]
+    image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by `image.shape` when image is a numpy image array)
     camera_parameters: CameraParameters
         The details on how and where the photo was taken
@@ -124,7 +128,7 @@ def bounding_area(
 def calculate_distance(
     pixel1: tuple[int, int],
     pixel2: tuple[int, int],
-    image_shape: tuple[int, int, int],
+    image_shape: tuple[int, int, int] | tuple[int, int],
     camera_parameters: CameraParameters,
 ) -> float | None:
     """
@@ -136,7 +140,7 @@ def calculate_distance(
     pixel1, pixel2: tuple[int, int]
         The two input pixel locations in [X,Y] form. The distance between them will be calculated
 
-    image_shape : tuple[int, int, int]
+    image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by `image.shape` when image is a numpy image array)
     camera_parameters: CameraParameters
         The details on how and where the photo was taken
