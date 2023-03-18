@@ -59,7 +59,6 @@ def pick_emergent_object(humanoids: list[BoundingBox], odlcs: ODLC_Dict) -> Boun
         min_odlc_distance: float = float("inf")
         odlc: Location
         for odlc in odlcs.values():
-            
             odlc_distance: float = geopy.distance.geodesic(
                 (odlc["latitude"], odlc["longitude"]),
                 (subject_humanoid.attributes["latitude"], subject_humanoid.attributes["longitude"]),
