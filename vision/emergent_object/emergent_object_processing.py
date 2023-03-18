@@ -3,6 +3,7 @@
 from nptyping import NDArray, Shape, Float64
 
 import numpy as np
+import geopy.distance
 
 from vision.common.bounding_box import BoundingBox, ObjectType, Vertices
 from vision.deskew.coordinate_lengths import get_distance
@@ -58,10 +59,11 @@ def pick_emergent_object(humanoids: list[BoundingBox], odlcs: ODLC_Dict) -> Boun
         min_odlc_distance: float = float("inf")
         odlc: Location
         for odlc in odlcs.values():
-            odlc_distance: float = get_distance(
+            
+            odlc_distance: float = geopy.distance.geodesic(
                 (odlc["latitude"], odlc["longitude"]),
                 (subject_humanoid.attributes["latitude"], subject_humanoid.attributes["longitude"]),
-            )
+            ).feet
 
             min_odlc_distance = min(odlc_distance, min_odlc_distance)
 
@@ -71,13 +73,13 @@ def pick_emergent_object(humanoids: list[BoundingBox], odlcs: ODLC_Dict) -> Boun
         for humanoid in humanoids:
             # Don't check candidates that are in the same image
             if subject_humanoid.attributes["image_path"] != humanoid.attributes["image_path"]:
-                humanoid_distance: float = get_distance(
+                humanoid_distance: float = geopy.distance.geodesic(
                     (humanoid.attributes["latitude"], humanoid.attributes["longitude"]),
                     (
                         subject_humanoid.attributes["latitude"],
                         subject_humanoid.attributes["longitude"],
                     ),
-                )
+                ).feet
 
                 min_humanoid_distance = min(humanoid_distance, min_humanoid_distance)
 
