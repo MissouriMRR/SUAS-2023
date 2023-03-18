@@ -6,7 +6,6 @@ import numpy as np
 import geopy.distance
 
 from vision.common.bounding_box import BoundingBox, ObjectType, Vertices
-from vision.deskew.coordinate_lengths import get_distance
 
 from vision.common.constants import Location, ODLC_Dict
 
