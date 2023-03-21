@@ -29,9 +29,11 @@ def perspective_matrix(
     image_shape: tuple[int, int, int] | tuple[int, int],
         The shape of the image to deskew. Aspect ratio should match the camera sensor
     focal_length : float
-        The camera's focal length - used to generate the camera's fields of view
-    rotation_deg : list[float]
-        The [roll, pitch, yaw] rotation in degrees
+        The camera's focal length in millimeters - used to generate the camera's
+        fields of view
+    rotation_deg: list[float]
+        The rotation of the drone in degrees. The constant ROTATION_OFFSET of the
+        camera, stored in constants.py, will be applied first
     scale: float | None
         Scales the resolution of the output. A value of 1 makes the area inside the camera view
         equal to the original image. Defaults to 1.
@@ -72,7 +74,7 @@ def perspective_matrix(
     intersects: Corners = np.array(
         [
             pixel_intersect(point, image_shape, focal_length, rotation_deg, 1)
-            for point in np.flip(source_pts, axis=1)  # use np.flip to convert XY to YX
+            for point in source_pts
         ],
         dtype=np.float32,
     )
@@ -122,9 +124,11 @@ def deskew(
     image : Image
         The input image to deskew. Aspect ratio should match the camera sensor
     focal_length : float
-        The camera's focal length - used to generate the camera's fields of view
-    rotation_deg : list[float]
-        The [roll, pitch, yaw] rotation in degrees
+        The camera's focal length in millimeters - used to generate the camera's
+        fields of view
+    rotation_deg: list[float]
+        The rotation of the drone in degrees. The constant ROTATION_OFFSET of the
+        camera, stored in constants.py, will be applied first
     scale: float | None
         Scales the resolution of the output. A value of 1 makes the area inside the camera view
         equal to the original image. Defaults to 1.
@@ -148,7 +152,6 @@ def deskew(
             4--3
 
             Returns None if no valid image could be generated.
-
     """
 
     matrix: NDArray[Shape["3, 3"], Float64]
