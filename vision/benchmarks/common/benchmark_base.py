@@ -2,6 +2,7 @@
 Base class for creating a benchmark module.
 """
 
+import csv
 import time
 
 from typing import Any
@@ -101,7 +102,22 @@ class Benchmark:
         file_name: str = (
             self.dataset.dataset_name + "_" + str(int(time.time())) + ".csv"
         )  # name of file to save to
-        print(file_name)  # needs to be implemented
 
-        # with open(file_name, "w") as file:
-        #     pass
+        with open(file_name, "w", encoding="utf-8") as csv_file:
+            csv_writer = csv.writer(csv_file)
+
+            csv_writer.writerow(self.dataset.headings)
+
+            img_results: BenchImage
+            for img_results in self.dataset.images:
+                row: list[Any] = [img_results.image_name]
+
+                acc_result: tuple[Any, bool]
+                for acc_result in img_results.accuracy_results:
+                    row.append(str(acc_result[0]) + "(Success=" + str(acc_result[1]) + ")")
+
+                time_result: float
+                for time_result in img_results.timing_results:
+                    row.append(time_result)
+
+                csv_writer.writerow(row)

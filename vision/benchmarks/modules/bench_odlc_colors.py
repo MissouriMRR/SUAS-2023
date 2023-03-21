@@ -34,8 +34,10 @@ class BenchODLCColors(Benchmark):
         ----------
         image : Image
             the image containing the standard odlc object
-        text_bounds : BoundingBox, by default BoundingBox()
+        text_bounds : BoundingBox | None, by default None
             the bounds of the text on the odlc object
+            NOTE: Needs default of None to allow overriding
+            of base class with different number of arguments.
 
         Returns
         -------
