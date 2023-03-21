@@ -101,6 +101,7 @@ class Benchmark:
         file_name: str = (
             self.dataset.dataset_name + "_" + str(int(time.time())) + ".csv"
         )  # name of file to save to
+        print(file_name)  # needs to be implemented
 
-        with open(file_name, "w") as file:
-            pass
+        # with open(file_name, "w") as file:
+        #     pass

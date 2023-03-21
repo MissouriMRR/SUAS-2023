@@ -4,7 +4,7 @@ Benchmark for the ODLC Colors algorithm.
 
 import time
 
-from vision.benchmarks.common.dataset import BenchDataset, BenchImage
+from vision.benchmarks.common.dataset import BenchImage
 from vision.benchmarks.common.benchmark_base import Benchmark
 
 from vision.common.bounding_box import BoundingBox
@@ -24,10 +24,9 @@ class BenchODLCColors(Benchmark):
         a set of images to run the benchmark on
     """
 
-    def __init__(self, dataset: BenchDataset) -> None:
-        super().__init__(dataset)
-
-    def run_module(self, image: Image, text_bounds: BoundingBox) -> tuple[ODLCColor, ODLCColor]:
+    def run_module(
+        self, image: Image, text_bounds: BoundingBox | None = None
+    ) -> tuple[ODLCColor, ODLCColor]:
         """
         Runs the find_colors function on the image in order to benchmark.
 
@@ -35,7 +34,7 @@ class BenchODLCColors(Benchmark):
         ----------
         image : Image
             the image containing the standard odlc object
-        text_bounds : BoundingBox
+        text_bounds : BoundingBox, by default BoundingBox()
             the bounds of the text on the odlc object
 
         Returns
@@ -47,6 +46,8 @@ class BenchODLCColors(Benchmark):
             text_color : ODLCColor
                 the color of the text on the object
         """
+        if text_bounds is None:
+            raise TypeError("Required argument text_bounds not specified for run_module()")
         return find_colors(image=image, text_bounds=text_bounds)
 
     def accuracy(self, bench_image: BenchImage) -> list[tuple[ODLCColor, bool]]:
