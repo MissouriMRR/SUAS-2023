@@ -14,10 +14,8 @@ class Maestro:
     ----------
     serial: serial.Serial
         Serial object to be able to read and send messages to and from the board.
-
     command_prefix: str
         The command protocol prefix that is sent before every command to the board.
-
     targets: list(int)
         A list of the current targets for each channel.
 
@@ -25,34 +23,24 @@ class Maestro:
     -------
     _send_command(command: str) -> None
         Sends a serial command to the board
-
     _get_bits(integer: int) -> tuple[int, int]
         Converts an integer value to the 7 high bit, 7 low bit format that the Pololu commands use
-
     _read_bits() -> int
         Read a 16 bit response from the Maestro board and convert it to an integer
-
     set_target(channel: int, target: int) -> None
         Sets the target position of the specified servo
-
     set_speed(channel: int, speed: int) -> None
         Sets the speed limit of the desired servo
-
     set_acceleration(channel: int, accel: int) -> None
         Sets the target position of the specified servo
-
     get_position(channel: int) -> int
         Returns the current position of the servo
-
     get_moving_state() -> bool
         States if any servos are currently moving
-
     getError() -> bool
         States if there is an error with the board
-
     go_home() -> None
         Sets all servos to their home position
-
     is_moving() -> bool
         Checks if a certain servo is still moving
     """
@@ -68,13 +56,11 @@ class Maestro:
 
         Parameters
         ----------
-        connection_address: str
+        connection_address: str = '/dev/ttyACM0'
             The command serial port of the Maestro board (usually '/dev/ttyACM0')
-
-        device_number: int
+        device_number: int = 12
             The device number that is used to address the board in Pololu Protocol commands
-
-        baud_rate: int
+        baud_rate: int = 9600
             The rate of communication configured for the board (default 9600)
         """
         self.serial: serial.Serial = serial.Serial(
@@ -125,8 +111,8 @@ class Maestro:
         result: int
             The response from the board
         """
-        lsb = ord(self.serial.read())
-        msb = ord(self.serial.read())
+        lsb: int = ord(self.serial.read())
+        msb: int = ord(self.serial.read())
         return (msb << 8) + lsb
 
     def set_target(self, channel: int, target: int) -> None:
@@ -137,7 +123,6 @@ class Maestro:
         ----------
         channel: int
             The channel of the desired servo
-
         target: int
             The target position in units of quarter-microseconds
 
@@ -147,8 +132,10 @@ class Maestro:
         To set the servos to full right, set the target to 8000.
         The range of the servo target is 4000 - 8000.
         """
+        low: int
+        high: int
         low, high = self._get_bits(target)
-        command = chr(0x04) + chr(channel) + chr(low) + chr(high)
+        command: str = chr(0x04) + chr(channel) + chr(low) + chr(high)
 
         self._send_command(command)
         self.targets[channel] = target
@@ -161,13 +148,14 @@ class Maestro:
         ----------
         channel: int
             The channel of the desired servo
-
         speed: int
             The speed limit to set the channel to in units of quarter-microseconds/10 ms
         """
+        low: int
+        high: int
         low, high = self._get_bits(speed)
 
-        command = chr(0x07) + chr(channel) + chr(low) + chr(high)
+        command: str = chr(0x07) + chr(channel) + chr(low) + chr(high)
         self._send_command(command)
 
     def set_acceleration(self, channel: int, accel: int) -> None:
@@ -178,7 +166,6 @@ class Maestro:
         ----------
         channel: int
             The channel of the desired servo
-
         target: int
             The target acceleration in units of quarter-microseconds/10 ms/80 ms
 
@@ -187,9 +174,11 @@ class Maestro:
         The range for acceleration is from 0 to 255.
         0 indicates no acceleration limit.
         """
+        low: int
+        high: int
         low, high = self._get_bits(accel)
 
-        command = chr(0x09) + chr(channel) + chr(low) + chr(high)
+        command: str = chr(0x09) + chr(channel) + chr(low) + chr(high)
         self._send_command(command)
 
     def get_position(self, channel: int) -> int:
@@ -206,9 +195,9 @@ class Maestro:
         position: int
             The current position of the servo in quarter-microseconds
         """
-        command = chr(0x10) + chr(channel)
+        command: str = chr(0x10) + chr(channel)
         self._send_command(command)
-        result = self._read_bits()
+        result: int = self._read_bits()
         print(result)
         return result
 
@@ -226,7 +215,7 @@ class Maestro:
         Only works with Maestro 12, 18, 24
         """
         self._send_command(chr(0x13))
-        response = self.serial.read()
+        response: bytes = self.serial.read()
         if response == 0x01:
             return True
         return False
@@ -241,7 +230,7 @@ class Maestro:
             The error code
         """
         self._send_command(chr(0x21))
-        result = self._read_bits()
+        result: int = self._read_bits()
         print(result)
         return result
 
