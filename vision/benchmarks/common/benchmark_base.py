@@ -29,6 +29,10 @@ class Benchmark:
         """
         Run the algorithm.
 
+        NOTE: When adding additional parameters in inheriting
+        classes, new parameters should default to None to continue
+        overwritting this function.
+
         Parameters
         ----------
         image : Image
@@ -46,6 +50,10 @@ class Benchmark:
     def accuracy(self, bench_image: BenchImage) -> list[tuple[Any, bool]]:
         """
         Run the benchmark to check accuracy of the algorithm.
+
+        NOTE: When adding additional parameters in inheriting
+        classes, new parameters should default to None to continue
+        overwritting this function.
 
         Parameters
         ----------
@@ -69,6 +77,10 @@ class Benchmark:
     def timings(self, bench_image: BenchImage) -> list[float]:
         """
         Run the benchmark to check the timings of the algorithm.
+
+        NOTE: When adding additional parameters in inheriting
+        classes, new parameters should default to None to continue
+        overwritting this function.
 
         Parameters
         ----------
