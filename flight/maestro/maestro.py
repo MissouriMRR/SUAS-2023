@@ -198,7 +198,6 @@ class Maestro:
         command: str = chr(0x10) + chr(channel)
         self._send_command(command)
         result: int = self._read_bits()
-        print(result)
         return result
 
     def get_moving_state(self) -> bool:
@@ -208,7 +207,7 @@ class Maestro:
         Returns
         -------
         response: bool
-            True if servos are still moving, false if not
+            True if servos are still moving, False if not
 
         Notes
         -----
@@ -216,7 +215,7 @@ class Maestro:
         """
         self._send_command(chr(0x13))
         response: bytes = self.serial.read()
-        if response == 0x01:
+        if response == bytes(0x01):
             return True
         return False
 
@@ -231,7 +230,6 @@ class Maestro:
         """
         self._send_command(chr(0x21))
         result: int = self._read_bits()
-        print(result)
         return result
 
     def go_home(self) -> None:
@@ -252,7 +250,7 @@ class Maestro:
         Returns
         -------
         result: bool
-            True if the servo is still moving, false if not
+            True if the servo is still moving, False if not
         """
         if self.targets[channel] != -1:
             if self.get_position(channel) != self.targets[channel]:
