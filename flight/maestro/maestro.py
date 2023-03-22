@@ -16,7 +16,7 @@ class Maestro:
         Serial object to be able to read and send messages to and from the board.
     command_prefix: str
         The command protocol prefix that is sent before every command to the board.
-    targets: list(int)
+    targets: list[int]
         A list of the current targets for each channel.
 
     Methods
@@ -83,7 +83,6 @@ class Maestro:
     def _get_bits(self, integer: int) -> tuple[int, int]:
         """
         Converts an integer value to the 7 high bit, 7 low bit format that the Pololu commands use
-        See: https://www.pololu.com/docs/0J40/5.e
 
         Parameters
         ----------
@@ -97,6 +96,10 @@ class Maestro:
                 The 7 low bits of the integer
             high_bits: int
                 The 7 high bits of the integer
+
+        Notes
+        -----
+        See the Pololu Protocol documentation here: https://www.pololu.com/docs/0J40/5.e
         """
         low_bits: int = integer & 0x7F
         high_bits: int = (integer >> 7) & 0x7F
