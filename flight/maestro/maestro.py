@@ -200,8 +200,8 @@ class Maestro:
         """
         command: str = chr(0x10) + chr(channel)
         self._send_command(command)
-        result: int = self._read_bits()
-        return result
+        position: int = self._read_bits()
+        return position
 
     def get_moving_state(self) -> bool:
         """
@@ -232,8 +232,8 @@ class Maestro:
             The error code
         """
         self._send_command(chr(0x21))
-        result: int = self._read_bits()
-        return result
+        error: int = self._read_bits()
+        return error
 
     def go_home(self) -> None:
         """
