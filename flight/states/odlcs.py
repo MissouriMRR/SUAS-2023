@@ -32,7 +32,7 @@ class ODLC(State):
             The next state in the state machine, AirDrop for the payloads
         """
 
-        #Camera gets turned on
+        #Camera gets ready to take photos
         await drone.camera.set_mode(Mode.PHOTO)
         logging.info("Camera changed to Photo mode")
 
@@ -49,10 +49,18 @@ class ODLC(State):
 
         #traverses the 3 waypoints starting at the midpoint on left to midpoint on the right then to the top left corner at the rectangle
         point: int
+        logging.info("Starting odlc zone flyover")
         for point in range(3):
-            logging.info("Moving")
+            if(point == 0):
+                logging.info("Moving to the center of the west boundary")
+            elif(point == 1):
+                await drone.camera.start_photo_interval(5)
+                logging.info("Moving to the center of the east boundary")
+            elif(point == 2):
+                logging.info("Moving to the north west corner")
+
             await move_to(
                 drone, waypoint["lats"][point], waypoint["longs"][point], waypoint["Altitude"][0]
             )
-
+            await drone.camera.stop_photo_interval()
         return AirDrop(self.state_settings)
