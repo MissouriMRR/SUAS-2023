@@ -4,6 +4,7 @@ File containing a class to control air drop functions
 
 from flight.maestro.maestro import Maestro
 
+
 class Airdrop_Control:
     """
     Class to control the air drop functions
@@ -45,7 +46,6 @@ class Airdrop_Control:
         """
         # I'm going to assume that we want to open the bottle by setting the servo full right
         self.board.set_target(bottle, 8000)
-
 
     def close_servo(self, bottle: int) -> None:
         """
