@@ -25,9 +25,7 @@ class BenchImage:
         desired result from running an accuracy benchmark
     """
 
-    def __init__(
-        self, image: Image, image_name: str, accuracy_goals: list[Any]
-    ) -> None:
+    def __init__(self, image: Image, image_name: str, accuracy_goals: list[Any]) -> None:
         self.image: Image = image
         self.image_name: str = image_name
         self.accuracy_goals: list[Any] = accuracy_goals
@@ -91,9 +89,7 @@ class BenchDataset:
         the name of the dataset
     """
 
-    def __init__(
-        self, images: list[BenchImage], headings: list[str], dataset_name: str
-    ) -> None:
+    def __init__(self, images: list[BenchImage], headings: list[str], dataset_name: str) -> None:
         self.images: list[BenchImage] = images
         self.headings: list[str] = headings
         self.dataset_name: str = dataset_name
@@ -113,14 +109,14 @@ def load_dataset(filename: str, dataset_name: str) -> BenchDataset:
 
     Returns
     -------
-    BenchDataset
+    dataset: BenchDataset
         the resulting dataset
     """
     images: list[BenchImage] = []
     headings: list[str] = []
 
     # load images from file
-    with open(filename, mode="r") as file:
+    with open(filename, mode="r", encoding="utf-8") as file:
         csv_file = csv.reader(file)
 
         for i, line in enumerate(csv_file):
