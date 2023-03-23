@@ -4,7 +4,7 @@ Test code for our drone in obstacle avoidance
 
 import asyncio
 import random
-from typing import AsyncIterator
+from typing import AsyncIterator, Final
 
 import mavsdk
 import mavsdk.core
@@ -16,7 +16,7 @@ from .avoidance_goto import goto_with_avoidance
 from .movement import goto_location_offboard
 from .point import InputPoint, Point
 
-TAKEOFF_ALTITUDE: float = 40.0
+TAKEOFF_ALTITUDE: Final[float] = 40.0
 
 
 async def takeoff(drone: mavsdk.System, altitude: float) -> None:
