@@ -72,7 +72,9 @@ async def move_toward(
 ) -> mavsdk.offboard.VelocityNedYaw:
     """
     Causes the drone to start moving toward a location;
-    only sets the drone's velocity once, then returns
+    only sets the drone's velocity once, then returns;
+    works best if the target location is in the same
+    or an adjacent UTM zone
 
     Parameters
     ----------
@@ -127,7 +129,9 @@ async def goto_location_offboard(
 ) -> None:
     """
     Causes the drone to go to a location using offboard commands;
-    importantly, this coroutine can be canceled
+    importantly, this coroutine can be canceled;
+    works best if the target location is in the same
+    or an adjacent UTM zone
 
     Parameters
     ----------
