@@ -39,6 +39,8 @@ class Location(TypedDict):
     longitude: float
 
 
+# int is the number of the water bottle to drop
+# Location is the coordinates of the standard object once found
 ODLC_Dict: TypeAlias = dict[int, Location]
 
 
