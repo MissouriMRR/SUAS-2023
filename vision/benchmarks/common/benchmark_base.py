@@ -27,7 +27,7 @@ class Benchmark:
 
     def run_module(self, image: Image) -> Any:
         """
-        Run the algorithm.
+        Run the algorithm to be benchmarked.
 
         NOTE: When adding additional parameters in inheriting
         classes, new parameters should default to None to continue
