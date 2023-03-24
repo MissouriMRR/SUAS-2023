@@ -7,6 +7,7 @@ from flight.odlc_boundaries.execute import move_to
 from mavsdk.camera import Mode
 import logging
 
+
 class ODLC(State):
     """
     State to fly through ODLC search grid and scan for standard & emergent objects, and start timelapse photo of region
@@ -50,7 +51,7 @@ class ODLC(State):
         "Altitude": [100],
         }
 
-        #traverses the 3 waypoints starting at the midpoint on left to midpoint on the right then to the top left corner at the rectangle
+        # traverses the 3 waypoints starting at the midpoint on left to midpoint on the right then to the top left corner at the rectangle
         point: int
         logging.info("Starting odlc zone flyover")
         for point in range(3):
