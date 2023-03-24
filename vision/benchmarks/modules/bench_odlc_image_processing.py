@@ -12,9 +12,9 @@ from vision.common.constants import Image
 from vision.standard_object.odlc_image_processing import preprocess_std_odlc
 
 
-class BenchODLCColors(Benchmark):
+class BenchODLCImageProcessing(Benchmark):
     """
-    Benchmark utility for the ODLC Colors algorithm.
+    Benchmark utility for the ODLC image processing algorithm.
 
     Parameters
     ----------
@@ -30,25 +30,15 @@ class BenchODLCColors(Benchmark):
         ----------
         image : Image
             the image of part of the air drop area
-        text_bounds : BoundingBox | None, by default None
-            the bounds of the text on the odlc object
-            NOTE: Needs default of None to allow overriding
-            of base class with different number of arguments.
 
         Returns
         -------
-        colors : tuple[ODLCColor, ODLCColor]
-            the colors of the standard object
-            shape_color : ODLCColor
-                the color of the shape
-            text_color : ODLCColor
-                the color of the text on the object
+        dilated : Image
+            the preprocessed image
         """
-        if text_bounds is None:
-            raise TypeError("Required argument text_bounds not specified for run_module()")
-        return find_colors(image=image, text_bounds=text_bounds)
+        return preprocess_std_odlc(image=image)
 
-    def accuracy(self, bench_image: BenchImage) -> list[tuple[ODLCColor, bool]]:
+    def accuracy(self, bench_image: BenchImage) -> list[tuple[None, bool]]:
         """
         Run the benchmark to check accuracy of the algorithm.
 
@@ -59,23 +49,17 @@ class BenchODLCColors(Benchmark):
 
         Returns
         -------
-        accuracy_results : list[tuple[ODLCColor, bool]]
+        accuracy_results : list[tuple[None, bool]]
             the accuracy results of running the algorithm on the image
 
-            result : ODLCColor
-                the color found by the algorithm
+            None : None
+                placeholder, no accurracy tested
             successful : bool
                 whether the algorithm's result was accurate
         """
-        colors: tuple[ODLCColor, ODLCColor] = self.run_module(
-            image=bench_image.image, text_bounds=bench_image.attributes["text_bounds"]
-        )
+        self.run_module(image=bench_image.image)
 
-        pass_color_1: bool = colors[0] == bench_image.accuracy_goals[0]
-        bench_image.accuracy_results.append((colors[0], pass_color_1))
-
-        pass_color_2: bool = colors[1] == bench_image.accuracy_goals[1]
-        bench_image.accuracy_results.append((colors[1], pass_color_2))
+        bench_image.accuracy_results.append((None, True))
 
         return bench_image.accuracy_results
 
@@ -95,7 +79,7 @@ class BenchODLCColors(Benchmark):
         """
         start_time: float = time.time()
 
-        self.run_module(image=bench_image.image, text_bounds=bench_image.attributes["text_bounds"])
+        self.run_module(image=bench_image.image)
 
         stop_time: float = time.time()
         elapsed_time: float = start_time - stop_time
