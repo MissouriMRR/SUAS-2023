@@ -22,7 +22,7 @@ class BenchODLCImageProcessing(Benchmark):
         a set of images to run the benchmark on
     """
 
-    def run_module(self, image: Image) -> Image:
+    def run_module(self, image: Image) -> Image | Exception:
         """
         Runs the preprocess_std_odlc function on the image in order to benchmark.
 
@@ -33,10 +33,13 @@ class BenchODLCImageProcessing(Benchmark):
 
         Returns
         -------
-        dilated : Image
-            the preprocessed image
+        dilated : Image | Exception
+            the preprocessed image, returns None if error occurred
         """
-        return preprocess_std_odlc(image=image)
+        try:
+            return preprocess_std_odlc(image=image)
+        except Exception as error:
+            return error
 
     def accuracy(self, bench_image: BenchImage) -> list[tuple[None, bool]]:
         """
@@ -57,9 +60,12 @@ class BenchODLCImageProcessing(Benchmark):
             successful : bool
                 whether the algorithm's result was accurate
         """
-        self.run_module(image=bench_image.image)
-
-        bench_image.accuracy_results.append((None, True))
+        result: Image | Exception = self.run_module(image=bench_image.image)
+        if type(result) != Exception:
+            bench_image.accuracy_results.append((None, True))
+        else:
+            bench_image.accuracy_results.append((None, False))
+            self.print_error(error=result, bench_image=bench_image)
 
         return bench_image.accuracy_results
 

@@ -25,7 +25,7 @@ class Benchmark:
     def __init__(self, dataset: BenchDataset) -> None:
         self.dataset: BenchDataset = dataset
 
-    def run_module(self, image: Image) -> Any:
+    def run_module(self, image: Image) -> Any | Exception:
         """
         Run the algorithm to be benchmarked.
 
@@ -40,8 +40,9 @@ class Benchmark:
 
         Returns
         -------
-        result : Any
-            the result of running the algorithm on the image
+        result : Any | Exception
+            the result of running the algorithm on the image, or
+            an exception if one occurred
         """
         raise NotImplementedError(
             "Calling base Benchmark class. Function not implemented for module."
@@ -133,3 +134,23 @@ class Benchmark:
                     row.append(time_result)
 
                 csv_writer.writerow(row)
+
+    def print_error(self, error: Exception, bench_image: BenchImage) -> None:
+        """
+        Prints an error that occurred when running a module
+
+        Parameters
+        ----------
+        error : Excpetion
+            the error that occurred
+        bench_image : BenchImage
+            the image that the module failed on
+        """
+        print(
+            "An error occurred when running",
+            str(self.__class__),
+            "on",
+            bench_image.image_name,
+            ". Error:\n",
+            str(error),
+        )

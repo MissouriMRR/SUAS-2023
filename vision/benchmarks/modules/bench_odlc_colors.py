@@ -26,7 +26,7 @@ class BenchODLCColors(Benchmark):
 
     def run_module(
         self, image: Image, text_bounds: BoundingBox | None = None
-    ) -> tuple[ODLCColor, ODLCColor]:
+    ) -> tuple[ODLCColor, ODLCColor] | Exception:
         """
         Runs the find_colors function on the image in order to benchmark.
 
@@ -48,9 +48,12 @@ class BenchODLCColors(Benchmark):
             text_color : ODLCColor
                 the color of the text on the object
         """
-        if text_bounds is None:
-            raise TypeError("Required argument text_bounds not specified for run_module()")
-        return find_colors(image=image, text_bounds=text_bounds)
+        try:
+            if text_bounds is None:
+                raise TypeError("Required argument text_bounds not specified for run_module()")
+            return find_colors(image=image, text_bounds=text_bounds)
+        except Exception as error:
+            return error
 
     def accuracy(self, bench_image: BenchImage) -> list[tuple[ODLCColor, bool]]:
         """
