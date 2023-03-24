@@ -124,6 +124,8 @@ def calc_emerg_obj_min_dist(humanoids: list[BoundingBox], subject_humanoid: Boun
     Returns
     -------
     min_humanoid_distance : float
+        The minimum distance from the subject_humanoid to another identified humanoid that was
+        found in a different image.
     """
     min_humanoid_distance: float = float("inf")
     humanoid: BoundingBox
@@ -154,8 +156,8 @@ def emergent_obj_selection(evaluation_array: NDArray[Shape["*, 4"], Float64]) ->
     Parameters
     ----------
     evaluation_array : NDArray[Shape["*, 4"], Float64]
-        The evaluations of all of the emergent objects
-        (standard_object_dist, emergent_object_dist, bounding_box_area, ai_confidence)
+        The evaluations of all of the emergent objects with format:
+        [standard_object_dist, emergent_object_dist, bounding_box_area, ai_confidence]
 
     Returns
     -------
