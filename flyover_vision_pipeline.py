@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 
 from nptyping import NDArray, Shape, UInt8
+from typing import Callable
 from vision.common.constants import Image, ScImage, Contour, Hierarchy, CameraParameters
 
 from vision.competition_inputs.bottle_reader import load_bottle_info, BottleData
@@ -14,6 +15,17 @@ from vision.standard_object.odlc_colors import find_colors
 from vision.deskew.camera_distances import get_coordinates
 from vision.common.bounding_box import BoundingBox
 from vision.common.odlc_characteristics import ODLCColor
+from vision.emergent_object.emergent_object import create_emergent_model, detect_emergent_object
+
+FLYOVER_IMAGES_PATH: str = ""
+JSON_PATH: str = ""
+
+
+def read_image_parameters(path: str) -> CameraParameters:
+    raise NotImplementedError
+
+def get_image_paths() -> list[str]:
+    raise NotImplementedError
 
 
 def flyover_pipeline() -> None:
@@ -24,16 +36,39 @@ def flyover_pipeline() -> None:
     # Load the data for each bottle
     bottle_info: list[BottleData] = load_bottle_info()
 
-    # The list of lists where all sightings of each ODLC will be stored
-    saved_odlcs: list[list[BoundingBox]] = [[], [], [], [], []]
+    # Load model
+    emg_model: Callable[[Image], str] = create_emergent_model()
+    
+    # List of filenames for images already completed to prevent repeating work
+    completed_images: list[str] = []
+    
+    # The list where all sightings of ODLCs will be stored
+    saved_odlcs: list[BoundingBox] = []
 
     # The list of BoundingBoxes where all potential emergent objects will be stored
     saved_humanoids: list[BoundingBox] = []
 
-    # List of filenames for images already completed to prevent repeating work
-    completed_images: list[str] = []
-
     # -- All below will be done within a loop that goes through all images. --
+    # While not done:
+        # Check for new images; for each new image:
+            # Get camera parameters
+            # Get standard and emergent objects
+            # Save standard and emergent objects
+    
+    while True:
+        for image_path in get_image_paths():
+            if image_path not in completed_images:
+                image: Image = cv2.imread(image_path)
+                
+                camera_parameters: CameraParameters = read_image_parameters(image_path)
+                
+                saved_odlcs += find_standard_objects(image, camera_parameters, image_path)
+                
+                saved_humanoids += find_emergent_objects(image, emg_model, camera_parameters, image_path)
+                
+                
+        
+
 
     original_image: Image = np.zeros((720, 1080, 3))
     image_path = "example_name.jpg"
@@ -46,24 +81,62 @@ def flyover_pipeline() -> None:
         "altitude_f": 100,
     }
 
-    processed_image: ScImage = preprocess_std_odlc(original_image)
+    # bottle_index: int = get_bottle_index(shape, bottle_info)
 
+    #     if bottle_index is not -1:
+    #         # Save the shape bounding box in its proper place
+
+
+
+def find_standard_objects(
+    original_image: Image,
+    camera_parameters: CameraParameters,
+    image_path: str
+):
+       
+    found_odlcs: list[BoundingBox] = []
+
+    # Run the image preprocessing
+    processed_image: ScImage = preprocess_std_odlc(original_image)
+    
+    # Get the contours in the image
     contours: tuple[Contour, ...]
     hierarchy: Hierarchy
     contours, hierarchy = cv2.findContours(processed_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
+    
     shapes: list[BoundingBox] = process_shapes(list(contours), hierarchy, processed_image.shape[:2])
 
     for shape in shapes:
         # Set the shape attributes by reference. If successful, keep the shape
         if not set_shape_attributes(shape, image_path, original_image, camera_parameters):
             continue  # Skip the current shape and move on to the next
+               
+        found_odlcs.append(shape)
+    
+    return found_odlcs
+
+
+def find_emergent_objects(
+    original_image: Image,
+    emg_model: Callable[[Image], str],
+    camera_parameters: CameraParameters,
+    image_path: str
+):
+    # The potential emergent objects found in the image
+    found_humanoids: list[BoundingBox] = []
+
+    detected_emergents: list[BoundingBox] = detect_emergent_object(original_image, emg_model)
+    
+    emergent: BoundingBox
+    for emergent in detected_emergents:
+        # Set the attributes by reference. If not successful, skip the current emergent
+        if not set_generic_attributes(emergent, image_path, original_image.shape, camera_parameters):
+            continue  # Skip the current emergent object and move on to the next
         
-        bottle_index: int = get_bottle_index(shape, bottle_info)
-        
-        if bottle_index is not -1:
-            # Save the shape bounding box in its proper place
-            saved_odlcs[bottle_index].append(shape)
+        found_humanoids.append(emergent)
+    
+    return found_humanoids
+    
 
 
 def get_bottle_index(shape: BoundingBox, bottle_info: list[BottleData]):
@@ -142,12 +215,9 @@ def set_shape_attributes(
     attributes_found: bool
         Returns true if all attributes were successfully found
     """
-    
     if shape.get_attribute("shape") is None:
         return False
     
-    shape.set_attribute("image_path", image_path)
-
     text_bounding: BoundingBox = get_odlc_text(original_image, shape)
 
     # If no text is found, we can't do find_colors()
@@ -162,16 +232,30 @@ def set_shape_attributes(
 
     shape.set_attribute("shape_color", shape_color)
     shape.set_attribute("text_color", text_color)
-
-    coordinates: tuple[float, float] | None = get_coordinates(
-        shape.get_center_coord(), original_image.shape, camera_parameters
-    )
     
-    if coordinates is None:
+    # Modifies by reference
+    if not set_generic_attributes(shape, image_path, original_image.shape, camera_parameters):
         return False
-
-    shape.set_attribute("latitude", coordinates[0])
-    shape.set_attribute("longitude", coordinates[1])
     
     return True
 
+def set_generic_attributes(
+        object: BoundingBox,
+        image_path: str,
+        image_shape: tuple[int, int] | tuple[int, int, int],
+        camera_parameters: CameraParameters
+    ) -> None:
+    
+    object.set_attribute("image_path", image_path)
+
+    coordinates: tuple[float, float] | None = get_coordinates(
+        object.get_center_coord(), image_shape, camera_parameters
+    )
+    
+    object.set_attribute("latitude", coordinates[0])
+    object.set_attribute("longitude", coordinates[1])
+    
+    if coordinates is None:
+        return False
+    
+    return True
