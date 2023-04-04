@@ -16,13 +16,13 @@ COLOR_LOG_FORMAT: str = (
 )
 
 
-def init_logger(queue: Queue[str]) -> QueueListener:
+def init_logger(queue: Queue) -> QueueListener:
     """
     Initializes a QueueListener object to be used throughout the competition code to contain log messages
 
     Parameters
     ----------
-    queue : Queue[str]
+    queue : Queue
         Data structure to hold logging messages
 
     Returns
@@ -31,7 +31,7 @@ def init_logger(queue: Queue[str]) -> QueueListener:
         Object to process log messages
     """
     file_formatter: Formatter = logging.Formatter(LOG_FORMAT)
-    file: FileHandler = logging.FileHandler(LOG_FILE, "logFile")
+    file: FileHandler = logging.FileHandler(LOG_FILE, "a")
     file.setFormatter(file_formatter)
 
     console_formatter: Formatter = ColoredFormatter(COLOR_LOG_FORMAT)
@@ -41,13 +41,13 @@ def init_logger(queue: Queue[str]) -> QueueListener:
     return QueueListener(queue, file, console)
 
 
-def worker_configurer(queue: Queue[str]) -> None:
+def worker_configurer(queue: Queue) -> None:
     """
     Configures the logger to send logging messages to QueueListener process
 
     Parameters
     ----------
-    queue : Queue[str]
+    queue : Queue
         Data structure that holds logging messages
     """
     queue_handler: QueueHandler = QueueHandler(queue)

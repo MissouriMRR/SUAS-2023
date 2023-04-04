@@ -215,7 +215,7 @@ async def init_and_begin(comm: Communication, sim: bool, state_settings: StateSe
 
 
 def flight(
-    comm: Communication, sim: bool, log_queue: Queue[str], state_settings: StateSettings
+    comm: Communication, sim: bool, log_queue: Queue, state_settings: StateSettings
 ) -> None:
     """
     Starts asynchronous event loop for flight code

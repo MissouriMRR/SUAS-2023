@@ -54,7 +54,7 @@ class FlightManager:
         self.run_threads(args.simulation)
 
     def init_flight(
-        self, flight_args: tuple[Communication, bool, Queue[str], StateSettings]
+        self, flight_args: tuple[Communication, bool, Queue, StateSettings]
     ) -> Process:
         """
         Initializes the flight state machine process

@@ -2,7 +2,7 @@
 
 from mavsdk import System
 from flight.states.state import State
-from flight.states.odlcs import ODLC
+#from flight.states.odlcs import ODLC
 from flight.states.land import Land
 
 
@@ -16,7 +16,7 @@ class AirDrop(State):
         Maneuver drone to each drop location and release the payloads onto corresponding standard ODLC
     """
 
-    async def run(self, drone: System) -> Land | ODLC:
+    async def run(self, drone: System) -> Land:
         """
         Run through the located drop locations and release each payload
 
