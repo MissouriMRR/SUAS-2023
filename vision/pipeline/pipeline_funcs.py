@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import json
 
 from nptyping import NDArray, Shape, UInt8
 from typing import Callable
@@ -56,31 +57,48 @@ def find_humanoids(
     return found_humanoids
 
 
+def read_image_parameters(json_path: str) -> dict[str, CameraParameters]:
+    """
+    Will read in the data from the given json file and return it as a python dict.
+
+    Parameters
+    ----------
+    json_path : str
+        The path of a valid json file, assumed to have data in the same format as return type.
+
+    Returns
+    -------
+    data : dict[str, CameraParameters]
+        The python dict version of the data from the given json file.
+    """
+    with open(json_path, encoding="utf-8") as jfile:
+        data: dict[str, CameraParameters] = json.load(jfile)
+
+    return data
+
+
 def find_standard_objects(
-    original_image: Image,
-    camera_parameters: CameraParameters,
-    image_path: str
+    original_image: Image, camera_parameters: CameraParameters, image_path: str
 ) -> list[BoundingBox]:
-       
     found_odlcs: list[BoundingBox] = []
 
     # Run the image preprocessing
     processed_image: ScImage = preprocess_std_odlc(original_image)
-    
+
     # Get the contours in the image
     contours: tuple[Contour, ...]
     hierarchy: Hierarchy
     contours, hierarchy = cv2.findContours(processed_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    
+
     shapes: list[BoundingBox] = process_shapes(list(contours), hierarchy, processed_image.shape[:2])
 
     for shape in shapes:
         # Set the shape attributes by reference. If successful, keep the shape
         if not set_shape_attributes(shape, image_path, original_image, camera_parameters):
             continue  # Skip the current shape and move on to the next
-               
+
         found_odlcs.append(shape)
-    
+
     return found_odlcs
 
 
@@ -93,7 +111,7 @@ def set_shape_attributes(
     """
     Gets the attributes of a shape returned from process_shapes()
     Modifies `shape` in place
-    
+
     Parameters
     ----------
     shape: BoundingBox
@@ -102,7 +120,7 @@ def set_shape_attributes(
         The path for the image the bounding box is from
     camera_parameters: CameraParameters
         The details of how and where the photo was taken
-    
+
     Returns
     -------
     attributes_found: bool
@@ -110,7 +128,7 @@ def set_shape_attributes(
     """
     if shape.get_attribute("shape") is None:
         return False
-    
+
     text_bounding: BoundingBox = get_odlc_text(original_image, shape)
 
     # If no text is found, we can't do find_colors()
@@ -125,29 +143,29 @@ def set_shape_attributes(
 
     shape.set_attribute("shape_color", shape_color)
     shape.set_attribute("text_color", text_color)
-    
+
     # Modifies by reference
     if not set_generic_attributes(shape, image_path, original_image.shape, camera_parameters):
         return False
-    
+
     return True
 
+
 def set_generic_attributes(
-        object: BoundingBox,
-        image_path: str,
-        image_shape: tuple[int, int] | tuple[int, int, int],
-        camera_parameters: CameraParameters
-    ) -> None:
-    
+    object: BoundingBox,
+    image_path: str,
+    image_shape: tuple[int, int] | tuple[int, int, int],
+    camera_parameters: CameraParameters,
+) -> None:
     object.set_attribute("image_path", image_path)
 
     coordinates: tuple[float, float] | None = get_coordinates(
         object.get_center_coord(), image_shape, camera_parameters
     )
-    
+
     object.set_attribute("latitude", coordinates[0])
     object.set_attribute("longitude", coordinates[1])
-    
+
     if coordinates is None:
         return False
     
