@@ -1,6 +1,6 @@
 from vision.common.constants import CameraParameters
 
-def read_image_parameters(path: str) -> CameraParameters:
+def read_image_parameters(json_path: str, img_path: str) -> CameraParameters:
     raise NotImplementedError
 
 

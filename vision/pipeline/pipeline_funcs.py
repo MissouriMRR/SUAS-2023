@@ -19,13 +19,6 @@ from vision.standard_object.odlc_colors import find_colors
 from vision.deskew.camera_distances import get_coordinates
 
 
-def read_image_parameters(path: str) -> CameraParameters:
-    raise NotImplementedError
-
-
-def get_image_paths() -> list[str]:
-    raise NotImplementedError
-
 
 def find_standard_objects(
     original_image: Image,
