@@ -52,7 +52,7 @@ def flyover_pipeline() -> None:
                 
                 saved_odlcs += find_standard_objects(image, camera_parameters, image_path)
                 
-                saved_humanoids += find_emergent_objects(image, emg_model, camera_parameters, image_path)
+                saved_humanoids += find_humanoids(image, emg_model, camera_parameters, image_path)
                 
                 
     # bottle_index: int = get_bottle_index(shape, bottle_info)

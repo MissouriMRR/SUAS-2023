@@ -19,6 +19,42 @@ from vision.standard_object.odlc_colors import find_colors
 from vision.deskew.camera_distances import get_coordinates
 
 
+def find_humanoids(
+    emg_model: Callable[[Image], str],
+    original_image: Image,
+    camera_parameters: CameraParameters,
+    image_path: str
+) -> list[BoundingBox]:
+    """
+    Finds all candidate emergent objects in a given image
+    
+    Parameters
+    ----------
+    original_image: Image
+        The image to run human detection on
+    emg_model: Callable[[Image], str]
+        The model which is being used for object detection/classification
+    camera_parameters: CameraParameters
+        The details of how and where the photo was taken
+    image_path: str
+        The path for the image the bounding box is from
+    """
+
+    # The potential emergent objects found in the image
+    found_humanoids: list[BoundingBox] = []
+
+    detected_emergents: list[BoundingBox] = detect_emergent_object(original_image, emg_model)
+    
+    emergent: BoundingBox
+    for emergent in detected_emergents:
+        # Set the attributes by reference. If not successful, skip the current emergent
+        if not set_generic_attributes(emergent, image_path, original_image.shape, camera_parameters):
+            continue  # Skip the current emergent object and move on to the next
+        
+        found_humanoids.append(emergent)
+    
+    return found_humanoids
+
 
 def find_standard_objects(
     original_image: Image,
@@ -48,86 +84,11 @@ def find_standard_objects(
     return found_odlcs
 
 
-def find_emergent_objects(
-    original_image: Image,
-    emg_model: Callable[[Image], str],
-    camera_parameters: CameraParameters,
-    image_path: str
-) -> list[BoundingBox]:
-    # The potential emergent objects found in the image
-    found_humanoids: list[BoundingBox] = []
-
-    detected_emergents: list[BoundingBox] = detect_emergent_object(original_image, emg_model)
-    
-    emergent: BoundingBox
-    for emergent in detected_emergents:
-        # Set the attributes by reference. If not successful, skip the current emergent
-        if not set_generic_attributes(emergent, image_path, original_image.shape, camera_parameters):
-            continue  # Skip the current emergent object and move on to the next
-        
-        found_humanoids.append(emergent)
-    
-    return found_humanoids
-    
-
-
-def get_bottle_index(shape: BoundingBox, bottle_info: list[BottleData]):
-    """
-    For the input ODLC BoundingBox, find the index of the bottle that it best matches.
-    Returns -1 if no good match is found
-    
-    Parameters
-    ----------
-    shape: BoundingBox
-        The bounding box of the shape. Attributes "text", "shape", "shape_color", and
-        "text_color" must be set
-    bottle_info: list[BottleData]
-        The input info from bottle.json
-    
-    Returns
-    -------
-    bottle_index: int
-        The index of the bottle from bottle.json that best matches the given ODLC
-        Returns -1 if no good match is found
-    """
-    
-    # For each of the given bottle shapes, find the number of characteristics the
-    #   discovered ODLC shape has in common with it
-    all_matches: NDArray[Shape[5], UInt8] = np.zeros((5), dtype=UInt8)
-    index: int
-    info: BottleData
-    for index, info in enumerate(bottle_info):
-        matches: int = 0
-        if shape.get_attribute("text") == info["Letter"]:
-            matches += 1
-
-        if shape.get_attribute("shape") == info["Shape"]:
-            matches += 1
-
-        if shape.get_attribute("shape_color") == info["Shape_Color"]:
-            matches += 1
-
-        if shape.get_attribute("letter_color") == info["Letter_Color"]:
-            matches += 1
-
-        all_matches[int(index)] = matches
-
-    # This if statement ensures that bad matches are ignored, and standards
-    #    can be lowered
-    if all_matches.max() > 2:
-        # Gets the index of the first bottle with the most matches.
-        # First [0] takes the first dimension, second [0] takes the first element
-        return np.where(all_matches == all_matches.max())[0][0]
-    else:
-        return -1
-
-
-
 def set_shape_attributes(
         shape: BoundingBox,
-        image_path: str,
         original_image: Image,
-        camera_parameters: CameraParameters
+        camera_parameters: CameraParameters,
+        image_path: str,
     ) -> bool:
     """
     Gets the attributes of a shape returned from process_shapes()
@@ -191,3 +152,54 @@ def set_generic_attributes(
         return False
     
     return True
+
+
+def get_bottle_index(shape: BoundingBox, bottle_info: list[BottleData]):
+    """
+    For the input ODLC BoundingBox, find the index of the bottle that it best matches.
+    Returns -1 if no good match is found
+    
+    Parameters
+    ----------
+    shape: BoundingBox
+        The bounding box of the shape. Attributes "text", "shape", "shape_color", and
+        "text_color" must be set
+    bottle_info: list[BottleData]
+        The input info from bottle.json
+    
+    Returns
+    -------
+    bottle_index: int
+        The index of the bottle from bottle.json that best matches the given ODLC
+        Returns -1 if no good match is found
+    """
+    
+    # For each of the given bottle shapes, find the number of characteristics the
+    #   discovered ODLC shape has in common with it
+    all_matches: NDArray[Shape[5], UInt8] = np.zeros((5), dtype=UInt8)
+    index: int
+    info: BottleData
+    for index, info in enumerate(bottle_info):
+        matches: int = 0
+        if shape.get_attribute("text") == info["Letter"]:
+            matches += 1
+
+        if shape.get_attribute("shape") == info["Shape"]:
+            matches += 1
+
+        if shape.get_attribute("shape_color") == info["Shape_Color"]:
+            matches += 1
+
+        if shape.get_attribute("letter_color") == info["Letter_Color"]:
+            matches += 1
+
+        all_matches[int(index)] = matches
+
+    # This if statement ensures that bad matches are ignored, and standards
+    #    can be lowered
+    if all_matches.max() > 2:
+        # Gets the index of the first bottle with the most matches.
+        # First [0] takes the first dimension, second [0] takes the first element
+        return np.where(all_matches == all_matches.max())[0][0]
+    else:
+        return -1
