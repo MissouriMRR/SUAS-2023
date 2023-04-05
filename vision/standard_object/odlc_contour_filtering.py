@@ -174,10 +174,10 @@ def test_bounding_box(contour: consts.Contour, dims: tuple[int, int]) -> bool:
     bounding_box_retval: tuple[int, int, int, int] = cv2.boundingRect(contour)
     bounding_box: bbox.BoundingBox = bbox.BoundingBox(
         bbox.tlwh_to_vertices(
-            bounding_box_retval[1],
             bounding_box_retval[0],
-            bounding_box_retval[3] - bounding_box_retval[1],
-            bounding_box_retval[2] - bounding_box_retval[0],
+            bounding_box_retval[1],
+            bounding_box_retval[2],
+            bounding_box_retval[3],
         ),
         bbox.ObjectType.STD_OBJECT,
     )
@@ -263,10 +263,10 @@ def min_common_bounding_box(contours: list[consts.Contour]) -> bbox.BoundingBox:
         boxes.append(
             bbox.BoundingBox(
                 bbox.tlwh_to_vertices(
-                    contour_box[1],
                     contour_box[0],
-                    contour_box[3] - contour_box[1],
-                    contour_box[2] - contour_box[0],
+                    contour_box[1],
+                    contour_box[2],
+                    contour_box[3],
                 ),
                 bbox.ObjectType.STD_OBJECT,
             )

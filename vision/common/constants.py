@@ -23,6 +23,27 @@ Hierarchy: TypeAlias = NDArray[Shape["1, *, 4"], IntC]
 Corners: TypeAlias = NDArray[Shape["4, 2"], Float64]
 
 
+class Location(TypedDict):
+    """
+    A saved coordinate location - primarily used for ODLCs
+
+    Attributes
+    ----------
+    latitude: float
+        The latitude in degrees of the location
+    longitude: float
+        The longitude in degrees of the location
+    """
+
+    latitude: float
+    longitude: float
+
+
+# int is the number of the water bottle to drop
+# Location is the coordinates of the standard object once found
+ODLC_Dict: TypeAlias = dict[int, Location]
+
+
 class CameraParameters(TypedDict):
     """
     The details on how and where a photo was taken
