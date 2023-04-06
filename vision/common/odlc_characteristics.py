@@ -3,13 +3,10 @@ Contains common objects/classes for use in the classification of the standard OD
 """
 
 from enum import Enum
-from typing import TypedDict
 
 import numpy as np
 
 from nptyping import NDArray, Shape, UInt8
-
-from flight.extract_gps import Waypoint
 
 
 class ODLCShape(str, Enum):
@@ -64,28 +61,3 @@ COLOR_RANGES: dict[ODLCColor, NDArray[Shape["*, 2, 3"], UInt8]] = {
     ODLCColor.BROWN: np.array([[[20, 255, 180], [10, 100, 120]]]),
     ODLCColor.ORANGE: np.array([[[24, 255, 255], [10, 50, 70]]]),
 }
-
-
-class StandardObject(TypedDict):
-    """
-    A standard ODLC object.
-
-    Attributes
-    ----------
-    shape : ODLCShape
-        the shape of the standard object
-    text : str
-        the alphanumeric character on the standard object
-    shape_color : ODLCColor
-        the color of the shape
-    text_color : ODLCColor
-        the color of the text
-    gps_position : Waypoint
-        the gps location of the standard object
-    """
-
-    shape: ODLCShape
-    text: str
-    shape_color: ODLCColor
-    text_color: ODLCColor
-    gps_position: Waypoint
