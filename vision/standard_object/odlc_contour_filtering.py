@@ -11,6 +11,9 @@ import vision.common.bounding_box as bbox
 
 
 # constants
+MIN_SHAPE_PIXEL_LEN: int = 10
+# The minimum length/width (vertical/horizontal) a shape may have in pixels
+
 MIN_AREA_BOX_RATIO_RANGE: float = 0.5
 # The maximum acceptable range of aspect ratios (centered on a 1:1 ratio), so if 0.5 is the
 # given parameter then the aspect ratio between the length and width must be between 0.5 and
@@ -26,9 +29,7 @@ ROUGHNESS_PERCENT_DIFF: float = 0.05
 
 
 def filter_contour(
-    contours: list[consts.Contour],
-    hierarchy: consts.Hierarchy,
-    index: int,
+    contour: consts.Contour,
     image_dims: tuple[int, int],
     approx_contour: consts.Contour,
 ) -> tuple[bool, bool]:
@@ -38,15 +39,8 @@ def filter_contour(
 
     Parameters
     ----------
-    contours : list[consts.Contour]
-        The list of contours returned by the contour detection algorithm
-        NOTE: cv2.findContours() returns as a tuple of arbitrary length, so first convert to list
-    hierarchy : consts.Hierarchy
-        The contour hierarchy list returned by the contour detection algorithm
-        (the 2nd value returned by cv2.findContours())
-    index : int
-        The index corresponding to the contour in contours and hierarchy to be checked
-        (must be in bounds of contours tuple and hierarchy array)
+    contour : consts.Contour
+        A contour returned by the contour detection algorithm
     image_dims : tuple[int, int]
         The dimensions of the original entire image
         (only height and width as gotten from image.shape[:2], not the color channels)
@@ -65,34 +59,34 @@ def filter_contour(
         is_circular : bool
             True if is_odlc is true and the shape was detected to be circular
     """
-    # test hierarchy, bounding_box, min_area_box, and spikiness
+    # calculate a bounding box of the contour to be used in multiple tests
+    # tuple[int, int, int, int] is the return type of cv2.boundingRect()
+    # the first two are the top left corner, last two are the width and height
+    cnt_bound_box_retval: tuple[int, int, int, int] = cv2.boundingRect(contour)
+    cnt_bound_box: bbox.BoundingBox = bbox.BoundingBox(
+        bbox.tlwh_to_vertices(
+            cnt_bound_box_retval[0],
+            cnt_bound_box_retval[1],
+            cnt_bound_box_retval[2],
+            cnt_bound_box_retval[3],
+        ),
+        bbox.ObjectType.STD_OBJECT,
+    )
+
+    # test smallness, bounding_box, min_area_box, and spikiness
     if (
-        (not test_heirarchy(hierarchy, index))
-        or (not test_bounding_box(contours[index], image_dims))
-        or (not test_min_area_box(contours[index]))
-        or (not test_spikiness(contours[index]))
+        (test_smallness(cnt_bound_box))
+        or (not test_bounding_box(cnt_bound_box, image_dims))
+        or (not test_min_area_box(contour))
+        or (not test_spikiness(contour))
     ):
         return (False, False)
 
     # run polygon specific test
-    if not test_roughness(contours[index], approx_contour):
+    if not test_roughness(contour, approx_contour):
         # if polygon test fails run circle test
-
-        # tuple[int, int, int, int] is the return type of cv2.boundingRect()
-        # the first two are the (y, x) of top left corner
-        # the last two are the (y, x) of the bottom right corner
-        cnt_bound_box_retval: tuple[int, int, int, int] = cv2.boundingRect(contours[index])
-        cnt_bound_box: bbox.BoundingBox = bbox.BoundingBox(
-            bbox.tlwh_to_vertices(
-                cnt_bound_box_retval[0],
-                cnt_bound_box_retval[1],
-                cnt_bound_box_retval[2],
-                cnt_bound_box_retval[3],
-            ),
-            bbox.ObjectType.STD_OBJECT,
-        )
         # use _generate_mask to get a mask of the shape then cvt bool image to UInt8
-        cnt_mask: consts.Mask = generate_mask(contours[index], cnt_bound_box)
+        cnt_mask: consts.Mask = generate_mask(contour, cnt_bound_box)
         cnt_sc_img: consts.ScImage = np.where(cnt_mask, 255, 0).astype(np.uint8)
 
         if not test_circleness(cnt_sc_img):
@@ -103,27 +97,24 @@ def filter_contour(
     return (True, False)
 
 
-def test_heirarchy(hierarchy: consts.Hierarchy, contour_index: int) -> bool:
+def test_smallness(bounding_box: bbox.BoundingBox) -> bool:
     """
-    Tests whether the contour at the given index contains another contour in it
+    Will check if the shape is less than MIN_SHAPE_PIXEL_LEN pixels vertically & horizontally.
 
     Parameters
     ----------
-    hierarchy : consts.Hierarchy
-        The 2nd value returned from cv2.findContours(), describes how contours are inside of
-        other contours
-    contour_index : int
-        The index of the contour to be examined (in the contours tuple and hierarchy array
-        returned from cv2.findContours())
+    contour : consts.Contour
+        The individual contour to be evaluated (as returned from cv2.findContours)
 
     Returns
     -------
-    contains_contour : bool
-        True if the given contour has a contour inside of it, False otherwise
+    is_big_enough : bool
+        True if the shape is at least MIN_SHAPE_PIXEL_LEN long vertically and horizontally.
     """
-    if hierarchy[0, contour_index, 2] <= 0:
-        return False
-    return True
+    return (
+        bounding_box.get_height() >= MIN_SHAPE_PIXEL_LEN
+        and bounding_box.get_width() >= MIN_SHAPE_PIXEL_LEN
+    )
 
 
 def test_min_area_box(contour: consts.Contour) -> bool:
@@ -149,7 +140,7 @@ def test_min_area_box(contour: consts.Contour) -> bool:
     return 1 - MIN_AREA_BOX_RATIO_RANGE < aspect_ratio < 1 + MIN_AREA_BOX_RATIO_RANGE
 
 
-def test_bounding_box(contour: consts.Contour, dims: tuple[int, int]) -> bool:
+def test_bounding_box(bounding_box: bbox.BoundingBox, dims: tuple[int, int]) -> bool:
     """
     Calculates the area of an upright bounding box around the given contour
     and compares it to the rectangle (image) of the given dimensions
@@ -171,17 +162,6 @@ def test_bounding_box(contour: consts.Contour, dims: tuple[int, int]) -> bool:
         Returns true if the bounding box area is less than the image area by a factor of
         test_area_ratio or more
     """
-    bounding_box_retval: tuple[int, int, int, int] = cv2.boundingRect(contour)
-    bounding_box: bbox.BoundingBox = bbox.BoundingBox(
-        bbox.tlwh_to_vertices(
-            bounding_box_retval[0],
-            bounding_box_retval[1],
-            bounding_box_retval[2],
-            bounding_box_retval[3],
-        ),
-        bbox.ObjectType.STD_OBJECT,
-    )
-
     box_area: float = bounding_box.get_height() * bounding_box.get_width()
     img_area: float = dims[0] * dims[1]
 
@@ -484,7 +464,7 @@ if __name__ == "__main__":
         cv2.waitKey(0)
         print(type(cntr_sc_img), type(cntr_sc_img[0]), type(cntr_sc_img[0, 0]))
         # actually running each test individually and printing results for testing/debugging
-        print("\nHierarchy Test:", test_heirarchy(hier, ind))
+        print("\nSmallness Test:", test_smallness(cntr))
         print("Min Area Box Test:", test_min_area_box(cntr))
         print(
             "Bounding Box Test:",
