@@ -17,12 +17,10 @@ from flight.state_settings import StateSettings
 class FlightManager:
     """
     Class to initiate state machine and multithreading
-
     Attributes
     ----------
     state_settings : StateSettings
         Descriptors and parameters for the flight state machine
-
     Methods
     -------
     main() -> None
@@ -31,13 +29,11 @@ class FlightManager:
         Starts a process for the flight state machine
     run_threads(sim: bool) -> None
         Runs the threads for the state machine and ensures machine progresses
-
     """
 
     def __init__(self, state_settings: StateSettings) -> None:
         """
         Constructor for the flight manager
-
         Parameters
         ----------
             state_settings: StateSettings
@@ -60,7 +56,6 @@ class FlightManager:
     ) -> Process:
         """
         Initializes the flight state machine process
-
         Parameters
         ----------
         flight_args: Tuple[Communication, bool, Queue, StateSettings]
@@ -73,7 +68,6 @@ class FlightManager:
                 Structure to handle logging messages
             state_settings : StateSettings
                 Settings for the flight state machine
-
         Returns
         -------
         process : Process
@@ -84,7 +78,6 @@ class FlightManager:
     def run_threads(self, sim: bool) -> None:
         """
         Runs the various threads present in the state machine
-
         Parameters
         ----------
         sim: bool
@@ -101,10 +94,6 @@ class FlightManager:
         log_queue: Queue[str] = Queue(-1)
         logging_process = init_logger(log_queue)
         logging_process.start()
-
-        # connect to the drone
-        drone: System = System()
-        drone.connect(system_address="udp://:14540")
 
         worker_configurer(log_queue)
 
@@ -128,10 +117,13 @@ class FlightManager:
                     logging.error("Flight process terminated, restarting")
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
-        except KeyboardInterrupt:
+        except KeyboardInterrupt and SystemExit:
             # Ctrl-C was pressed
             logging.info("Ctrl-C Pressed, forcing drone to land")
-            drone.action.return_to_launch()
+            self.state_settings.simple_takeoff = True
+            flight_args = (comm_obj, sim, log_queue, self.state_settings)
+            flight_process = self.init_flight(flight_args)
+            flight_process.start()
         # Join flight process before exiting function
         flight_process.join()
 
