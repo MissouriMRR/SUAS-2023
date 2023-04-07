@@ -117,7 +117,7 @@ class FlightManager:
                     logging.error("Flight process terminated, restarting")
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
-        except KeyboardInterrupt and SystemExit:
+        except KeyboardInterrupt or SystemExit:
             # Ctrl-C was pressed
             logging.info("Ctrl-C Pressed, forcing drone to land")
             self.state_settings.simple_takeoff = True
