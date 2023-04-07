@@ -76,7 +76,7 @@ class BenchODLCColors(Benchmark):
         """
         colors: tuple[ODLCColor, ODLCColor] = self.run_module(
             image=bench_image.image, text_bounds=bench_image.attributes["text_bounds"]
-        )
+        )  ## TODO: Fix exception stuff
 
         pass_color_1: bool = colors[0] == bench_image.accuracy_goals[0]
         bench_image.accuracy_results.append((colors[0], pass_color_1))

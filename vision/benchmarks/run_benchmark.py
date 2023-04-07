@@ -9,6 +9,9 @@ from enum import Enum
 from vision.benchmarks.common.benchmark_base import Benchmark
 from vision.benchmarks.common.dataset import BenchDataset, load_dataset
 
+from vision.benchmarks.modules.bench_odlc_colors import BenchODLCColors
+from vision.benchmarks.modules.bench_odlc_image_processing import BenchODLCImageProcessing
+
 
 class ValidBenchmarks(str, Enum):
     """
@@ -16,6 +19,7 @@ class ValidBenchmarks(str, Enum):
     """
 
     ODLC_COLORS = "ODLC Colors"
+    ODLC_IMAGE_PROCESSING = "ODLC Image Processing"
 
 
 # Driver for running a vision benchmark
@@ -55,10 +59,18 @@ if __name__ == "__main__":
 
     if not args.benchmark:
         raise RuntimeError("No benchmark specified.")
-    benchmark_type: ValidBenchmarks = ValidBenchmarks("")
+    benchmark_type: ValidBenchmarks = ValidBenchmarks()
 
     # parse the csv dataset
     if not os.path.exists(file_location):
         raise RuntimeError("Specified CSV file does not exist.")
+    dataset: BenchDataset = load_dataset(filename=file_location, dataset_name=dataset_name)
 
     # parse benchmark to run
+    benchmark: Benchmark | None = None
+    if benchmark_type == ValidBenchmarks.ODLC_COLORS:
+        benchmark = BenchODLCColors(dataset=dataset)
+    elif benchmark_type == ValidBenchmarks.ODLC_IMAGE_PROCESSING:
+        benchmark = BenchODLCImageProcessing(dataset=dataset)
+    else:
+        raise RuntimeError("Invalid Benchmark")
