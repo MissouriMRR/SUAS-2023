@@ -1,5 +1,5 @@
 """
-Dataset classes.
+Contains containers for benchmark datasets and images.
 """
 
 import csv
@@ -106,6 +106,8 @@ def load_dataset(filename: str, dataset_name: str) -> BenchDataset:
     ----------
     filename : str
         the path and name of the file
+    dataset_name : str
+        the name of the dataset
 
     Returns
     -------
