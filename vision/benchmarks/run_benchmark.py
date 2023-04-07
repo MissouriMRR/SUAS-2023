@@ -74,3 +74,7 @@ if __name__ == "__main__":
         benchmark = BenchODLCImageProcessing(dataset=dataset)
     else:
         raise RuntimeError("Invalid Benchmark")
+
+    # run the benchmark and save the results
+    benchmark.run_all()
+    benchmark.save_results()
