@@ -11,8 +11,8 @@ from vision.common.bounding_box import BoundingBox
 from vision.common.odlc_characteristics import ODLCColor
 from vision.emergent_object.emergent_object import create_emergent_model, detect_emergent_object
 
-from vision.pipeline.pipeline_funcs import *
-from vision.pipeline.file_reading import *
+from vision.pipeline.standard_object import *
+from vision.pipeline.emergent_object import *
 
 
 def flyover_pipeline() -> None:
@@ -34,31 +34,24 @@ def flyover_pipeline() -> None:
 
     # The list of BoundingBoxes where all potential emergent objects will be stored
     saved_humanoids: list[BoundingBox] = []
-
-    # -- All below will be done within a loop that goes through all images. --
-    # While not done:
-        # Check for new images; for each new image:
-            # Get camera parameters
-            # Get standard and emergent objects
-            # Save standard and emergent objects
     
     not_done: bool = True
     while not_done:
-        for image_path in get_image_paths():
+        image_parameters: dict[str, CameraParameters] = read_parameter_json()
+        
+        for image_path in image_parameters.keys:
             if image_path not in completed_images:
                 image: Image = cv2.imread(image_path)
                 
-                camera_parameters: CameraParameters = read_image_parameters(image_path)
+                camera_parameters: CameraParameters = image_parameters[image_path]
                 
                 saved_odlcs += find_standard_objects(image, camera_parameters, image_path)
                 
                 saved_humanoids += find_humanoids(image, emg_model, camera_parameters, image_path)
-                
-                
-    # bottle_index: int = get_bottle_index(shape, bottle_info)
-
-    #     if bottle_index is not -1:
-    #         # Save the shape bounding box in its proper place
+    
+    # TODO:
+    #   Pick emergent object
+    #   Return airdrop locations
 
 
 
