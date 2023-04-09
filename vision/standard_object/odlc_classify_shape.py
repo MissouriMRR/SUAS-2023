@@ -65,26 +65,34 @@ def process_shapes(
         bbox.tlwh_to_vertices(retval_box[0], retval_box[1], retval_box[2], retval_box[3])
         for retval_box in retval_boxes
     ]
-    shape_boxes: list[bbox.BoundingBox] = [
+    boxes: list[bbox.BoundingBox] = [
         bbox.BoundingBox(verts, bbox.ObjectType.STD_OBJECT) for verts in verts_lst
     ]
+    
+    shape_boxes: list[bbox.BoundingBox] = []
 
     idx: int
     hier: npt.NDArray[npt.Shape["4"], npt.IntC]
     box: bbox.BoundingBox
     # for each contour (and corresponding elements in hierarchy array and box list)
-    for idx, (hier, box) in enumerate(zip(hierarchy[0], shape_boxes)):
+    for idx, (hier, box) in enumerate(zip(hierarchy[0], boxes)):
+        classification: chars.ODLCShape | None
+        
         # as long as the contour is not inside another contour that has been classified as a shape
         if (
             hier[3] == -1
-            or not shape_boxes[hier[3]].attributes()
-            or shape_boxes[hier[3]].attributes()["shape"] is None
+            or not boxes[hier[3]].attributes
+            or boxes[hier[3]].attributes["shape"] is None
         ):
-            box.set_attribute("shape", classify_shape(contours[idx], image_dims))
+            classification = classify_shape(contours[idx], image_dims)
         else:
             # if the contour is inside an identified ODLC shape then it should not be recognized
-            box.set_attribute("shape", None)
-
+            classification = None
+        
+        if classification is not None:
+            box.set_attribute("shape", classification)
+            shape_boxes.append(box)
+    
     return shape_boxes
 
 
@@ -167,9 +175,12 @@ def check_concave_shapes(approx: consts.Contour) -> chars.ODLCShape | None:
     # of the points where the two shapes differ.
     # in rubber band analogy, counting the number of gaps between the shape and the rubber band
     # eg. a plus has 4 corners that point inward so the rubber band would not touch it in 4 spots
-    defects: npt.NDArray[npt.Shape["*, 1, 4"], npt.IntC] | None = cv2.convexityDefects(
-        approx, convex_hull
-    )
+    try:
+        defects: npt.NDArray[npt.Shape["*, 1, 4"], npt.IntC] | None = cv2.convexityDefects(
+            approx, convex_hull
+        )
+    except:
+        return None
 
     if defects is not None:
         if len(defects) == 5:
@@ -222,7 +233,10 @@ def get_angle(
     # vector forms of points a (pts[0]) and b (pts[2]) with vertex (pts[1]) as origin
     vec_a: npt.NDArray[npt.Shape["1, 2"], npt.IntC] = pts[0] - pts[1]
     vec_b: npt.NDArray[npt.Shape["1, 2"], npt.IntC] = pts[2] - pts[1]
-
+    
+    vec_a = np.squeeze(vec_a)
+    vec_b = np.squeeze(vec_b)
+       
     return np.degrees(
         np.arccos(np.dot(vec_a, vec_b) / (np.linalg.norm(vec_a) * np.linalg.norm(vec_b)))
     )

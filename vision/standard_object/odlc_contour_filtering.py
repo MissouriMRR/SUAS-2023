@@ -11,7 +11,7 @@ import vision.common.bounding_box as bbox
 
 
 # constants
-MIN_SHAPE_PIXEL_LEN: int = 10
+MIN_SHAPE_PIXEL_LEN: int = 90
 # The minimum length/width (vertical/horizontal) a shape may have in pixels
 
 MIN_AREA_BOX_RATIO_RANGE: float = 0.5
@@ -75,7 +75,7 @@ def filter_contour(
 
     # test smallness, bounding_box, min_area_box, and spikiness
     if (
-        (test_smallness(cnt_bound_box))
+        (not test_smallness(cnt_bound_box))
         or (not test_bounding_box(cnt_bound_box, image_dims))
         or (not test_min_area_box(contour))
         or (not test_spikiness(contour))
