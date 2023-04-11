@@ -80,7 +80,7 @@ def process_shapes(
             or not shape_boxes[hier[3]].attributes()
             or shape_boxes[hier[3]].attributes()["shape"] is None
         ):
-            box.set_attribute("shape", classify_shape(contours, hierarchy, idx, image_dims))
+            box.set_attribute("shape", classify_shape(contours[idx], image_dims))
         else:
             # if the contour is inside an identified ODLC shape then it should not be recognized
             box.set_attribute("shape", None)
@@ -89,9 +89,7 @@ def process_shapes(
 
 
 def classify_shape(
-    contours: list[consts.Contour],
-    hierarchy: consts.Hierarchy,
-    index: int,
+    contour: consts.Contour,
     image_dims: tuple[int, int],
     approx_contour: consts.Contour | None = None,
 ) -> chars.ODLCShape | None:
@@ -101,15 +99,8 @@ def classify_shape(
 
     Parameters
     ----------
-    contours : list[consts.Contour]
-        The list of contours returned by the contour detection algorithm
-        NOTE: cv2.findContours() returns as a tuple of arbitrary length, so first convert to list
-    hierarchy : consts.Hierarchy
-        The contour hierarchy list returned by the contour detection algorithm
-        (the 2nd value returned by cv2.findContours())
-    index : int
-        The index corresponding to the contour in contours and hierarchy to be checked
-        (must be in bounds of contours tuple and hierarchy array)
+    contour : consts.Contour
+        A contour returned by the contour detection algorithm
     image_dims : tuple[int, int]
         The dimensions of the original entire image
         (only height and width as gotten from image.shape[:2], not the color channels)
@@ -130,21 +121,19 @@ def classify_shape(
     """
     if approx_contour is None:
         approx_contour = cv2.approxPolyDP(
-            contours[index], cv2.arcLength(contours[index], True) * APPROX_CNT_THRESH, True
+            contour, cv2.arcLength(contour, True) * APPROX_CNT_THRESH, True
         )
 
     is_shape: bool
     is_circular: bool
-    is_shape, is_circular = filtering.filter_contour(
-        contours, hierarchy, index, image_dims, approx_contour
-    )
+    is_shape, is_circular = filtering.filter_contour(contour, image_dims, approx_contour)
 
     if not is_shape:
         return None
 
     shape: chars.ODLCShape | None = None
     if is_circular:
-        shape = classify_circular(contours[index])
+        shape = classify_circular(contour)
     else:
         shape = check_concave_shapes(approx_contour)
         if shape is None:
