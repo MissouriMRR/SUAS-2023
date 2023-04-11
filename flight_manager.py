@@ -10,6 +10,7 @@ from communication import Communication
 from flight.flight import flight
 from flight.states import StateEnum
 from flight.state_settings import StateSettings
+import time
 
 
 class FlightManager:
@@ -79,6 +80,29 @@ class FlightManager:
         """
         return Process(target=flight, name="flight", args=flight_args)
 
+    async def run_time(comm_obj: Communication)-> Communication:
+        """
+        Keeps track of run time since this function has been called and if the time is greater than 28 minutes in seconds it calls for the drone to land
+        
+        Parameters
+        ----------
+        comm_obj: Communication
+            Object to monitor the current state of the machine for flight & vision code
+
+        Returns
+        -------
+        comm_obj: Communication
+            Object to monitor the current state of the machine for flight & vision code
+        """
+        #gets the current time from the time epoch and finds the time it has been since that point while waiting 1 minute between each measurement
+        start = time.time()
+        now=0
+        while(now < 1680):
+            time.sleep(60)
+            now = time.time(start)
+        comm_obj.state = StateEnum.Land
+        return comm_obj
+
     def run_threads(self, sim: bool) -> None:
         """
         Runs the various threads present in the state machine
@@ -113,6 +137,10 @@ class FlightManager:
 
         logging.debug(f"Title: {self.state_settings.run_title}")
         logging.debug(f"Description: {self.state_settings.run_description}")
+
+        comm_obj = run_time(comm_obj)
+        flight_process = self.init_flight(flight_args)
+        flight_process.start()
 
         try:
             while comm_obj.state != StateEnum.Final_State:
