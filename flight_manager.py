@@ -10,7 +10,26 @@ from communication import Communication
 from flight.flight import flight
 from flight.states import StateEnum
 from flight.state_settings import StateSettings
+import time
 
+async def run_time(start:float) -> float:
+        """
+        Keeps track of run time since this function has been called and if the time is greater than 28 minutes in seconds it calls for the drone to land
+        
+        Parameters
+        ----------
+        start: float
+            time in seconds when the drone has started
+
+        Returns
+        -------
+        timespan: float
+            time in seconds since state machine start
+        """
+        #gets the current time and compares it to the time the statemachine was started and returns the difference
+        now = time.time()
+        timespan = now - start
+        return timespan
 
 class FlightManager:
     """
@@ -54,7 +73,7 @@ class FlightManager:
         self.run_threads(args.simulation)
 
     def init_flight(
-        self, flight_args: tuple[Communication, bool, Queue[str], StateSettings]
+        self, flight_args: tuple[Communication, bool, Queue, StateSettings]
     ) -> Process:
         """
         Initializes the flight state machine process
@@ -114,6 +133,8 @@ class FlightManager:
         logging.debug(f"Title: {self.state_settings.run_title}")
         logging.debug(f"Description: {self.state_settings.run_description}")
 
+        start = time.time()
+
         try:
             while comm_obj.state != StateEnum.Final_State:
                 # State machine is still running
@@ -122,6 +143,11 @@ class FlightManager:
                     logging.error("Flight process terminated, restarting")
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
+                elif run_time(start) > 1680:
+                    comm_obj.state = StateEnum.Land
+                    flight_process = self.init_flight(flight_args)
+                    flight_process.start()
+
         except KeyboardInterrupt:
             # Ctrl-C was pressed
             logging.info("Ctrl-C Pressed, forcing drone to land")
