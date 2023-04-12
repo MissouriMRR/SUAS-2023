@@ -12,24 +12,26 @@ from flight.states import StateEnum
 from flight.state_settings import StateSettings
 import time
 
-async def run_time(start:float) -> float:
-        """
-        Keeps track of run time since this function has been called and if the time is greater than 28 minutes in seconds it calls for the drone to land
-        
-        Parameters
-        ----------
-        start: float
-            time in seconds when the drone has started
 
-        Returns
-        -------
-        timespan: float
-            time in seconds since state machine start
-        """
-        #gets the current time and compares it to the time the statemachine was started and returns the difference
-        now = time.time()
-        timespan = now - start
-        return timespan
+async def run_time(start: float) -> float:
+    """
+    Keeps track of run time since this function has been called and if the time is greater than 28 minutes in seconds it calls for the drone to land
+
+    Parameters
+    ----------
+    start: float
+        time in seconds when the drone has started
+
+    Returns
+    -------
+    timespan: float
+        time in seconds since state machine start
+    """
+    # gets the current time and compares it to the time the statemachine was started and returns the difference
+    now = time.time()
+    timespan = now - start
+    return timespan
+
 
 class FlightManager:
     """
@@ -72,9 +74,7 @@ class FlightManager:
         logging.debug("Simulation flag %s", "enabled" if args.simulation else "disabled")
         self.run_threads(args.simulation)
 
-    def init_flight(
-        self, flight_args: tuple[Communication, bool, Queue, StateSettings]
-    ) -> Process:
+    def init_flight(self, flight_args: tuple[Communication, bool, Queue, StateSettings]) -> Process:
         """
         Initializes the flight state machine process
 
