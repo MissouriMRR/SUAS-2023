@@ -54,9 +54,7 @@ class FlightManager:
         logging.debug("Simulation flag %s", "enabled" if args.simulation else "disabled")
         self.run_threads(args.simulation)
 
-    def init_flight(
-        self, flight_args: tuple[Communication, bool, Queue, StateSettings]
-    ) -> Process:
+    def init_flight(self, flight_args: tuple[Communication, bool, Queue, StateSettings]) -> Process:
         """
         Initializes the flight state machine process
 
@@ -80,10 +78,10 @@ class FlightManager:
         """
         return Process(target=flight, name="flight", args=flight_args)
 
-    async def run_time(comm_obj: Communication)-> Communication:
+    async def run_time(comm_obj: Communication) -> Communication:
         """
         Keeps track of run time since this function has been called and if the time is greater than 28 minutes in seconds it calls for the drone to land
-        
+
         Parameters
         ----------
         comm_obj: Communication
@@ -94,10 +92,10 @@ class FlightManager:
         comm_obj: Communication
             Object to monitor the current state of the machine for flight & vision code
         """
-        #gets the current time from the time epoch and finds the time it has been since that point while waiting 1 minute between each measurement
+        # gets the current time from the time epoch and finds the time it has been since that point while waiting 1 minute between each measurement
         start = time.time()
-        now=0
-        while(now < 1680):
+        now = 0
+        while now < 1680:
             time.sleep(60)
             now = time.time(start)
         comm_obj.state = StateEnum.Land
