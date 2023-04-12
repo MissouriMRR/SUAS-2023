@@ -153,4 +153,5 @@ class Benchmark:
             bench_image.image_name,
             ". Error:\n",
             str(error),
+            "\n",
         )
