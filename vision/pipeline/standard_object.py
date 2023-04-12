@@ -3,14 +3,14 @@ import numpy as np
 import json
 
 from nptyping import NDArray, Shape, UInt8
-from typing import Callable
+from typing import Callable, TypeAlias
 import vision.common.constants as consts
 
 from vision.competition_inputs.bottle_reader import BottleData
 from vision.common.bounding_box import BoundingBox
 from vision.common.odlc_characteristics import ODLCColor
 
-from vision.emergent_object.emergent_object import detect_emergent_object
+# from vision.emergent_object.emergent_object import detect_emergent_object
 
 from vision.standard_object.odlc_image_processing import preprocess_std_odlc
 from vision.standard_object.odlc_classify_shape import process_shapes
@@ -22,12 +22,15 @@ from vision.deskew.camera_distances import get_coordinates
 from vision.pipeline.pipeline_utils import *
 
 
+ContourHeirarchyList: TypeAlias = list[tuple[tuple[consts.Contour, ...], consts.Hierarchy]]
+
 PROCESSING_THRESHOLDS: list[tuple[int, int]] = [
     (0, 50),
     # (25, 150),
     # (50, 250),
     # (75, 350)
 ]
+
 
 def find_standard_objects(
     original_image: consts.Image,
@@ -36,7 +39,7 @@ def find_standard_objects(
 ) -> list[BoundingBox]:
     """
     Finds all bounding boxes of standard objects in an image
-    
+
     Parameters
     ----------
     original_image: Image
@@ -47,30 +50,27 @@ def find_standard_objects(
         The details of how and where the photo was taken
     image_path: str
         The path for the image the bounding box is from
-    
+
     Returns
     -------
     found_odlcs: list[BoundingBox]
         The list of bounding boxes of detected standard objects
     """
-    
+
     found_odlcs: list[BoundingBox] = []
-    
-    print("Getting contours...")
-    contour_heirarchies_list: list[tuple[tuple[consts.Contour, ...], consts.Hierarchy]] = iterate_find_contours(original_image)
-    
-    print(type(contour_heirarchies_list))
-    print(type(contour_heirarchies_list[0]))
-    print(type(contour_heirarchies_list[0][0]))
-    
+
+    contour_heirarchies_list: ContourHeirarchyList = iterate_find_contours(original_image)
+
     for contours, hierarchy in contour_heirarchies_list:
-        shapes: list[BoundingBox] = process_shapes(list(contours), hierarchy, original_image.shape[:2])
+        shapes: list[BoundingBox] = process_shapes(
+            list(contours), hierarchy, original_image.shape[:2]
+        )
 
         for shape in shapes:
             # Set the shape attributes by reference. If successful, keep the shape
             if not set_shape_attributes(shape, original_image):
                 continue  # Skip the current shape and move on to the next
-            
+
             # Modifies by reference
             # if not set_generic_attributes(shape, image_path, original_image.shape, camera_parameters):
             #     continue
@@ -80,53 +80,73 @@ def find_standard_objects(
     return found_odlcs
 
 
-def iterate_find_contours(
-    original_image: consts.Image
-):
-    contour_heirarchies_list: list[tuple[tuple[consts.Contour, ...], consts.Hierarchy]] = []
-    
+def iterate_find_contours(original_image: consts.Image) -> ContourHeirarchyList:
+    """
+    Gets the contours on multiple inputs for an image - hopefully one of the inputs will work
+
+    Parameters
+    ----------
+    original_image: Image
+        The image to find contours in
+
+    Returns
+    -------
+    contour_heirarchies_list: ContourHeirarchyList
+        The list of tuples of contours and heirarchies in the form (contour, heirarchy)
+    """
+
+    contour_heirarchies_list: ContourHeirarchyList = []
+
     for range in PROCESSING_THRESHOLDS:
         processed_image = preprocess_std_odlc(original_image, range[0], range[1])
-    
+
         # Get the contours in the image
         contours: tuple[consts.Contour, ...]
         hierarchy: consts.Hierarchy
-        contours, hierarchy = cv2.findContours(processed_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        
-        contour_heirarchies_list.append((contours, hierarchy))
-        
-        # Invert the image and find the contours again
-        inverted = 255 - processed_image
-        
-        inv_contours, inv_hierarchy = cv2.findContours(
-            inverted, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+        contours, hierarchy = cv2.findContours(
+            processed_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
         )
-        
-        contour_heirarchies_list.append((inv_contours, inv_hierarchy))
-    
+
+        contour_heirarchies_list.append((contours, hierarchy))
+
     return contour_heirarchies_list
 
 
-def sort_odlcs(bottle_info: list[BottleData], saved_odlcs: list[BoundingBox]) -> list[list[BoundingBox]]:
-    # Sort the standard objects by which bottle they match
-    
+def sort_odlcs(
+    bottle_info: list[BottleData], saved_odlcs: list[BoundingBox]
+) -> list[list[BoundingBox]]:
+    """
+    Sorts the standard objects in the given list by which bottle they match
+
+    Parameters
+    ----------
+    bottle_info: list[BottleData]
+        The data describing the object matching each bottle
+    saved_odlcs: list[BoundingBox]
+        The list of all sightings of standard objects
+    Returns
+    -------
+    sorted_odlcs: list[list[BoundingBox]]
+        The list of sightings of each object, matched to bottles
+    """
+
     # The first index represents the bottle index - that's why there's 5
     sorted_odlcs: list[list[BoundingBox]] = [[], [], [], [], []]
-    
+
     for shape in saved_odlcs:
         bottle_index: int = get_bottle_index(shape, bottle_info)
 
         # Save the shape bounding box in its proper place
         if bottle_index != -1:
             sorted_odlcs[bottle_index].append(shape)
-    
+
     return sorted_odlcs
 
 
 def set_shape_attributes(
-        shape: BoundingBox,
-        original_image: consts.Image,
-    ) -> bool:
+    shape: BoundingBox,
+    original_image: consts.Image,
+) -> bool:
     """
     Gets the attributes of a shape returned from process_shapes()
     Modifies `shape` in place
@@ -145,7 +165,7 @@ def set_shape_attributes(
     attributes_found: bool
         Returns true if all attributes were successfully found
     """
-    
+
     if shape.get_attribute("shape") is None:
         return False
 
@@ -167,11 +187,11 @@ def set_shape_attributes(
     return True
 
 
-def get_bottle_index(shape: BoundingBox, bottle_info: list[BottleData]):
+def get_bottle_index(shape: BoundingBox, bottle_info: list[BottleData]) -> int:
     """
     For the input ODLC BoundingBox, find the index of the bottle that it best matches.
     Returns -1 if no good match is found
-    
+
     Parameters
     ----------
     shape: BoundingBox
@@ -179,14 +199,14 @@ def get_bottle_index(shape: BoundingBox, bottle_info: list[BottleData]):
         "text_color" must be set
     bottle_info: list[BottleData]
         The input info from bottle.json
-    
+
     Returns
     -------
     bottle_index: int
         The index of the bottle from bottle.json that best matches the given ODLC
         Returns -1 if no good match is found
     """
-    
+
     # For each of the given bottle shapes, find the number of characteristics the
     #   discovered ODLC shape has in common with it
     all_matches: NDArray[Shape[5], UInt8] = np.zeros((5), dtype=UInt8)

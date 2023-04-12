@@ -15,9 +15,18 @@ from vision.pipeline.standard_object import *
 from vision.pipeline.emergent_object import *
 
 
-def flyover_pipeline() -> None:
+def flyover_pipeline(image_folder: str, camera_data_path: str, state_path: str) -> None:
     """
     Finds all standard objects in each image in the input folder
+
+    Parameters
+    ----------
+    image_folder: str
+        The folder containing the images to process
+    camera_data_path: str
+        The path to the json file containing the CameraParameters entries
+    state_path: str
+        A text file containing True if all images have been taken and False otherwise
     """
 
     # Load the data for each bottle
@@ -25,37 +34,31 @@ def flyover_pipeline() -> None:
 
     # Load model
     emg_model: Callable[[Image], str] = create_emergent_model()
-    
+
     # List of filenames for images already completed to prevent repeating work
     completed_images: list[str] = []
-    
+
     # The list where all sightings of ODLCs will be stored
     saved_odlcs: list[BoundingBox] = []
 
     # The list of BoundingBoxes where all potential emergent objects will be stored
     saved_humanoids: list[BoundingBox] = []
-    
-    not_done: bool = True
-    while not_done:
-        image_parameters: dict[str, CameraParameters] = read_parameter_json()
-        
+
+    all_images_taken: bool = False
+    while not all_images_taken:
+        image_parameters: dict[str, CameraParameters] = read_parameter_json(camera_data_path)
+
         for image_path in image_parameters.keys:
             if image_path not in completed_images:
                 image: Image = cv2.imread(image_path)
-                
+
                 camera_parameters: CameraParameters = image_parameters[image_path]
-                
+
                 saved_odlcs += find_standard_objects(image, camera_parameters, image_path)
-                
+
                 saved_humanoids += find_humanoids(image, emg_model, camera_parameters, image_path)
-    
-    # TODO:
-    #   Pick emergent object
-    #   Return airdrop locations
 
-
-
-
+        all_images_taken = flyover_finished(state_path)
 
 
 if __name__ == "__main__":
