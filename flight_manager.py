@@ -143,7 +143,7 @@ class FlightManager:
                     logging.error("Flight process terminated, restarting")
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
-                elif run_time(start) > 1680:
+                elif run_time(start) > 1680.0:
                     comm_obj.state = StateEnum.Land
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
