@@ -236,6 +236,7 @@ def flight(
     logging.debug("Flight process started")
     asyncio.run(init_and_begin(comm, sim, state_settings))
 
+
 def run_time(start: float) -> None:
     """
     Keeps track of run time since this function has been called and if the time is greater than 28 minutes in seconds it calls for the drone to land
@@ -250,11 +251,11 @@ def run_time(start: float) -> None:
     None
     """
     # gets the current time and compares it to the time the statemachine was started and returns the difference
-    
+
     now = time.time()
     timespan = now - start
-    while(timespan>1680.0):
+    while timespan > 1680.0:
         time.sleep(60)
         now = time.time()
-        timespan = now - start    
+        timespan = now - start
     return
