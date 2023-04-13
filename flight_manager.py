@@ -54,7 +54,9 @@ class FlightManager:
         logging.debug("Simulation flag %s", "enabled" if args.simulation else "disabled")
         self.run_threads(args.simulation)
 
-    def init_flight(self, flight_args: tuple[Communication, bool, Queue[str], StateSettings]) -> Process:
+    def init_flight(
+        self, flight_args: tuple[Communication, bool, Queue[str], StateSettings]
+    ) -> Process:
         """
         Initializes the flight state machine process
 
