@@ -27,13 +27,13 @@ async def run_time(start: float) -> None:
     None
     """
     # gets the current time and compares it to the time the statemachine was started and returns the difference
-    
+
     now = time.time()
     timespan = now - start
-    while(timespan>1680.0):
+    while timespan > 1680.0:
         time.sleep(60)
         now = time.time()
-        timespan = now - start    
+        timespan = now - start
     return
 
 
@@ -150,7 +150,7 @@ class FlightManager:
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
                 elif time_process.is_alive() is not True:
-                    #time has reached 28 minutes trying to land drone
+                    # time has reached 28 minutes trying to land drone
                     comm_obj.state = StateEnum.Land
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
