@@ -17,7 +17,7 @@ from vision.standard_object.odlc_classify_shape import process_shapes
 from vision.standard_object.odlc_text_detection import get_odlc_text
 from vision.standard_object.odlc_colors import find_colors
 
-import vision.pipeline.pipeline_utils as utils
+import vision.pipeline.pipeline_utils as pipe_utils
 
 ContourHeirarchyList: TypeAlias = list[tuple[tuple[consts.Contour, ...], consts.Hierarchy]]
 
@@ -63,7 +63,7 @@ def find_standard_objects(
                 continue  # Skip the current shape and move on to the next
 
             # Modifies by reference
-            if not utils.set_generic_attributes(
+            if not pipe_utils.set_generic_attributes(
                 shape, image_path, original_image.shape, camera_parameters
             ):
                 continue

@@ -2,6 +2,7 @@
 
 from typing import Callable
 
+import time
 import cv2
 
 import vision.common.constants as consts
@@ -12,9 +13,9 @@ from vision.common.bounding_box import BoundingBox
 from vision.emergent_object.emergent_object import create_emergent_model
 from vision.emergent_object.emergent_object_processing import pick_emergent_object
 
-import vision.pipeline.standard_object as std
-import vision.pipeline.emergent_object as emg
-import vision.pipeline.pipeline_utils as utils
+import vision.pipeline.standard_object as std_obj
+import vision.pipeline.emergent_object as emg_obj
+import vision.pipeline.pipeline_utils as pipe_utils
 
 
 def flyover_pipeline(camera_data_path: str, state_path: str, output_path: str) -> None:
@@ -46,34 +47,46 @@ def flyover_pipeline(camera_data_path: str, state_path: str, output_path: str) -
     # The list of BoundingBoxes where all potential emergent objects will be stored
     saved_humanoids: list[BoundingBox] = []
 
+    # Wait for and process unfinished images until no more images are being taken
     all_images_taken: bool = False
     while not all_images_taken:
-        image_parameters: dict[str, consts.CameraParameters] = utils.read_parameter_json(
+        # Wait to check the file instead of spamming it
+        time.sleep(1)
+
+        # Check if all images have been taken
+        all_images_taken = pipe_utils.flyover_finished(state_path)
+        
+        # Load in the json containing the camera data
+        image_parameters: dict[str, consts.CameraParameters] = pipe_utils.read_parameter_json(
             camera_data_path
         )
-
+        
+        # Loop through all images in the json - if it hasn't been processed, process it
         for image_path in image_parameters.keys():
             if image_path not in completed_images:
+                # Save the image path as completed so it isn't processed again
                 completed_images.append(image_path)
 
+                # Load the image to process
                 image: consts.Image = cv2.imread(image_path)
 
+                # Get the camera parameters from the loaded parameter file
                 camera_parameters: consts.CameraParameters = image_parameters[image_path]
 
-                saved_odlcs += std.find_standard_objects(image, camera_parameters, image_path)
+                # Append all discovered standard objects to the list of saved odlcs
+                saved_odlcs += std_obj.find_standard_objects(image, camera_parameters, image_path)
 
-                saved_humanoids += emg.find_humanoids(
+                # Append all discovered humanoids to the list of saved humanoids
+                saved_humanoids += emg_obj.find_humanoids(
                     image, emg_model, camera_parameters, image_path
                 )
 
-        all_images_taken = utils.flyover_finished(state_path)
-
     # Sort and output the locations of all ODLCs
-    sorted_odlcs: list[list[BoundingBox]] = std.sort_odlcs(bottle_info, saved_odlcs)
-    odlc_dict: consts.ODLC_Dict = std.create_odlc_dict(sorted_odlcs)
-    utils.output_odlc_json(output_path, odlc_dict)
+    sorted_odlcs: list[list[BoundingBox]] = std_obj.sort_odlcs(bottle_info, saved_odlcs)
+    odlc_dict: consts.ODLC_Dict = std_obj.create_odlc_dict(sorted_odlcs)
+    pipe_utils.output_odlc_json(output_path, odlc_dict)
 
-    # Find the emergent object and save the image
+    # Pick the emergent object and save the image cropped in on the emergent object
     emergent_object: BoundingBox = pick_emergent_object(saved_humanoids, odlc_dict)
     emergent_image: consts.Image = cv2.imread(emergent_object.get_attribute("image_path"))
     emergent_crop: consts.Image = crop_image(emergent_image, emergent_object)

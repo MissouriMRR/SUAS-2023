@@ -1,13 +1,11 @@
 """Functions that run emergent object detection to find human(oid)s in an image"""
 
 from typing import Callable
+
 import vision.common.constants as consts
-
 from vision.common.bounding_box import BoundingBox
-
 from vision.emergent_object.emergent_object import detect_emergent_object
-
-from vision.pipeline.pipeline_utils import set_generic_attributes
+import vision.pipeline.pipeline_utils as pipe_utils
 
 
 def find_humanoids(
@@ -44,7 +42,7 @@ def find_humanoids(
     emergent: BoundingBox
     for emergent in detected_emergents:
         # Set the attributes by reference. If not successful, skip the current emergent
-        if not set_generic_attributes(
+        if not pipe_utils.set_generic_attributes(
             emergent, image_path, original_image.shape, camera_parameters
         ):
             continue  # Skip the current emergent object and move on to the next
