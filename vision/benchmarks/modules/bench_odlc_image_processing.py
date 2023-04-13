@@ -61,7 +61,7 @@ class BenchODLCImageProcessing(Benchmark):
                 whether the algorithm's result was accurate
         """
         result: Image | Exception = self.run_module(image=bench_image.image)
-        if type(result) != Exception:
+        if not isinstance(result, Exception):
             bench_image.accuracy_results.append((None, True))
         else:
             bench_image.accuracy_results.append((None, False))
