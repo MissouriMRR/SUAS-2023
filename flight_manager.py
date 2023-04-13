@@ -112,10 +112,7 @@ class FlightManager:
         logging.debug(f"Title: {self.state_settings.run_title}")
         logging.debug(f"Description: {self.state_settings.run_description}")
 
-
-        
-        start = time.time()
-        time_process: Process = Process(target=flight, name = "run_time", args=start)
+        time_process: Process = Process(target=flight, name = "run_time")
         time_process.start()
 
         try:

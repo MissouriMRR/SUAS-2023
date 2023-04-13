@@ -250,7 +250,7 @@ def run_time(start: float) -> None:
     None
     """
     # gets the current time and compares it to the time the statemachine was started and returns the difference
-    
+    start = time.time()
     now = time.time()
     timespan = now - start
     while(timespan>1680.0):
