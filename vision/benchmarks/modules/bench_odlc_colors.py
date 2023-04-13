@@ -76,15 +76,16 @@ class BenchODLCColors(Benchmark):
         """
         colors: tuple[ODLCColor, ODLCColor] | Exception = self.run_module(
             image=bench_image.image, text_bounds=bench_image.attributes["text_bounds"]
-        )  ## TODO: Fix exception stuff
+        )
 
-        if type(colors) != Exception:
+        if isinstance(colors, tuple):
             pass_color_1: bool = colors[0] == bench_image.accuracy_goals[0]
             bench_image.accuracy_results.append((colors[0], pass_color_1))
 
             pass_color_2: bool = colors[1] == bench_image.accuracy_goals[1]
             bench_image.accuracy_results.append((colors[1], pass_color_2))
-        else:
+
+        if isinstance(colors, Exception):
             bench_image.accuracy_results.append((None, False))
             bench_image.accuracy_results.append((None, False))
             self.print_error(error=colors, bench_image=bench_image)
