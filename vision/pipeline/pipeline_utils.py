@@ -1,3 +1,5 @@
+"""Pipeline functions not specific to either standard or emergent object"""
+
 import numpy as np
 import json
 
@@ -85,33 +87,7 @@ def set_generic_attributes(
     return True
 
 
-def create_odlc_dict(sorted_odlcs: list[list[BoundingBox]]) -> consts.ODLC_Dict:
+def output_odlc_json(output_path: str, dict_data: consts.ODLC_Dict) -> None:
     """
-    Creates the ODLC_Dict dictionary from a list of shape bounding boxes
-
-    Parameters
-    ----------
-    list[list[BoundingBox]]
-        The list of sightings of each object, matched to bottles
-
-    Returns
-    -------
-    odlc_dict: consts.ODLC_Dict
-        The dictionary of ODLCs matching the output format
+    Saves the ODLC_Dict to a file
     """
-
-    odlc_dict: consts.ODLC_Dict = {}
-
-    for i, bottle in enumerate(sorted_odlcs):
-        coords_list: list[tuple[int, int]] = []
-
-        for shape in bottle:
-            coords_list.append((shape.get_attribute("latitude"), shape.get_attribute("longitude")))
-
-        coords_array = np.array(coords_list)
-
-        average_coord = np.average(coords_array, axis=0)
-
-        odlc_dict[str(i)] = {"latitude": average_coord[0], "longitude": average_coord[1]}
-
-    return odlc_dict

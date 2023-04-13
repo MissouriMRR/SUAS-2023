@@ -2,17 +2,18 @@
 
 import cv2
 import numpy as np
+import json
 
 from typing import Callable
 from vision.common.constants import Image, CameraParameters
 
 from vision.competition_inputs.bottle_reader import load_bottle_info, BottleData
 from vision.common.bounding_box import BoundingBox
-from vision.common.odlc_characteristics import ODLCColor
-from vision.emergent_object.emergent_object import create_emergent_model, detect_emergent_object
+from vision.emergent_object.emergent_object import create_emergent_model
 
-from vision.pipeline.standard_object import *
-from vision.pipeline.emergent_object import *
+import vision.pipeline.standard_object as std
+import vision.pipeline.emergent_object as emg
+import vision.pipeline.pipeline_utils as utils
 
 
 def flyover_pipeline(image_folder: str, camera_data_path: str, state_path: str) -> None:
@@ -46,19 +47,25 @@ def flyover_pipeline(image_folder: str, camera_data_path: str, state_path: str) 
 
     all_images_taken: bool = False
     while not all_images_taken:
-        image_parameters: dict[str, CameraParameters] = read_parameter_json(camera_data_path)
+        image_parameters: dict[str, CameraParameters] = utils.read_parameter_json(camera_data_path)
 
         for image_path in image_parameters.keys:
             if image_path not in completed_images:
+                completed_images.append(image_path)
+                
                 image: Image = cv2.imread(image_path)
 
                 camera_parameters: CameraParameters = image_parameters[image_path]
 
-                saved_odlcs += find_standard_objects(image, camera_parameters, image_path)
+                saved_odlcs += std.find_standard_objects(image, camera_parameters, image_path)
 
-                saved_humanoids += find_humanoids(image, emg_model, camera_parameters, image_path)
+                saved_humanoids += emg.find_humanoids(
+                    image, emg_model, camera_parameters, image_path
+                )
 
-        all_images_taken = flyover_finished(state_path)
+        all_images_taken = utils.flyover_finished(state_path)
+    
+    
 
 
 if __name__ == "__main__":
