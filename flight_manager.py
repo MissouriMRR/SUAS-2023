@@ -13,7 +13,7 @@ from flight.state_settings import StateSettings
 import time
 
 
-async def run_time(start: float) -> float:
+async def run_time(start: float) -> None:
     """
     Keeps track of run time since this function has been called and if the time is greater than 28 minutes in seconds it calls for the drone to land
 
@@ -24,13 +24,17 @@ async def run_time(start: float) -> float:
 
     Returns
     -------
-    timespan: float
-        time in seconds since state machine start
+    None
     """
     # gets the current time and compares it to the time the statemachine was started and returns the difference
+    
     now = time.time()
     timespan = now - start
-    return timespan
+    while(timespan>1680.0):
+        time.sleep(60)
+        now = time.time()
+        timespan = now - start    
+    return
 
 
 class FlightManager:
@@ -134,6 +138,8 @@ class FlightManager:
         logging.debug(f"Description: {self.state_settings.run_description}")
 
         start = time.time()
+        time_process: Process = run_time(start)
+        time_process.start()
 
         try:
             while comm_obj.state != StateEnum.Final_State:
@@ -143,7 +149,8 @@ class FlightManager:
                     logging.error("Flight process terminated, restarting")
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
-                elif run_time(start) > 1680.0:
+                elif time_process.is_alive() is not True:
+                    #time has reached 28 minutes trying to land drone
                     comm_obj.state = StateEnum.Land
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
