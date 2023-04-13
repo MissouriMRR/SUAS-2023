@@ -12,6 +12,7 @@ from flight.states import StateEnum
 from flight.state_settings import StateSettings
 import time
 
+
 class FlightManager:
     """
     Class to initiate state machine and multithreading
