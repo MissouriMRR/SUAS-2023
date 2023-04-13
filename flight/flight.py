@@ -11,6 +11,7 @@ from communication import Communication
 from flight import config
 from flight.states import STATES, State, StateEnum
 from flight.state_settings import StateSettings
+import time
 
 SIM_ADDR: str = "udp://:14540"  # Address to connect to drone simulator
 CON_ADDR: str = "serial:///dev/ttyUSB0:921600"  # Address to connect to pixhawk w/ baud rate
@@ -234,3 +235,26 @@ def flight(
     logger.worker_configurer(log_queue)
     logging.debug("Flight process started")
     asyncio.run(init_and_begin(comm, sim, state_settings))
+
+def run_time(start: float) -> None:
+    """
+    Keeps track of run time since this function has been called and if the time is greater than 28 minutes in seconds it calls for the drone to land
+
+    Parameters
+    ----------
+    start: float
+        time in seconds when the drone has started
+
+    Returns
+    -------
+    None
+    """
+    # gets the current time and compares it to the time the statemachine was started and returns the difference
+    
+    now = time.time()
+    timespan = now - start
+    while(timespan>1680.0):
+        time.sleep(60)
+        now = time.time()
+        timespan = now - start    
+    return

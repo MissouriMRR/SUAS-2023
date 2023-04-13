@@ -12,31 +12,6 @@ from flight.states import StateEnum
 from flight.state_settings import StateSettings
 import time
 
-
-async def run_time(start: float) -> None:
-    """
-    Keeps track of run time since this function has been called and if the time is greater than 28 minutes in seconds it calls for the drone to land
-
-    Parameters
-    ----------
-    start: float
-        time in seconds when the drone has started
-
-    Returns
-    -------
-    None
-    """
-    # gets the current time and compares it to the time the statemachine was started and returns the difference
-    
-    now = time.time()
-    timespan = now - start
-    while(timespan>1680.0):
-        time.sleep(60)
-        now = time.time()
-        timespan = now - start    
-    return
-
-
 class FlightManager:
     """
     Class to initiate state machine and multithreading
@@ -137,8 +112,10 @@ class FlightManager:
         logging.debug(f"Title: {self.state_settings.run_title}")
         logging.debug(f"Description: {self.state_settings.run_description}")
 
+
+        
         start = time.time()
-        time_process: Process = run_time(start)
+        time_process: Process = Process(target=flight, name = "run_time", args=start)
         time_process.start()
 
         try:
