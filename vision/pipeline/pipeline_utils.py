@@ -1,6 +1,5 @@
 """Pipeline functions not specific to either standard or emergent object"""
 
-import numpy as np
 import json
 
 import vision.common.constants as consts
@@ -39,25 +38,32 @@ def flyover_finished(state_path: str) -> bool:
     ----------
     state_path: str
         The file holding a boolean
+
+    Returns
+    -------
+    all_images_taken: bool
+        True if all photos are saved
     """
 
-    with open(state_path) as file:
+    with open(state_path, encoding="UTF-8") as file:
         return str(file.read) == "True"
 
 
 def set_generic_attributes(
-    object: BoundingBox,
+    box: BoundingBox,
     image_path: str,
     image_shape: tuple[int, int] | tuple[int, int, int],
     camera_parameters: consts.CameraParameters,
 ) -> bool:
     """
-    Sets BoundingBox attributes by reference. Attributes changed are image_path, latitude, and longitude
+    Sets BoundingBox attributes by reference. Attributes changed are image_path, latitude,
+    and longitude.
+
     "Generic" because these attributes are important for any object
 
     Parameters
     ----------
-    object: BoundingBox
+    box: BoundingBox
         The bounding box of the object to which the attributes will be set
     image_path: str
         The path for the image the bounding box is from
@@ -72,22 +78,32 @@ def set_generic_attributes(
         Returns true if all attributes were successfully found
     """
 
-    object.set_attribute("image_path", image_path)
+    box.set_attribute("image_path", image_path)
 
     coordinates: tuple[float, float] | None = get_coordinates(
-        object.get_center_coord(), image_shape, camera_parameters
+        box.get_center_coord(), image_shape, camera_parameters
     )
 
     if coordinates is None:
         return False
 
-    object.set_attribute("latitude", coordinates[0])
-    object.set_attribute("longitude", coordinates[1])
+    box.set_attribute("latitude", coordinates[0])
+    box.set_attribute("longitude", coordinates[1])
 
     return True
 
 
-def output_odlc_json(output_path: str, dict_data: consts.ODLC_Dict) -> None:
+def output_odlc_json(output_path: str, odlc_dict: consts.ODLC_Dict) -> None:
     """
     Saves the ODLC_Dict to a file
+
+    Parameters
+    ----------
+    output_path: str
+        The json file name and path to save the data in
+    odlc_dict: consts.ODLC_Dict
+        The dictionary of ODLCs matched with bottles
     """
+
+    with open(output_path, "w", encoding="UTF-8") as file:
+        json.dump(odlc_dict, file, indent=4)

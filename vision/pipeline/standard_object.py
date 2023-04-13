@@ -21,18 +21,12 @@ import vision.pipeline.pipeline_utils as utils
 
 ContourHeirarchyList: TypeAlias = list[tuple[tuple[consts.Contour, ...], consts.Hierarchy]]
 
-PROCESSING_THRESHOLDS: list[tuple[int, int]] = [
-    (0, 50),
-    # (25, 150),
-    # (50, 250),
-    # (75, 350)
-]
+# The various thresholds to run the image processing at
+PROCESSING_THRESHOLDS: list[tuple[int, int]] = [(0, 50), (25, 150), (50, 250), (75, 350)]
 
 
 def find_standard_objects(
-    original_image: consts.Image,
-    camera_parameters: consts.CameraParameters,
-    image_path: str
+    original_image: consts.Image, camera_parameters: consts.CameraParameters, image_path: str
 ) -> list[BoundingBox]:
     """
     Finds all bounding boxes of standard objects in an image
@@ -213,22 +207,22 @@ def get_bottle_index(shape: BoundingBox, bottle_info: list[BottleData]) -> int:
     info: BottleData
     for index, info in enumerate(bottle_info):
         matches: int = 0
-        if shape.get_attribute("text") == info["Letter"]:
+        if shape.get_attribute("text") == info["letter"]:
             matches += 1
 
-        if shape.get_attribute("shape") == info["Shape"]:
+        if shape.get_attribute("shape") == info["shape"]:
             matches += 1
 
-        if shape.get_attribute("shape_color") == info["Shape_Color"]:
+        if shape.get_attribute("shape_color") == info["shape_color"]:
             matches += 1
 
-        if shape.get_attribute("letter_color") == info["Letter_Color"]:
+        if shape.get_attribute("letter_color") == info["letter_color"]:
             matches += 1
 
         all_matches[int(index)] = matches
 
-    # This if statement ensures that bad matches are ignored, and standards
-    #    can be lowered
+    # This if statement ensures that bad matches are ignored, and standards can be lowered.
+    #   Still takes the best match, but if none are good enough they will be ignored.
     if all_matches.max() > 2:
         # Gets the index of the first bottle with the most matches.
         # First [0] takes the first dimension, second [0] takes the first element
