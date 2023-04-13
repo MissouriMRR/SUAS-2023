@@ -127,7 +127,7 @@ class FlightManager:
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
                 elif time_process.is_alive() is not True:
-                    #time has reached 28 minutes trying to land drone
+                    # time has reached 28 minutes trying to land drone
                     comm_obj.state = StateEnum.Land
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
