@@ -19,7 +19,7 @@ class ODLC(State):
         Run ODLC flight algorithm and pass to next state
     """
 
-    async def airdrop_count() -> int:
+    async def airdrop_count(self) -> int:
         """
         Counts the number of airdrop locations found and returns it
         
