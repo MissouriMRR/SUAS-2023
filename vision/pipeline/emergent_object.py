@@ -47,5 +47,4 @@ def find_humanoids(
         ):
             found_humanoids.append(emergent)
 
-
     return found_humanoids
