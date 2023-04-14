@@ -7,6 +7,7 @@ from flight.odlc_boundaries.execute import move_to
 from mavsdk.camera import Mode
 import logging
 
+
 class ODLC(State):
     """
     State to fly through ODLC search grid and scan for standard & emergent objects, and start timelapse photo of region
@@ -55,7 +56,7 @@ class ODLC(State):
         # traverses the 3 waypoints starting at the midpoint on left to midpoint on the right then to the top left corner at the rectangle
         point: int
         airdrops: int
-        while(airdrops != 5):
+        while airdrops != 5:
             point = 0
             logging.info("Starting odlc zone flyover")
             for point in range(3):
@@ -73,7 +74,10 @@ class ODLC(State):
                     logging.info("Moving to the north west corner")
 
                 await move_to(
-                    drone, waypoint["lats"][point], waypoint["longs"][point], waypoint["Altitude"][0]
+                    drone,
+                    waypoint["lats"][point],
+                    waypoint["longs"][point],
+                    waypoint["Altitude"][0],
                 )
 
         with open("flight/data/state.txt", "w") as state:
