@@ -55,12 +55,12 @@ def flyover_pipeline(camera_data_path: str, state_path: str, output_path: str) -
 
         # Check if all images have been taken
         all_images_taken = pipe_utils.flyover_finished(state_path)
-        
+
         # Load in the json containing the camera data
         image_parameters: dict[str, consts.CameraParameters] = pipe_utils.read_parameter_json(
             camera_data_path
         )
-        
+
         # Loop through all images in the json - if it hasn't been processed, process it
         for image_path in image_parameters.keys():
             if image_path not in completed_images:
