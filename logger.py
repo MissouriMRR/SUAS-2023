@@ -1,12 +1,14 @@
 """Functions and Configurations for logging flight & vision data during flight"""
 
 import logging
+
 from typing import TextIO
 from multiprocessing import Queue
 from logging import Formatter, FileHandler, StreamHandler
 from logging.handlers import QueueHandler, QueueListener
-from colorlog import ColoredFormatter
 from datetime import datetime
+
+from colorlog import ColoredFormatter
 
 LOG_FILE: str = f"logs/{datetime.now()}.log"
 LOG_LEVEL = logging.DEBUG
@@ -18,7 +20,8 @@ COLOR_LOG_FORMAT: str = (
 
 def init_logger(queue: Queue[str]) -> QueueListener:
     """
-    Initializes a QueueListener object to be used throughout the competition code to contain log messages
+    Initializes a QueueListener object to be used throughout the competition
+    code to contain log messages
 
     Parameters
     ----------
@@ -54,4 +57,3 @@ def worker_configurer(queue: Queue[str]) -> None:
     root = logging.getLogger()
     root.addHandler(queue_handler)
     root.setLevel(LOG_LEVEL)
-    return
