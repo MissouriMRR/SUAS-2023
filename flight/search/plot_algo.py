@@ -2,15 +2,15 @@
 The actual algorithm powering the drone's navigation
 """
 
-# pylint: disable=C0200
-# NOTE: removes "consider using enumerate" error
-
 from math import floor, sqrt
 from bisect import insort
+
+import numpy as np
+
 from pathfinding.finder.a_star import AStarFinder
 from pathfinding.core.grid import Grid, Node
-import numpy as np
 from nptyping import Int8, NDArray, Shape
+
 from flight.search.cell_map import CellMap
 from flight.search.cell import Cell
 from flight.search.helper import AIR_DROP_AREA
