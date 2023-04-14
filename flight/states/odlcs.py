@@ -6,6 +6,7 @@ from flight.states.airdrop import AirDrop
 from flight.odlc_boundaries.execute import move_to
 from mavsdk.camera import Mode
 import logging
+import json
 
 class ODLC(State):
     """
@@ -17,7 +18,24 @@ class ODLC(State):
         Run ODLC flight algorithm and pass to next state
     """
 
-    airdrop_count()
+    async def airdrop_count() -> int:
+        """
+        Counts the number of airdrop locations found and returns it
+        
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        airdrop: int
+            The amount of airdrops found
+        """
+        
+        with open("flight/data/output.json") as output:
+            airdrop_dict = json.load(output)
+            airdrops = len(airdrop_dict)
+        return airdrops
 
     async def run(self, drone: System) -> AirDrop:
         """
@@ -75,6 +93,7 @@ class ODLC(State):
                 await move_to(
                     drone, waypoint["lats"][point], waypoint["longs"][point], waypoint["Altitude"][0]
                 )
+            airdrops = await airdrop_count()
 
         with open("flight/data/state.txt", "w") as state:
             state.write("true")
