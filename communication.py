@@ -1,4 +1,5 @@
 """Communication object to pass between flight and vision code"""
+
 from flight.states import StateEnum
 
 
@@ -49,4 +50,3 @@ class Communication:
             Name of teh new state in the state machine
         """
         self.__state = new_state
-        return
