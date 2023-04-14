@@ -97,7 +97,7 @@ class ODLC(State):
                     waypoint["longs"][point],
                     waypoint["Altitude"][0],
                 )
-            airdrops = await airdrop_count()
+            airdrops = await self.airdrop_count()
 
         with open("flight/data/state.txt", "w") as state:
             state.write("true")
