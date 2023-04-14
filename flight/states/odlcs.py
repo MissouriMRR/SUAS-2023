@@ -22,7 +22,7 @@ class ODLC(State):
     async def airdrop_count() -> int:
         """
         Counts the number of airdrop locations found and returns it
-        
+
         Parameters
         ----------
         None
@@ -32,7 +32,7 @@ class ODLC(State):
         airdrop: int
             The amount of airdrops found
         """
-        
+
         with open("flight/data/output.json") as output:
             airdrop_dict = json.load(output)
             airdrops = len(airdrop_dict)
