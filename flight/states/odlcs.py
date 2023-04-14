@@ -7,7 +7,6 @@ from flight.odlc_boundaries.execute import move_to
 from mavsdk.camera import Mode
 import logging
 
-
 class ODLC(State):
     """
     State to fly through ODLC search grid and scan for standard & emergent objects, and start timelapse photo of region
@@ -17,6 +16,8 @@ class ODLC(State):
     run(drone: System) -> AirDrop
         Run ODLC flight algorithm and pass to next state
     """
+
+    airdrop_count()
 
     async def run(self, drone: System) -> AirDrop:
         """
@@ -53,24 +54,30 @@ class ODLC(State):
 
         # traverses the 3 waypoints starting at the midpoint on left to midpoint on the right then to the top left corner at the rectangle
         point: int
-        logging.info("Starting odlc zone flyover")
-        for point in range(3):
-            if point == 0:
-                logging.info("Moving to the center of the west boundary")
-            elif point == 1:
-                # starts taking photos at a .5 second interval because we want to get multiple photos of the boundary so there is overlap and
-                # the speed of the drone should be 20 m/s which is 64 feet/s which means it will traverse the length of the boundary (360 ft) in 6 sec
-                # and that means with the shortest length of photos being taken depending on rotation would be 90 feet and we want to take multiple photos
-                # so we would need a minimum of 4 photos to cover the whole boundary and we want multiple, so using .5 seconds between each photo allows
-                # it to take a minimum of 12 photos of the odlc boundary which will capture the whole area
-                await drone.camera.start_photo_interval(0.5)
-                logging.info("Moving to the center of the east boundary")
-            elif point == 2:
-                logging.info("Moving to the north west corner")
+        airdrops: int
+        while(airdrops != 5):
+            point = 0
+            logging.info("Starting odlc zone flyover")
+            for point in range(3):
+                if point == 0:
+                    logging.info("Moving to the center of the west boundary")
+                elif point == 1:
+                    # starts taking photos at a .5 second interval because we want to get multiple photos of the boundary so there is overlap and
+                    # the speed of the drone should be 20 m/s which is 64 feet/s which means it will traverse the length of the boundary (360 ft) in 6 sec
+                    # and that means with the shortest length of photos being taken depending on rotation would be 90 feet and we want to take multiple photos
+                    # so we would need a minimum of 4 photos to cover the whole boundary and we want multiple, so using .5 seconds between each photo allows
+                    # it to take a minimum of 12 photos of the odlc boundary which will capture the whole area
+                    await drone.camera.start_photo_interval(0.5)
+                    logging.info("Moving to the center of the east boundary")
+                elif point == 2:
+                    logging.info("Moving to the north west corner")
 
-            await move_to(
-                drone, waypoint["lats"][point], waypoint["longs"][point], waypoint["Altitude"][0]
-            )
+                await move_to(
+                    drone, waypoint["lats"][point], waypoint["longs"][point], waypoint["Altitude"][0]
+                )
+
+        with open("flight/data/state.txt", "w") as state:
+            state.write("true")
         # stops taking photos
         await drone.camera.stop_photo_interval()
         return AirDrop(self.state_settings)
