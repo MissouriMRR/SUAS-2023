@@ -42,11 +42,10 @@ def find_humanoids(
     emergent: BoundingBox
     for emergent in detected_emergents:
         # Set the attributes by reference. If not successful, skip the current emergent
-        if not pipe_utils.set_generic_attributes(
+        if pipe_utils.set_generic_attributes(
             emergent, image_path, original_image.shape, camera_parameters
         ):
-            continue  # Skip the current emergent object and move on to the next
+            found_humanoids.append(emergent)
 
-        found_humanoids.append(emergent)
 
     return found_humanoids

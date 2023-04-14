@@ -5,7 +5,7 @@ from typing import TypeAlias
 import cv2
 import numpy as np
 
-from nptyping import NDArray, Shape, UInt8
+from nptyping import NDArray, Shape, UInt8, Float32
 import vision.common.constants as consts
 
 from vision.competition_inputs.bottle_reader import BottleData
@@ -51,24 +51,21 @@ def find_standard_objects(
     found_odlcs: list[BoundingBox] = []
 
     contour_heirarchies_list: ContourHeirarchyList = iterate_find_contours(original_image)
-
+    
+    contours: tuple[consts.Contour, ...]
+    hierarchy: consts.Hierarchy
     for contours, hierarchy in contour_heirarchies_list:
         shapes: list[BoundingBox] = process_shapes(
             list(contours), hierarchy, original_image.shape[:2]
         )
-
+        
+        shape: BoundingBox
         for shape in shapes:
             # Set the shape attributes by reference. If successful, keep the shape
-            if not set_shape_attributes(shape, original_image):
-                continue  # Skip the current shape and move on to the next
-
-            # Modifies by reference
-            if not pipe_utils.set_generic_attributes(
-                shape, image_path, original_image.shape, camera_parameters
-            ):
-                continue
-
-            found_odlcs.append(shape)
+            if set_shape_attributes(shape, original_image) and pipe_utils.set_generic_attributes(
+                    shape, image_path, original_image.shape, camera_parameters
+                ):
+                    found_odlcs.append(shape)
 
     return found_odlcs
 
@@ -89,9 +86,10 @@ def iterate_find_contours(original_image: consts.Image) -> ContourHeirarchyList:
     """
 
     contour_heirarchies_list: ContourHeirarchyList = []
-
+    
+    thresholds: tuple[int, int]
     for thresholds in PROCESSING_THRESHOLDS:
-        processed_image = preprocess_std_odlc(original_image, thresholds[0], thresholds[1])
+        processed_image: consts.ScImage = preprocess_std_odlc(original_image, thresholds[0], thresholds[1])
 
         # Get the contours in the image
         contours: tuple[consts.Contour, ...]
@@ -169,7 +167,8 @@ def sort_odlcs(
 
     # The first index represents the bottle index - that's why there's 5
     sorted_odlcs: list[list[BoundingBox]] = [[], [], [], [], []]
-
+    
+    shape: BoundingBox
     for shape in saved_odlcs:
         bottle_index: int = get_bottle_index(shape, bottle_info)
 
@@ -203,6 +202,7 @@ def get_bottle_index(shape: BoundingBox, bottle_info: list[BottleData]) -> int:
     # For each of the given bottle shapes, find the number of characteristics the
     #   discovered ODLC shape has in common with it
     all_matches: NDArray[Shape[5], UInt8] = np.zeros((5), dtype=UInt8)
+    
     index: int
     info: BottleData
     for index, info in enumerate(bottle_info):
@@ -247,16 +247,19 @@ def create_odlc_dict(sorted_odlcs: list[list[BoundingBox]]) -> consts.ODLC_Dict:
     """
 
     odlc_dict: consts.ODLC_Dict = {}
-
+    
+    i: int
+    bottle: list[BoundingBox]
     for i, bottle in enumerate(sorted_odlcs):
         coords_list: list[tuple[int, int]] = []
-
+        
+        shape: BoundingBox
         for shape in bottle:
             coords_list.append((shape.get_attribute("latitude"), shape.get_attribute("longitude")))
 
-        coords_array = np.array(coords_list)
+        coords_array: NDArray[Shape["*, 2"], Float32] = np.array(coords_list)
 
-        average_coord = np.average(coords_array, axis=0)
+        average_coord: NDArray[Shape["2"], Float32] = np.average(coords_array, axis=0)
 
         odlc_dict[str(i)] = {"latitude": average_coord[0], "longitude": average_coord[1]}
 

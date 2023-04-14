@@ -75,7 +75,3 @@ SENSOR_HEIGHT: float = 8.8
 # In degrees of [roll, pitch, yaw]
 # Set to [0.0, -90.0, 0.0] when the camera is facing directly downwards
 ROTATION_OFFSET: list[float] = [0.0, -90.0, 0.0]
-
-
-FLYOVER_IMAGES_PATH: str = ""
-JSON_PATH: str = ""

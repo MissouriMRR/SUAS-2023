@@ -57,7 +57,7 @@ def flyover_pipeline(camera_data_path: str, state_path: str, output_path: str) -
         all_images_taken = pipe_utils.flyover_finished(state_path)
 
         # Load in the json containing the camera data
-        image_parameters: dict[str, consts.CameraParameters] = pipe_utils.read_parameter_json(
+        image_parameters: pipe_utils.FolderParameters = pipe_utils.read_parameter_json(
             camera_data_path
         )
 
