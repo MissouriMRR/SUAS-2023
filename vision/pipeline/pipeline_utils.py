@@ -2,13 +2,13 @@
 
 import json
 
+from typing import TypeAlias
+
 import vision.common.constants as consts
 
 from vision.common.bounding_box import BoundingBox
 
 from vision.deskew.camera_distances import get_coordinates
-
-from typing import TypeAlias
 
 # Keys are image paths and values are the camera parameters for the image
 FolderParameters: TypeAlias = dict[str, consts.CameraParameters]
