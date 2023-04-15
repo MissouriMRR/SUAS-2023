@@ -157,7 +157,7 @@ def sort_odlcs(
         The data describing the object matching each bottle
     saved_odlcs: list[BoundingBox]
         The list of all sightings of standard objects
-    
+
     Returns
     -------
     sorted_odlcs: list[list[BoundingBox]]
