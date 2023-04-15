@@ -9,7 +9,7 @@ import sys
 from mavsdk import System
 
 from flight import extract_gps
-from flight.Waypoint.goto import move_to
+from flight.waypoint.goto import move_to
 
 # Defining file path constant for extract_gps
 MOVE_TO_TEST_PATH: str = "./data/waypoint_data.json"

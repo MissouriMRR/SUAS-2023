@@ -11,7 +11,7 @@ from mavsdk import System
 import flight.config
 
 from flight.state_settings import StateSettings
-from flight.Waypoint.goto import move_to
+from flight.waypoint.goto import move_to
 from flight.extract_gps import extract_gps, Waypoint, GPSData
 
 
