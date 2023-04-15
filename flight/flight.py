@@ -99,7 +99,7 @@ async def observe_in_air(drone: System, comm: Communication) -> None:
         if is_in_air:
             was_in_air = is_in_air
         if was_in_air and not is_in_air:
-            comm.state = StateEnum.Final_State
+            comm.state = StateEnum.FINAL_STATE
             return
 
 
@@ -187,9 +187,9 @@ async def start_flight(comm: Communication, drone: System, state_settings: State
             await drone.action.land()
         except Exception:  # pylint: disable=broad-except
             logging.error("No system available")
-            comm.state = StateEnum.Final_State
+            comm.state = StateEnum.FINAL_STATE
             return
-    comm.state = StateEnum.Final_State
+    comm.state = StateEnum.FINAL_STATE
     await termination_task
     flight_mode_task.cancel()
 
