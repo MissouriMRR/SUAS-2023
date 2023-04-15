@@ -93,9 +93,12 @@ class FlightManager:
         # Create manager object
         manager: BaseManager = BaseManager()
         # Start manager
-        manager.start()
+        manager.start()  # pylint: disable=consider-using-with
+
         # Create Communication object from manager
+        # pylint: disable=no-member
         comm_obj: Communication = manager.Communication()  # type: ignore[attr-defined]
+
         log_queue: Queue[str] = Queue(-1)
         logging_process = init_logger(log_queue)
         logging_process.start()
@@ -111,8 +114,8 @@ class FlightManager:
         flight_process.start()
         logging.debug("Flight process with id %d started", flight_process.pid)
 
-        logging.debug(f"Title: {self.state_settings.run_title}")
-        logging.debug(f"Description: {self.state_settings.run_description}")
+        logging.debug("Title: %s", self.state_settings.run_title)
+        logging.debug("Description: %s", self.state_settings.run_description)
 
         try:
             while comm_obj.state != StateEnum.Final_State:
