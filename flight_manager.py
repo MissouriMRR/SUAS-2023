@@ -118,7 +118,7 @@ class FlightManager:
         logging.debug("Description: %s", self.state_settings.run_description)
 
         try:
-            while comm_obj.state != StateEnum.Final_State:
+            while comm_obj.state != StateEnum.FINAL_STATE:
                 # State machine is still running
                 if flight_process.is_alive() is not True:
                     # Flight process has been killed; restart the process
@@ -128,7 +128,7 @@ class FlightManager:
         except KeyboardInterrupt:
             # Ctrl-C was pressed
             logging.info("Ctrl-C Pressed, forcing drone to land")
-            comm_obj.state = StateEnum.Land
+            comm_obj.state = StateEnum.LAND
             flight_process = self.init_flight(flight_args)
             flight_process.start()
 
