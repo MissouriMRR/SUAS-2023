@@ -9,6 +9,9 @@ import logging
 from mavsdk import System
 
 
+# duplicate code disabled since we may want different functionality
+# for waypoints/odlcs search points
+# pylint: disable=duplicate-code
 async def move_to(
     drone: System, latitude: float, longitude: float, altitude: float, fast_param: float
 ) -> None:

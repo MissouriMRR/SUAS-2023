@@ -13,6 +13,8 @@ from mavsdk import System
 from flight.waypoint import goto
 
 
+# duplicate code disabled for testing function
+# pylint: disable=duplicate-code
 async def run() -> None:
     """
     This function is a driver to test the goto function and runs through the
