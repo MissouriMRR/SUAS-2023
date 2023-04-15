@@ -35,8 +35,6 @@ def find_standard_objects(
     ----------
     original_image: Image
         The image to find shapes in
-    processed_image: consts.ScImage
-        The processed image - binarized to hopefully show standard objects
     camera_parameters: CameraParameters
         The details of how and where the photo was taken
     image_path: str
@@ -117,10 +115,8 @@ def set_shape_attributes(
     ----------
     shape: BoundingBox
         The bounding box of the shape. Attribute "shape" must be set
-    image_path: str
-        The path for the image the bounding box is from
-    camera_parameters: CameraParameters
-        The details of how and where the photo was taken
+    original_image: Image
+        The image used to get the details for each shape
 
     Returns
     -------
@@ -239,7 +235,7 @@ def create_odlc_dict(sorted_odlcs: list[list[BoundingBox]]) -> consts.ODLC_Dict:
 
     Parameters
     ----------
-    list[list[BoundingBox]]
+    sorted_odlcs: list[list[BoundingBox]]
         The list of sightings of each object, matched to bottles
 
     Returns

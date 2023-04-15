@@ -2,19 +2,14 @@
 
 import json
 
-from typing import TypeAlias
-
 import vision.common.constants as consts
 
 from vision.common.bounding_box import BoundingBox
 
 from vision.deskew.camera_distances import get_coordinates
 
-# Keys are image paths and values are the camera parameters for the image
-FolderParameters: TypeAlias = dict[str, consts.CameraParameters]
 
-
-def read_parameter_json(json_path: str) -> FolderParameters:
+def read_parameter_json(json_path: str) -> dict[str, consts.CameraParameters]:
     """
     Will read in the data from the given json file and return it as a python dict.
 
@@ -30,7 +25,7 @@ def read_parameter_json(json_path: str) -> FolderParameters:
     """
 
     with open(json_path, encoding="utf-8") as jfile:
-        data: FolderParameters = json.load(jfile)
+        data: dict[str, consts.CameraParameters] = json.load(jfile)
 
     return data
 

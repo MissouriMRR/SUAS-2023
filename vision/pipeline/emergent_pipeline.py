@@ -19,10 +19,10 @@ def find_humanoids(
 
     Parameters
     ----------
-    original_image: Image
-        The image to run human detection on
     emg_model: Callable[[Image], str]
         The model which is being used for object detection/classification
+    original_image: Image
+        The image to run human detection on
     camera_parameters: CameraParameters
         The details of how and where the photo was taken
     image_path: str

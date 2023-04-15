@@ -13,8 +13,8 @@ from vision.common.bounding_box import BoundingBox
 from vision.emergent_object.emergent_object import create_emergent_model
 from vision.emergent_object.emergent_object_processing import pick_emergent_object
 
-import vision.pipeline.standard_object as std_obj
-import vision.pipeline.emergent_object as emg_obj
+import vision.pipeline.standard_pipeline as std_obj
+import vision.pipeline.emergent_pipeline as emg_obj
 import vision.pipeline.pipeline_utils as pipe_utils
 
 
@@ -57,7 +57,7 @@ def flyover_pipeline(camera_data_path: str, state_path: str, output_path: str) -
         all_images_taken = pipe_utils.flyover_finished(state_path)
 
         # Load in the json containing the camera data
-        image_parameters: pipe_utils.FolderParameters = pipe_utils.read_parameter_json(
+        image_parameters: dict[str, consts.CameraParameters] = pipe_utils.read_parameter_json(
             camera_data_path
         )
 
