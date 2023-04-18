@@ -194,8 +194,8 @@ def emergent_obj_selection(evaluation_array: NDArray[Shape["*, 4"], Float64]) ->
 
 if __name__ == "__main__":
     saved_odlcs: ODLC_Dict = {
-        0: {"latitude": 52.10025, "longitude": 20.21222},
-        3: {"latitude": 52.80085, "longitude": 21.91021},
+        "0": {"latitude": 52.10025, "longitude": 20.21222},
+        "3": {"latitude": 52.80085, "longitude": 21.91021},
     }
 
     saved_humanoids: list[BoundingBox] = []
