@@ -44,6 +44,8 @@ def preprocess_std_odlc(image: Image, thresh_min: int = 50, thresh_max: int = 10
 
 
 # Runs preprocessing on specified image and displays results.
+# duplicate code disabled for main
+# pylint: disable=duplicate-code
 if __name__ == "__main__":
     import sys
 

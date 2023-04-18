@@ -5,7 +5,7 @@ File containing a class to control air drop functions
 from flight.maestro.maestro import Maestro
 
 
-class Airdrop_Control:
+class AirdropControl:
     """
     Class to control the air drop functions
 
