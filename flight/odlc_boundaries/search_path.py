@@ -96,6 +96,8 @@ def generate_search_paths(
     return generated_search_paths
 
 
+# duplicate code disabled for testing function
+# pylint: disable=duplicate-code
 async def run() -> None:
     """
     This function is just a driver to test the goto function and runs through the

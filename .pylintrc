@@ -90,6 +90,7 @@ disable=raw-checker-failed,
         deprecated-pragma,
         use-symbolic-message-instead,
         too-many-public-methods,
+        too-few-public-methods,
         unsubscriptable-object,
         consider-using-enumerate
 

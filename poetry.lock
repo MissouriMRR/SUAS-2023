@@ -509,6 +509,14 @@ pytz = ">=2020.1"
 test = ["hypothesis (>=5.5.3)", "pytest (>=6.0)", "pytest-xdist (>=1.31)"]
 
 [[package]]
+name = "pathfinding"
+version = "1.0.1"
+description = "Pathfinding algorithms (based on Pathfinding.JS)"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pathspec"
 version = "0.10.1"
 description = "Utility library for gitignore style pattern matching of file paths."
@@ -638,6 +646,17 @@ description = "The sip module support for PyQt5"
 category = "main"
 optional = false
 python-versions = ">=3.7"
+
+[[package]]
+name = "pyserial"
+version = "3.5"
+description = "Python Serial Port Extension"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+cp2110 = ["hidapi"]
 
 [[package]]
 name = "pytesseract"
@@ -926,7 +945,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "c5f6c9e30b2ec76c8d727b4a82fed1ff64f241cd5c9eeb37974b66e05e18ba8f"
+content-hash = "460aff5338be95c174c42294e0cb988a68d18e46cc2aae66ccfd2414fe035287"
 
 [metadata.files]
 aiogrpc = [
@@ -1587,6 +1606,10 @@ pandas = [
     {file = "pandas-1.5.3-cp39-cp39-win_amd64.whl", hash = "sha256:dfd681c5dc216037e0b0a2c821f5ed99ba9f03ebcf119c7dac0e9a7b960b9ec9"},
     {file = "pandas-1.5.3.tar.gz", hash = "sha256:74a3fd7e5a7ec052f183273dc7b0acd3a863edf7520f5d3a1765c04ffdb3b0b1"},
 ]
+pathfinding = [
+    {file = "pathfinding-1.0.1-py3-none-any.whl", hash = "sha256:911a5f8b8fbbdb8c4c8b804501b3a4107595d07663f496f7f3bd9ec87513196a"},
+    {file = "pathfinding-1.0.1.tar.gz", hash = "sha256:e735f91173da99b3e0963c315984d5cd616563998de9f58706b0092930fb0675"},
+]
 pathspec = [
     {file = "pathspec-0.10.1-py3-none-any.whl", hash = "sha256:46846318467efc4556ccfd27816e004270a9eeeeb4d062ce5e6fc7a87c573f93"},
     {file = "pathspec-0.10.1.tar.gz", hash = "sha256:7ace6161b621d31e7902eb6b5ae148d12cfd23f4a249b9ffb6b9fee12084323d"},
@@ -1766,6 +1789,10 @@ pyqt5-sip = [
     {file = "PyQt5_sip-12.11.1-cp39-cp39-win32.whl", hash = "sha256:5c152878443c3e951d5db7df53509d444708dc06a121c267b548146be06b87f8"},
     {file = "PyQt5_sip-12.11.1-cp39-cp39-win_amd64.whl", hash = "sha256:bd935cc46dfdbb89c21042c1db2e46a71f25693af57272f146d6d9418e2934f1"},
     {file = "PyQt5_sip-12.11.1.tar.gz", hash = "sha256:97d3fbda0f61edb1be6529ec2d5c7202ae83aee4353e4b264a159f8c9ada4369"},
+]
+pyserial = [
+    {file = "pyserial-3.5-py2.py3-none-any.whl", hash = "sha256:c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0"},
+    {file = "pyserial-3.5.tar.gz", hash = "sha256:3c77e014170dfffbd816e6ffc205e9842efb10be9f58ec16d3e8675b4925cddb"},
 ]
 pytesseract = [
     {file = "pytesseract-0.3.10-py3-none-any.whl", hash = "sha256:8f22cc98f765bf13517ead0c70effedb46c153540d25783e04014f28b55a5fc6"},

@@ -4,10 +4,14 @@ for moving the drone to a certain waypoint and stopping there for 15 secs
 """
 
 import asyncio
-from mavsdk import System
 import logging
 
+from mavsdk import System
 
+
+# duplicate code disabled since we may want different functionality
+# for waypoints/odlcs search points
+# pylint: disable=duplicate-code
 async def move_to(
     drone: System, latitude: float, longitude: float, altitude: float, fast_param: float
 ) -> None:
@@ -28,8 +32,8 @@ async def move_to(
         a float contatining the requested altitude to go to (in feet)
     fast_param: float
         a float that determines if the drone will take less time checking its precise location
-        before moving on to another waypoint. If its 1, it will move at normal speed, if its less than 1(0.83),
-        it will be faster.
+        before moving on to another waypoint. If its 1, it will move at normal speed,
+        if its less than 1(0.83), it will be faster.
     """
 
     # converts feet into meters
@@ -62,7 +66,8 @@ async def move_to(
             ):
                 location_reached = True
                 logging.info("arrived")
-                # sleeps for 15 seconds to give substantial time for the airdrop, can be changed later.
+                # sleeps for 15 seconds to give substantial time for the airdrop,
+                # can be changed later.
                 await asyncio.sleep(15)
                 break
 
