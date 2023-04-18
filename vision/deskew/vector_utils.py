@@ -2,13 +2,12 @@
 
 import numpy as np
 from scipy.spatial.transform import Rotation
-from nptyping import Float64
 
 from vision.common.constants import Point, Vector, SENSOR_WIDTH, SENSOR_HEIGHT, ROTATION_OFFSET
 
 
-# Vector pointing toward the +X axis, represents the camera's forward direction when the rotation
-#   on all axes is 0
+# Vector pointing toward the +X axis, represents the camera's forward direction when the
+#   rotation on all axes is 0
 IHAT: Vector = np.array([1, 0, 0], dtype=np.float64)
 
 
@@ -26,13 +25,13 @@ def pixel_intersect(
     Parameters
     ----------
     pixel : tuple[int, int]
-        The coordinates of the pixel in [Y, X] form
+        The location of the pixel in [X, Y] form
     image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by image.shape when image is a numpy image array)
     focal_length : float
-        The camera's focal length
+        The camera's focal length in millimeters
     rotation_deg : list[float]
-        The [roll, pitch, yaw] rotation in degrees
+        The [roll, pitch, yaw] rotation of the drone in degrees
     height : float
         The height that the image was taken at. The units of the output will be the units of the
         input.
@@ -40,19 +39,19 @@ def pixel_intersect(
     Returns
     -------
     intersect : Point | None
-        The coordinates [X,Y] where the pixel's vector intersects with the ground.
+        The coordinates [X,Y] where the pixel's vector intersects with the ground. Units
+            are the same as `height`
         Returns None if there is no intersect.
     """
 
     # Create the normalized vector representing the direction of the given pixel
     vector: Vector = pixel_vector(pixel, image_shape, focal_length)
 
-    rotation_rad = np.deg2rad(rotation_deg).tolist()
-
-    vector = euler_rotate(vector, rotation_rad)
-
     # Apply the constant rotation offset
-    vector = euler_rotate(vector, ROTATION_OFFSET)
+    vector = rotate_degrees(vector, ROTATION_OFFSET)
+
+    # Apply the drone rotation
+    vector = rotate_degrees(vector, rotation_deg)
 
     intersect: Point | None = plane_collision(vector, height)
 
@@ -61,55 +60,57 @@ def pixel_intersect(
 
 def plane_collision(ray_direction: Vector, height: float) -> Point | None:
     """
-    Returns the point where a ray intersects the XY plane
+    Returns the point where a ray intersects the XY plane. North is +X
     Returns None if there is no intersect.
 
     Parameters
     ----------
     ray_direction : Vector
-        XYZ coordinates that represent the direction a ray faces from (0, 0, 0)
+        XYZ coordinates that represent the direction a ray faces
     height : float
         The Z coordinate for the starting height of the ray; can be any units
 
     Returns
     -------
     intersect : Point | None
-        The ray's intersection with the plane in [X,Y] format
+        The ray's intersection with the plane in [X,Y] format. Units are the same as
+        `height`
         Returns None if there is no intersect.
-
     """
-    # Find the "time" at which the line intersects the plane
-    # Line is defined as ray_direction * time + origin.
-    # Origin is the point at X, Y, Z = (0, 0, height)
 
-    intersect: Point | None = None
+    # Find the "time" at which the line intersects the plane.
+    # Line is defined as ray_direction * time + vertex. Vertex is the point at
+    #   X, Y, Z = (0, 0, height)
+    time: float = -height / ray_direction[2].item()
 
-    time: Float64 = -height / ray_direction[2]
-
-    # Checks if the ray intersects with the plane
+    # Checks if the ray intersects with the plane - negative `time` means the intersection
+    #   is behind the camera
     if np.isinf(time) or np.isnan(time) or time < 0:
-        return intersect
+        return None
 
-    intersect = ray_direction[:2] * time
+    intersect: Point = ray_direction[:2] * time
 
     return intersect
 
 
 def pixel_vector(
-    pixel: tuple[int, int], image_shape: tuple[int, int, int] | tuple[int, int], focal_length: float
+    pixel: tuple[int, int],
+    image_shape: tuple[int, int, int] | tuple[int, int],
+    focal_length: float,
 ) -> Vector:
     """
     Generates a vector representing the given pixel.
-    Pixels are in row-major form [Y, X] to match numpy indexing.
+    Pixels are in row-major form [X, Y]
 
     Parameters
     ----------
     pixel : tuple[int, int]
-        The coordinates of the pixel in [Y, X] form
+        The pixel location in [X, Y] form
     image_shape : tuple[int, int, int] | tuple[int, int]
         The shape of the image (returned by image.shape when image is a numpy image array)
     focal_length : float
-        The camera's focal length - used to generate the camera's fields of view
+        The camera's focal length in millimeters - used to generate the camera's
+        fields of view
 
     Returns
     -------
@@ -122,10 +123,12 @@ def pixel_vector(
     fov_v: float
     fov_h, fov_v = focal_length_to_fovs(focal_length)
 
-    return camera_vector(
-        pixel_angle(fov_h, pixel[1] / image_shape[1]),
-        pixel_angle(fov_v, pixel[0] / image_shape[0]),
+    vector: Vector = camera_vector(
+        pixel_angle(fov_h, pixel[0] / image_shape[1]),
+        pixel_angle(fov_v, pixel[1] / image_shape[0]),
     )
+
+    return vector
 
 
 def pixel_angle(fov: float, ratio: float) -> float:
@@ -169,6 +172,7 @@ def focal_length_to_fovs(focal_length: float) -> tuple[float, float]:
         The fields of view in radians
         Format is [horizontal, vertical]
     """
+
     return get_fov(focal_length, SENSOR_WIDTH), get_fov(focal_length, SENSOR_HEIGHT)
 
 
@@ -215,13 +219,15 @@ def camera_vector(h_angle: float, v_angle: float) -> Vector:
     # Calculate the vertical rotation needed for the final vector to have the desired direction
     edge: float = edge_angle(v_angle, h_angle)
 
-    return euler_rotate(IHAT, [0, edge, -h_angle])
+    vector: Vector = rotate_radians(IHAT, [0, edge, -h_angle])
+
+    return vector
 
 
 def edge_angle(v_angle: float, h_angle: float) -> float:
     """
-    Finds the angle such that rotating by edge_angle on the Y axis then rotating by h_angle on
-    the Z axis gives a vector an angle v_angle with the Y axis
+    Finds the angle in radians such that rotating by edge_angle on the Y axis then
+    rotating by h_angle on the Z axis gives a vector an angle v_angle with the Y axis
 
     Can be derived using a square pyramid of height 1
 
@@ -235,15 +241,15 @@ def edge_angle(v_angle: float, h_angle: float) -> float:
     Returns
     -------
     edge_angle : float
-        The angle to rotate vertically
+        The angle in radians to rotate vertically
     """
 
     return np.arctan(np.tan(v_angle) * np.cos(h_angle))
 
 
-def euler_rotate(vector: Vector, rotation_rad: list[float]) -> Vector:
+def rotate_degrees(vector: Vector, rotation_deg: list[float]) -> Vector:
     """
-    Rotates a vector based on a given roll, pitch, and yaw.
+    Rotates a vector based on a given roll, pitch, and yaw in degrees.
 
     Follows the MAVSDK.EulerAngle convention - positive roll is banking to the right, positive
     pitch is pitching nose up, positive yaw is clock-wise seen from above.
@@ -253,7 +259,32 @@ def euler_rotate(vector: Vector, rotation_rad: list[float]) -> Vector:
     vector: Vector
         A vector represented by an XYZ coordinate that will be rotated
     rotation_deg: list[float]
-        The [roll, pitch, yaw] rotation in radians
+        The [roll, pitch, yaw] in degrees to rotate
+
+    Returns
+    -------
+    rotated_vector : Vector
+        The vector which has been rotated
+    """
+
+    rotation_rad: list[float] = np.deg2rad(rotation_deg).tolist()
+
+    return rotate_radians(vector, rotation_rad)
+
+
+def rotate_radians(vector: Vector, rotation_rad: list[float]) -> Vector:
+    """
+    Rotates a vector based on a given roll, pitch, and yaw in radians.
+
+    Follows the MAVSDK.EulerAngle convention - positive roll is banking to the right, positive
+    pitch is pitching nose up, positive yaw is clock-wise seen from above.
+
+    Parameters
+    ----------
+    vector: Vector
+        A vector represented by an XYZ coordinate that will be rotated
+    rotation_rad: list[float]
+        The [roll, pitch, yaw] in radians to rotate
 
     Returns
     -------
