@@ -35,6 +35,8 @@ seaborn = "^0.12.2"
 gitpython = "^3.1.31"
 setuptools = "^67.4.0"
 geopy = "^2.3.0"
+pyserial = "^3.5"
+pathfinding = "^1.0.1"
 
 [tool.poetry.dev-dependencies]
 black = "^21.12b0"

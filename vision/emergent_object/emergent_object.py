@@ -120,6 +120,8 @@ def detect_emergent_object(image: Image, model: Callable[[Image], Any]) -> list[
     return boxes
 
 
+# duplicate code disabled for main
+# pylint: disable=duplicate-code
 if __name__ == "__main__":
     import sys
 

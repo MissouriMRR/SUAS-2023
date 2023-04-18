@@ -2,10 +2,6 @@
 Defines the CellMap class and has some basic tests at the bottom of the file.
 """
 
-# pylint: disable=C0200
-# NOTE: removes "consider using enumerate" error
-
-
 from flight.search.cell import Cell
 from flight.search.helper import get_bounds
 
