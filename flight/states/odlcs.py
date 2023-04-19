@@ -2,11 +2,13 @@
 
 from mavsdk import System
 from flight.states.state import State
-from flight.states.airdrop import AirDrop
+from flight.maestro.air_drop import AirDrop
 from flight.odlc_boundaries.execute import move_to
-from mavsdk.camera import Mode
 import logging
 import json
+import time
+from libsonyapi.camera import Camera
+from libsonyapi.actions import Actions
 
 
 class ODLC(State):
@@ -18,6 +20,43 @@ class ODLC(State):
     run(drone: System) -> AirDrop
         Run ODLC flight algorithm and pass to next state
     """
+
+    async def picture_gps(self, drone) -> None:
+        take_photos: bool = True
+        pic: int =1
+        info: dict = {}
+        while take_photos:
+            
+            camera.do(Actions.actTakePicture)
+            if 100 > pic % 10 > 9:
+                name = "DSC000" + pic + ".jpg"
+            else:
+                name = "DSC0000" + pic + ".jpg"
+
+            async for position in drone.telemetry.position():
+            # continuously checks current latitude, longitude and altitude of the drone
+                drone_lat: float = position.latitude_deg
+                drone_long: float = position.longitude_deg
+                drone_alt: float = position.relative_altitude_m
+
+            point: dict = {name : {"focal_length": 14,
+                                  "rotation_deg": [drone.offboard.Attitude.roll_deg, drone.offboard.Attitude.pitch_deg, drone.offboard.Attitude.yaw_deg],
+                                  "drone_coordinates": [drone_lat, drone_long],
+                                  "altitude_f": drone_alt
+                                   }}
+        
+            info.update(point)
+        
+            with open('camera.json', 'w') as camera:
+                json.dump(info, camera)
+
+            with open('state.txt', 'r') as state:
+                if state.read() == "true":
+                    take_photos = False
+            time.sleep(.5)
+            pic = pic + 1
+
+
 
     async def airdrop_count(self) -> int:
         """
@@ -54,7 +93,7 @@ class ODLC(State):
         """
 
         # Camera gets ready to take photos
-        await drone.camera.set_mode(Mode.PHOTO)
+        camera = Camera()
         logging.info("Camera changed to Photo mode")
 
         # These waypoint values are all that are needed to traverse the whole odlc drop location because it is a small rectangle
@@ -86,7 +125,7 @@ class ODLC(State):
                     # and that means with the shortest length of photos being taken depending on rotation would be 90 feet and we want to take multiple photos
                     # so we would need a minimum of 4 photos to cover the whole boundary and we want multiple, so using .5 seconds between each photo allows
                     # it to take a minimum of 12 photos of the odlc boundary which will capture the whole area
-                    await drone.camera.start_photo_interval(0.5)
+                    await self.picture_gps()
                     logging.info("Moving to the center of the east boundary")
                 elif point == 2:
                     logging.info("Moving to the north west corner")
@@ -102,5 +141,4 @@ class ODLC(State):
         with open("flight/data/state.txt", "w") as state:
             state.write("true")
         # stops taking photos
-        await drone.camera.stop_photo_interval()
         return AirDrop(self.state_settings)
