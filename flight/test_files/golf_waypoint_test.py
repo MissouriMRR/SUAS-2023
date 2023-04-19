@@ -12,6 +12,9 @@ from mavsdk import System
 
 from flight.waypoint import goto
 
+SIM_ADDR: str = "udp://:14540"
+CON_ADDR: str = "serial:///dev/ttyUSB0:921600"
+
 
 # duplicate code disabled for testing function
 # pylint: disable=duplicate-code
@@ -24,17 +27,17 @@ async def run() -> None:
 
     Notes
     -----
-    Currently has 3 values in each the Lats and Longs array and code is looped
+    Currently has 4 values in each the Lats and Longs array and code is looped
     and will stay in that loop until the drone has reached each of locations
     specified by the latitude and longitude and continues to run until forced disconnect
     """
     # Put all latitudes, longitudes and altitudes into seperate arrays
-    lats: List[float] = [37.9008502, 37.9008129, 37.8964543]
-    longs: List[float] = [-91.6615228, -91.6615335, -91.6570381]
+    lats: List[float] = [37.948658, 37.948200, 37.948358, 37.948800]
+    longs: List[float] = [-91.784431, -91.783406, -91.783253, -91.784169]
 
     # create a drone object
     drone: System = System()
-    await drone.connect(system_address="udp://:14540")
+    await drone.connect(system_address=SIM_ADDR)
 
     # initilize drone configurations
     await drone.action.set_takeoff_altitude(12)
