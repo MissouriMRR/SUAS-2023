@@ -6,6 +6,8 @@
 import asyncio
 import logging
 
+from typing import TypeVar
+
 from mavsdk import System
 
 import flight.config
@@ -14,6 +16,7 @@ from flight.state_settings import StateSettings
 from flight.waypoint.goto import move_to
 from flight.extract_gps import extract_gps, Waypoint, GPSData
 
+StateType = TypeVar("StateType", bound = 'State')
 
 class State:
     """
@@ -47,7 +50,7 @@ class State:
 
     async def run(
         self, drone: System
-    ) -> Start | PreProcess | Takeoff | Waypoints | ODLC | AirDrop | Land | Final | None:
+    ) -> StateType | None:
         """
         Flight mission code for each state
 
@@ -104,7 +107,7 @@ class AirDrop(State):
         the payloads onto corresponding standard ODLC
     """
 
-    async def run(self, drone: System) -> Land | ODLC:
+    async def run(self, drone: System) -> StateType:
         """
         Run through the located drop locations and release each payload
 
@@ -200,6 +203,81 @@ class ODLC(State):
         return AirDrop(self.state_settings)
 
 
+class Waypoints(State):
+    """
+    State to run through waypoint flight path
+
+    Methods
+    -------
+    run(drone: System) -> ODLC
+        Process set of waypoints and fly within 25ft of each
+    """
+
+    async def run(self, drone: System) -> ODLC:
+        """
+        Run through list of waypoints & fly within 25ft of each desired point
+
+        Parameters
+        ----------
+        drone : System
+            MAVSDK object for manipulating drone position & attitude
+
+        Returns
+        -------
+        ODLC : State
+            Re-fly the waypoints if we failed to reach a waypoint boundary,
+            or progress to ODLC flight stage
+        """
+        gps_dict: GPSData = extract_gps("flight/data/golf_data.json")
+        waypoints: list[Waypoint] = gps_dict["waypoints"]
+
+        for waypoint in waypoints:
+            # 5/6 is the fast parameter to make it less accurate to within 3.6 feet
+            # so it can fly through the waypoints faster
+            await move_to(drone, waypoint[0], waypoint[1], waypoint[2], 5 / 6)
+
+        return ODLC(self.state_settings)
+
+class Takeoff(State):
+    """
+    Runs takeoff procedure to lift the drone to preset altitude
+
+    Methods
+    -------
+    run(drone: System) -> Waypoints
+        Lift the drone from takeoff location and begin movement to first waypoint
+    """
+
+    async def run(self, drone: System) -> Waypoints:
+        """
+        Run takeoff procedure to move drone upwards using offboard or action functions
+
+        Parameters
+        ----------
+        drone : System
+            MAVSDK object to manipulate drone position and attitude
+
+        Returns
+        -------
+        Waypoints : State
+            Next state to fly waypoint path
+        """
+        # Initialize altitude (convert feet to meters)
+        await drone.action.set_takeoff_altitude(flight.config.TAKEOFF_ALT / 3.2808)
+
+        # Arm drone and takeoff
+        logging.info("Arming Drone")
+        await drone.action.arm()
+
+        logging.info("Taking off")
+        await drone.action.takeoff()
+
+        # Wait for drone to take off
+        await asyncio.sleep(2)
+
+        # Go to Waypoint State
+        return Waypoints(self.state_settings)
+
 class PreProcess(State):
     """
     State to generate flight paths for competition
@@ -253,80 +331,3 @@ class Start(State):
         """
         logging.debug("Start state machine")
         return PreProcess(self.state_settings)
-
-
-class Takeoff(State):
-    """
-    Runs takeoff procedure to lift the drone to preset altitude
-
-    Methods
-    -------
-    run(drone: System) -> Waypoints
-        Lift the drone from takeoff location and begin movement to first waypoint
-    """
-
-    async def run(self, drone: System) -> Waypoints:
-        """
-        Run takeoff procedure to move drone upwards using offboard or action functions
-
-        Parameters
-        ----------
-        drone : System
-            MAVSDK object to manipulate drone position and attitude
-
-        Returns
-        -------
-        Waypoints : State
-            Next state to fly waypoint path
-        """
-        # Initialize altitude (convert feet to meters)
-        await drone.action.set_takeoff_altitude(flight.config.TAKEOFF_ALT / 3.2808)
-
-        # Arm drone and takeoff
-        logging.info("Arming Drone")
-        await drone.action.arm()
-
-        logging.info("Taking off")
-        await drone.action.takeoff()
-
-        # Wait for drone to take off
-        await asyncio.sleep(2)
-
-        # Go to Waypoint State
-        return Waypoints(self.state_settings)
-
-
-class Waypoints(State):
-    """
-    State to run through waypoint flight path
-
-    Methods
-    -------
-    run(drone: System) -> ODLC
-        Process set of waypoints and fly within 25ft of each
-    """
-
-    async def run(self, drone: System) -> ODLC:
-        """
-        Run through list of waypoints & fly within 25ft of each desired point
-
-        Parameters
-        ----------
-        drone : System
-            MAVSDK object for manipulating drone position & attitude
-
-        Returns
-        -------
-        ODLC : State
-            Re-fly the waypoints if we failed to reach a waypoint boundary,
-            or progress to ODLC flight stage
-        """
-        gps_dict: GPSData = extract_gps("flight/data/waypoint_data.json")
-        waypoints: list[Waypoint] = gps_dict["waypoints"]
-
-        for waypoint in waypoints:
-            # 5/6 is the fast parameter to make it less accurate to within 3.6 feet
-            # so it can fly through the waypoints faster
-            await move_to(drone, waypoint[0], waypoint[1], waypoint[2], 5 / 6)
-
-        return ODLC(self.state_settings)
