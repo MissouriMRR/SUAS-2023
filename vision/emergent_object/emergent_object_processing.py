@@ -64,6 +64,9 @@ def pick_emergent_object(humanoids: list[BoundingBox], odlcs: ODLC_Dict) -> Boun
         # Get the distance to the closest emergent object that's not in the same image
         min_humanoid_distance: float = calc_emerg_obj_min_dist(humanoids, subject_humanoid)
 
+        # invert the humanoid distance to prioritize closest humanoids
+        min_humanoid_distance *= -1
+        
         evaluation: tuple[float, float, float, float] = (
             min_odlc_distance,
             min_humanoid_distance,
@@ -142,9 +145,6 @@ def calc_emerg_obj_min_dist(humanoids: list[BoundingBox], subject_humanoid: Boun
 
             if humanoid_distance < min_humanoid_distance:
                 min_humanoid_distance = humanoid_distance
-
-    # invert the humanoid distance to prioritize closest humanoids
-    min_humanoid_distance *= -1
 
     return min_humanoid_distance
 
