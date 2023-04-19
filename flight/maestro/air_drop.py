@@ -35,7 +35,7 @@ class AirdropControl:
         """
         self.board = Maestro(connection_address, device_number)
 
-    def drop_bottle(self, bottle: int) -> None:
+    async def drop_bottle(self, bottle: int) -> None:
         """
         Drops the bottle from the drone
 
@@ -47,7 +47,7 @@ class AirdropControl:
         # I'm going to assume that we want to open the bottle by setting the servo full right
         self.board.set_target(bottle, 8000)
 
-    def close_servo(self, bottle: int) -> None:
+    async def close_servo(self, bottle: int) -> None:
         """
         Closes the servo after bottle has been dropped
 

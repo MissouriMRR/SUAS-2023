@@ -6,13 +6,15 @@
 import asyncio
 import logging
 
-from mavsdk import System
+from math import sqrt
+from mavsdk import System, telemetry
 
 import flight.config
 
 from flight.state_settings import StateSettings
 from flight.waypoint.goto import move_to
 from flight.extract_gps import extract_gps, Waypoint, GPSData
+from flight.maestro.air_drop import AirdropControl
 
 
 class State:
@@ -102,6 +104,9 @@ class AirDrop(State):
     run(drone: System) -> Land | ODLC
         Maneuver drone to each drop location and release
         the payloads onto corresponding standard ODLC
+
+    get_distance(x1: float, y1: float, x2: float, y2: float) -> float
+        Gets the distance between two points
     """
 
     async def run(self, drone: System) -> Land | ODLC:
@@ -118,7 +123,76 @@ class AirDrop(State):
         Land | ODLC : State
             Progress to land the drone or re-scan the ODLC search area if an object was missed
         """
+        # TODO: Stop this
+        # Using sample locations for now
+        bottle_locations = {
+            1: {"latitude": 37.901096681, "longitude": -91.6658804},
+            2: {"latitude": 37.9009907274, "longitude": -91.66255949},
+            3: {"latitude": 37.89915707, "longitude": -91.663931618},
+            4: {"latitude": 37.89783936, "longitude": -91.661258865},
+            5: {"latitude": 37.900769059, "longitude": -91.665224920},
+        }
+
+        # setup airdrop
+        airdrop = AirdropControl()
+
+        # For the amount of bottles there are...
+        for num in range(len(bottle_locations)):
+            logging.info("Bottle drop #", num + 1, "started")
+            # Set initial value for lowest distance so we can compare
+            lowest_distance: float = 100000
+            bottle_num: int
+            # Get the drones current position
+            async for position in drone.telemetry.position():
+                current_location: telemetry.Position = position
+                break
+            # For each bottle location, get the distance from the drone
+            for location in bottle_locations.values():
+                distance: float = await self.get_distance(
+                    current_location.latitude_deg,
+                    current_location.longitude_deg,
+                    location["latitude"],
+                    location["longitude"],
+                )
+                if distance < lowest_distance:
+                    lowest_distance = distance
+                    bottle_loc: dict[str, float] = location
+                    bottle_num = [i for i in bottle_locations if bottle_locations[i] == location][0]
+            logging.info(
+                f'Nearest bottle: #{bottle_num} at ({bottle_loc["latitude"]}, {bottle_loc["longitude"]})'
+            )
+            # Move to the nearest bottle
+            await move_to(drone, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
+            await airdrop.drop_bottle(bottle_num)
+            await asyncio.sleep(
+                5
+            )  # This will need to be changed based on how long it takes to drop the bottle
+            # Remove the bottle location from the dictionary
+            bottle_locations.pop(bottle_num)
+        logging.info("-- Airdrop done!")
         return Land(self.state_settings)
+
+    async def get_distance(self, x_1: float, y_1: float, x_2: float, y_2: float) -> float:
+        """
+        Gets the distance between two points
+
+        Parameters
+        ----------
+        x_1 : float
+            The x coordinate of the first point
+        y_1 : float
+            The y coordinate of the first point
+        x_2 : float
+            The x coordinate of the second point
+        y_2 : float
+            The y coordinate of the second point
+
+        Returns
+        -------
+        float
+            The distance between the two points
+        """
+        return sqrt((x_2 - x_1) ** 2 + (y_2 - y_1) ** 2)
 
 
 class Final(State):
