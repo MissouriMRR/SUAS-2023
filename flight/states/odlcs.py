@@ -23,7 +23,7 @@ class ODLC(State):
     async def picture_gps(self, drone: System) -> None:
         take_photos: bool = True
         pic: int = 1
-        info: dict[str,dict[str,int|list[int]]] = {}
+        info: dict[str, dict[str, int | list[int]]] = {}
         while take_photos:
             camera.do(Actions.actTakePicture)
             if 100 > pic % 10 > 9:
@@ -37,21 +37,19 @@ class ODLC(State):
                 drone_long: float = position.longitude_deg
                 drone_alt: float = position.relative_altitude_m
 
-            point: dict[str,dict[str,int|list[int]]] = {
-                name : {
-                "focal_length": 14,
-                "rotation_deg": [
-                drone.offboard.Attitude.roll_deg, 
-                drone.offboard.Attitude.pitch_deg, 
-                drone.offboard.Attitude.yaw_deg
-                ],
-                "drone_coordinates": [
-                drone_lat, 
-                drone_long
-                ],
-                "altitude_f": drone_alt
-                }}
-        
+            point: dict[str, dict[str, int | list[int]]] = {
+                name: {
+                    "focal_length": 14,
+                    "rotation_deg": [
+                        drone.offboard.Attitude.roll_deg,
+                        drone.offboard.Attitude.pitch_deg,
+                        drone.offboard.Attitude.yaw_deg,
+                    ],
+                    "drone_coordinates": [drone_lat, drone_long],
+                    "altitude_f": drone_alt,
+                }
+            }
+
             info.update(point)
 
             with open("camera.json", "w") as camera:
