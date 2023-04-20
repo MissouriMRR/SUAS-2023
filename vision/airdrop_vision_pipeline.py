@@ -40,8 +40,10 @@ def airdrop_pipeline(camera_data_path: str, state_path: str, output_path: str) -
     # List of filenames for images already completed to prevent repeating work
     completed_images: list[str] = []
 
-
+    # The data from the previous run
     prev_data: list[BoundingBox] = []
+    
+    # True only for the first time an image is processed - prevents errors from prev_data 
     first_detection: bool = True
     
     # Wait for and process unfinished images until no more images are being taken
@@ -136,6 +138,7 @@ def create_judge_dict(judges: list[BoundingBox]) -> consts.ODLC_Dict:
     """
 
     judge_dict: consts.ODLC_Dict = {}
+    
     for i, judge in enumerate(judges):
         judge_dict[str(i)] = {
             "latitude": judge.get_attribute("latitude"),
