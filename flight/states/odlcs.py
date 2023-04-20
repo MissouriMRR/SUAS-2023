@@ -23,7 +23,10 @@ class ODLC(State):
     async def picture_gps(self, drone: System) -> None:
         take_photos: bool = True
         pic: int = 1
-        info: dict[str,dict[str,int|list[int]]] = {}
+        info: dict[str,dict[str,int|list[int|float]|float]] = {}
+        #Camera gets ready to take photos
+        camera: Camera = Camera()
+        logging.info("Camera initialized and starting to take photos")
         while take_photos:
             camera.do(Actions.actTakePicture)
             if 100 > pic % 10 > 9:
@@ -37,7 +40,7 @@ class ODLC(State):
                 drone_long: float = position.longitude_deg
                 drone_alt: float = position.relative_altitude_m
 
-            point: dict[str,dict[str,int|list[int]]] = {
+            point: dict[str,dict[str,int|list[int|float]|float]] = {
                 name : {
                 "focal_length": 14,
                 "rotation_deg": [
@@ -96,10 +99,6 @@ class ODLC(State):
         AirDrop : State
             The next state in the state machine, AirDrop for the payloads
         """
-
-        # Camera gets ready to take photos
-        camera: Camera = Camera()
-        logging.info("Camera changed to Photo mode")
 
         # These waypoint values are all that are needed to traverse the whole odlc drop location because it is a small rectangle
         # The first waypoint is the midpoint of the left side of the rectangle(one of the short sides), the second point is the
