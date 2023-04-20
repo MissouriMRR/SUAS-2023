@@ -22,10 +22,9 @@ class ODLC(State):
 
     async def picture_gps(self, drone: System) -> None:
         take_photos: bool = True
-        pic: int =1
+        pic: int = 1
         info: dict[str,dict[str,int|list[int]]] = {}
         while take_photos:
-            
             camera.do(Actions.actTakePicture)
             if 100 > pic % 10 > 9:
                 name = f"DSC000{pic}.jpg"
@@ -33,29 +32,36 @@ class ODLC(State):
                 name = f"DSC0000{pic}.jpg"
 
             async for position in drone.telemetry.position():
-            # continuously checks current latitude, longitude and altitude of the drone
+                # continuously checks current latitude, longitude and altitude of the drone
                 drone_lat: float = position.latitude_deg
                 drone_long: float = position.longitude_deg
                 drone_alt: float = position.relative_altitude_m
 
-            point: dict[str,dict[str,int|list[int]]] = {name : {"focal_length": 14,
-                "rotation_deg": [drone.offboard.Attitude.roll_deg, drone.offboard.Attitude.pitch_deg, drone.offboard.Attitude.yaw_deg],
-                "drone_coordinates": [drone_lat, drone_long],
+            point: dict[str,dict[str,int|list[int]]] = {
+                name : {
+                "focal_length": 14,
+                "rotation_deg": [
+                drone.offboard.Attitude.roll_deg, 
+                drone.offboard.Attitude.pitch_deg, 
+                drone.offboard.Attitude.yaw_deg
+                ],
+                "drone_coordinates": [
+                drone_lat, 
+                drone_long
+                ],
                 "altitude_f": drone_alt
                 }}
         
             info.update(point)
-        
-            with open('camera.json', 'w') as camera:
+
+            with open("camera.json", "w") as camera:
                 json.dump(info, camera)
 
-            with open('state.txt', 'r') as state:
+            with open("state.txt", "r") as state:
                 if state.read() == "true":
                     take_photos = False
-            time.sleep(.5)
+            time.sleep(0.5)
             pic = pic + 1
-
-
 
     async def airdrop_count(self) -> int:
         """
