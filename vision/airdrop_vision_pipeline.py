@@ -42,10 +42,10 @@ def airdrop_pipeline(camera_data_path: str, state_path: str, output_path: str) -
 
     # The data from the previous run
     prev_data: list[BoundingBox] = []
-    
-    # True only for the first time an image is processed - prevents errors from prev_data 
+
+    # True only for the first time an image is processed - prevents errors from prev_data
     first_detection: bool = True
-    
+
     # Wait for and process unfinished images until no more images are being taken
     all_images_taken: bool = False
     while not all_images_taken:
@@ -76,7 +76,7 @@ def airdrop_pipeline(camera_data_path: str, state_path: str, output_path: str) -
                 current_data = emg_obj.find_humanoids(
                     image, emg_model, camera_parameters, image_path
                 )
-                
+
                 if not first_detection:
                     judges: list[BoundingBox] = compare_data(prev_data, current_data)
 
@@ -85,7 +85,7 @@ def airdrop_pipeline(camera_data_path: str, state_path: str, output_path: str) -
                     pipe_utils.output_odlc_json(output_path, judge_dict)
 
                 prev_data = current_data
-                
+
                 first_detection = False
 
 
@@ -138,7 +138,7 @@ def create_judge_dict(judges: list[BoundingBox]) -> consts.ODLC_Dict:
     """
 
     judge_dict: consts.ODLC_Dict = {}
-    
+
     for i, judge in enumerate(judges):
         judge_dict[str(i)] = {
             "latitude": judge.get_attribute("latitude"),

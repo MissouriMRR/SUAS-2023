@@ -66,7 +66,7 @@ def pick_emergent_object(humanoids: list[BoundingBox], odlcs: ODLC_Dict) -> Boun
 
         # invert the humanoid distance to prioritize closest humanoids
         min_humanoid_distance *= -1
-        
+
         evaluation: tuple[float, float, float, float] = (
             min_odlc_distance,
             min_humanoid_distance,
