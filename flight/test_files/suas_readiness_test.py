@@ -10,11 +10,12 @@ from typing import List
 
 from mavsdk import System
 
-#sys.path.append("././SUAS-2023/flight")
-#from flight.waypoint.goto import move_to
+# sys.path.append("././SUAS-2023/flight")
+# from flight.waypoint.goto import move_to
 
 SIM_ADDR: str = "udp://:14540"
 CON_ADDR: str = "serial:///dev/ttyUSB0:921600"
+
 
 # Python imports made me angry so I just copied move_to here
 async def move_to(
@@ -93,7 +94,7 @@ async def run() -> None:
 
     lats: list[float] = [37.94893290, 37.947899284]
     longs: list[float] = [-91.784668343, -91.782420970]
-    #rando_waypoint: tuple[float, float] = ()
+    # rando_waypoint: tuple[float, float] = ()
     # create a drone object
     drone: System = System()
     await drone.connect(system_address=SIM_ADDR)
@@ -115,12 +116,11 @@ async def run() -> None:
             logging.info("Global position estimate ok")
             break
 
-    
     print("Fetching amsl altitude at home location....")
     async for terrain_info in drone.telemetry.home():
         absolute_altitude = terrain_info.absolute_altitude_m
         break
-    
+
     logging.info("-- Arming")
     await drone.action.arm()
 
@@ -131,12 +131,13 @@ async def run() -> None:
     # wait for drone to take off
     await asyncio.sleep(15)
 
-    #Fly to first waypoint
+    # Fly to first waypoint
     print("Going to first waypoint")
-    await drone.action.goto_location(start_waypoint[0], start_waypoint[1], 25+absolute_altitude, 0)
+    await drone.action.goto_location(
+        start_waypoint[0], start_waypoint[1], 25 + absolute_altitude, 0
+    )
     await asyncio.sleep(5)
     print("Reached first waypoint")
-
 
     # Begin 12 mile flight
     print("Starting the line")
@@ -147,7 +148,7 @@ async def run() -> None:
             await move_to(drone, lats[point], longs[point], 75, 0.5)
             print("Reached waypoint")
         print("Iteration:", i)
-        #iteration += 1
+        # iteration += 1
 
     # return home
     logging.info("12 miles accomplished")
