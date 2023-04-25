@@ -60,9 +60,9 @@ def airdrop_pipeline(camera_data_path: str, state_path: str, output_path: str) -
             camera_data_path
         )
 
+        image_path: str
         # Loop through all images in the json - if it hasn't been processed, process it
         for image_path in image_parameters.keys():
-            image_path: str
             if image_path not in completed_images:
                 # Save the image path as completed so it isn't processed again
                 completed_images.append(image_path)
