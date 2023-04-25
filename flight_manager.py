@@ -10,7 +10,6 @@ from communication import Communication
 from flight.flight import flight
 from flight.states import StateEnum
 from flight.state_settings import StateSettings
-import time
 
 
 class FlightManager:
@@ -112,8 +111,8 @@ class FlightManager:
         flight_process.start()
         logging.debug("Flight process with id %d started", flight_process.pid)
 
-        logging.debug(f"Title: {self.state_settings.run_title}")
-        logging.debug(f"Description: {self.state_settings.run_description}")
+        logging.debug("Title: %s", self.state_settings.run_title)
+        logging.debug("Description: %s", self.state_settings.run_description)
 
         time_process: Process = Process(target=flight, name="run_time")
         time_process.start()

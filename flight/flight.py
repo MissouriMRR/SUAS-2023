@@ -1,17 +1,19 @@
 """Initialization Code for Flight State Machine"""
+#pylint: disable-bare-except
 import asyncio
 import logging
+import time
+from multiprocessing import Queue
 from mavsdk import System
 from mavsdk.core import ConnectionState
 import mavsdk
-from multiprocessing import Queue
+
 
 import logger
 from communication import Communication
 from flight import config
 from flight.states import STATES, State, StateEnum
 from flight.state_settings import StateSettings
-import time
 
 SIM_ADDR: str = "udp://:14540"  # Address to connect to drone simulator
 CON_ADDR: str = "serial:///dev/ttyUSB0:921600"  # Address to connect to pixhawk w/ baud rate
@@ -59,7 +61,7 @@ class StateMachine:
         Runs the flight code specific to each state until completion
         """
         while self.current_state:
-            self.current_state = await self.current_state.run(self.drone)  # type: ignore[assignment]
+            self.current_state = await self.current_state.run(self.drone) # type: ignore[assignment]
 
 
 async def log_flight_mode(drone: System) -> None:
@@ -239,7 +241,8 @@ def flight(
 
 def run_time(start: float) -> None:
     """
-    Keeps track of run time since this function has been called and if the time is greater than 28 minutes in seconds it calls for the drone to land
+    Keeps track of run time since this function has been called and if the time
+    is greater than 28 minutes in seconds it calls for the drone to land
 
     Parameters
     ----------
@@ -250,7 +253,8 @@ def run_time(start: float) -> None:
     -------
     None
     """
-    # gets the current time and compares it to the time the statemachine was started and returns the difference
+
+    # find the difference between the current time and the time the state machine started
     start = time.time()
     now = time.time()
     timespan = now - start
@@ -258,4 +262,3 @@ def run_time(start: float) -> None:
         time.sleep(60)
         now = time.time()
         timespan = now - start
-    return
