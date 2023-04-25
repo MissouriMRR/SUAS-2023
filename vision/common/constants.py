@@ -41,7 +41,7 @@ class Location(TypedDict):
 
 # str is the index of the water bottle to drop as a string (because json)
 # Location is the coordinates of the standard object once found
-ODLC_Dict: TypeAlias = dict[str, Location]
+ODLCDict: TypeAlias = dict[str, Location]
 
 
 class CameraParameters(TypedDict):

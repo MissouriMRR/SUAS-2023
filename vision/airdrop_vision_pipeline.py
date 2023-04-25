@@ -15,7 +15,7 @@ import vision.pipeline.emergent_pipeline as emg_obj
 import vision.pipeline.pipeline_utils as pipe_utils
 
 # The furthest a judge can move between images in feet
-MAX_JUDGE_MOVEMENT_F: float = 15
+MAX_JUDGE_MOVEMENT_FT: float = 15
 
 
 def airdrop_pipeline(camera_data_path: str, state_path: str, output_path: str) -> None:
@@ -41,7 +41,7 @@ def airdrop_pipeline(camera_data_path: str, state_path: str, output_path: str) -
     completed_images: list[str] = []
 
     # The data from the previous run
-    prev_data: list[BoundingBox] = []
+    prev_humanoids: list[BoundingBox] = []
 
     # True only for the first time an image is processed - prevents errors from prev_data
     first_detection: bool = True
@@ -62,6 +62,7 @@ def airdrop_pipeline(camera_data_path: str, state_path: str, output_path: str) -
 
         # Loop through all images in the json - if it hasn't been processed, process it
         for image_path in image_parameters.keys():
+            image_path: str
             if image_path not in completed_images:
                 # Save the image path as completed so it isn't processed again
                 completed_images.append(image_path)
@@ -73,33 +74,34 @@ def airdrop_pipeline(camera_data_path: str, state_path: str, output_path: str) -
                 camera_parameters: consts.CameraParameters = image_parameters[image_path]
 
                 # Find potential judges in the image
-                current_data = emg_obj.find_humanoids(
+                current_humanoids = emg_obj.find_humanoids(
                     image, emg_model, camera_parameters, image_path
                 )
 
                 if not first_detection:
-                    judges: list[BoundingBox] = compare_data(prev_data, current_data)
+                    judges: list[BoundingBox] = compare_data(prev_humanoids, current_humanoids)
 
-                    judge_dict: consts.ODLC_Dict = create_judge_dict(judges)
+                    judge_dict: consts.ODLCDict = create_judge_dict(judges)
 
                     pipe_utils.output_odlc_json(output_path, judge_dict)
+                else:
+                    first_detection = False
+                
+                prev_humanoids = current_humanoids
 
-                prev_data = current_data
-
-                first_detection = False
 
 
 def compare_data(
-    prev_data: list[BoundingBox], current_data: list[BoundingBox]
+    prev_humanoids: list[BoundingBox], current_humanoids: list[BoundingBox]
 ) -> list[BoundingBox]:
     """ "
     Compares humanoid detections between two images to filter out false positive detections
 
     Parameters
     ----------
-    prev_data: list[BoundingBox]
+    prev_humanoids: list[BoundingBox]
         The detected humanoids from the previous image being considered
-    current_data: list[BoundingBox]
+    current_humanoids: list[BoundingBox]
         The detected humanoids from the current image
 
     Returns
@@ -109,19 +111,20 @@ def compare_data(
     """
 
     judges: list[BoundingBox] = []
-
-    for current_detection in current_data:
-        min_distance = calc_emerg_obj_min_dist(prev_data, current_detection)
+    
+    current_detection: BoundingBox
+    for current_detection in current_humanoids:
+        min_distance = calc_emerg_obj_min_dist(prev_humanoids, current_detection)
 
         # Ensures that a detection in the current image that was not in the previous image
         #   will be ignored
-        if min_distance < MAX_JUDGE_MOVEMENT_F:
+        if min_distance < MAX_JUDGE_MOVEMENT_FT:
             judges.append(current_detection)
 
     return judges
 
 
-def create_judge_dict(judges: list[BoundingBox]) -> consts.ODLC_Dict:
+def create_judge_dict(judges: list[BoundingBox]) -> consts.ODLCDict:
     """
     Creates an ODLC_Dict object that represents where the judges probably are
 
@@ -137,8 +140,10 @@ def create_judge_dict(judges: list[BoundingBox]) -> consts.ODLC_Dict:
         The keys are indices in string form and are meaningless.
     """
 
-    judge_dict: consts.ODLC_Dict = {}
-
+    judge_dict: consts.ODLCDict = {}
+    
+    i: int
+    judge: BoundingBox
     for i, judge in enumerate(judges):
         judge_dict[str(i)] = {
             "latitude": judge.get_attribute("latitude"),
