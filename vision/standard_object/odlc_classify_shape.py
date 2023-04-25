@@ -177,7 +177,7 @@ def get_child_amt(idx: int, hier: consts.Hierarchy) -> int:
 
     Returns
     -------
-    children : int
+    count : int
         The number of (direct) children that the given contour has
     """
     count: int = 1
@@ -190,7 +190,7 @@ def get_child_amt(idx: int, hier: consts.Hierarchy) -> int:
         curr = hier[0, curr, 0]
         count += 1
 
-    return curr
+    return count
 
 
 def check_concavity(approx: consts.Contour) -> int:
