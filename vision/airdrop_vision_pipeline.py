@@ -86,9 +86,8 @@ def airdrop_pipeline(camera_data_path: str, state_path: str, output_path: str) -
                     pipe_utils.output_odlc_json(output_path, judge_dict)
                 else:
                     first_detection = False
-                
-                prev_humanoids = current_humanoids
 
+                prev_humanoids = current_humanoids
 
 
 def compare_data(
@@ -111,7 +110,7 @@ def compare_data(
     """
 
     judges: list[BoundingBox] = []
-    
+
     current_detection: BoundingBox
     for current_detection in current_humanoids:
         min_distance = calc_emerg_obj_min_dist(prev_humanoids, current_detection)
@@ -141,7 +140,7 @@ def create_judge_dict(judges: list[BoundingBox]) -> consts.ODLCDict:
     """
 
     judge_dict: consts.ODLCDict = {}
-    
+
     i: int
     judge: BoundingBox
     for i, judge in enumerate(judges):
