@@ -255,7 +255,7 @@ def run_time(start: float) -> None:
     start = time.time()
     now = time.time()
     timespan = now - start
-    # 1680 is seconds in seconds and that signals that we are almost out of time
+    # 1680 is 28 minutes in seconds and that signals that we are almost out of time
     # and the drone should start to head back to home and land
     # the sleep 60 makes the code wait a minute before running code
     # so the code isnt running constantly
