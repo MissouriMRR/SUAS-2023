@@ -117,6 +117,9 @@ class FlightManager:
         logging.debug("Title: %s", self.state_settings.run_title)
         logging.debug("Description: %s", self.state_settings.run_description)
 
+        time_process: Process = Process(target=flight, name="run_time")
+        time_process.start()
+
         try:
             while comm_obj.state != StateEnum.FINAL_STATE:
                 # State machine is still running
@@ -125,6 +128,12 @@ class FlightManager:
                     logging.error("Flight process terminated, restarting")
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
+                elif time_process.is_alive() is not True:
+                    # time has reached 28 minutes trying to land drone
+                    comm_obj.state = StateEnum.LAND
+                    flight_process = self.init_flight(flight_args)
+                    flight_process.start()
+
         except KeyboardInterrupt:
             # Ctrl-C was pressed
             logging.info("Ctrl-C Pressed, forcing drone to land")
