@@ -1,13 +1,13 @@
 """Initialization Code for Flight State Machine"""
+# pylint: disable-bare-except
 import asyncio
 import logging
 
+import time
 from multiprocessing import Queue
-
-import mavsdk
-
 from mavsdk import System
 from mavsdk.core import ConnectionState
+import mavsdk
 
 import logger
 
@@ -238,3 +238,28 @@ def flight(
     logger.worker_configurer(log_queue)
     logging.debug("Flight process started")
     asyncio.run(init_and_begin(comm, sim, state_settings))
+
+
+def run_time(start: float) -> None:
+    """
+    Keeps track of run time since this function has been called and if the time
+    is greater than 28 minutes in seconds it calls for the drone to land
+
+    Parameters
+    ----------
+    start: float
+        time in seconds when the drone has started
+    """
+
+    # find the difference between the current time and the time the state machine started
+    start = time.time()
+    now = time.time()
+    timespan = now - start
+    # 1680 is 28 minutes in seconds and that signals that we are almost out of time
+    # and the drone should start to head back to home and land
+    # the sleep 60 makes the code wait a minute before running code
+    # so the code isnt running constantly
+    while timespan < 1680.0:
+        time.sleep(60)
+        now = time.time()
+        timespan = now - start
