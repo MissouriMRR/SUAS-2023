@@ -8,7 +8,7 @@ from multiprocessing.managers import BaseManager
 from logger import init_logger, worker_configurer
 from communication import Communication
 from flight.flight import flight
-from flight.states import StateEnum
+from flight.states import Land, StateEnum
 from flight.state_settings import StateSettings
 
 
@@ -127,7 +127,7 @@ class FlightManager:
                     flight_process.start()
                 elif time_process.is_alive() is not True:
                     # time has reached 28 minutes trying to land drone
-                    comm_obj.state = StateEnum.Land
+                    comm_obj.state = Land
                     flight_process = self.init_flight(flight_args)
                     flight_process.start()
 
