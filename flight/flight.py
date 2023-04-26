@@ -2,31 +2,28 @@
 # pylint: disable-bare-except
 import asyncio
 import logging
+
 import time
 from multiprocessing import Queue
 from mavsdk import System
 from mavsdk.core import ConnectionState
 import mavsdk
 
-
 import logger
+
 from communication import Communication
 from flight import config
 from flight.states import STATES, State, StateEnum
 from flight.state_settings import StateSettings
 
 SIM_ADDR: str = "udp://:14540"  # Address to connect to drone simulator
-CON_ADDR: str = (
-    "serial:///dev/ttyUSB0:921600"  # Address to connect to pixhawk w/ baud rate
-)
+CON_ADDR: str = "serial:///dev/ttyUSB0:921600"  # Address to connect to pixhawk w/ baud rate
 
 
 class DroneNotFoundError(Exception):
     """
     Exception for when the drone cannot connect
     """
-
-    pass
 
 
 class StateMachine:
@@ -63,7 +60,9 @@ class StateMachine:
         Runs the flight code specific to each state until completion
         """
         while self.current_state:
-            self.current_state = await self.current_state.run(self.drone)  # type: ignore[assignment]
+            self.current_state = await self.current_state.run(
+                self.drone
+            )  # type: ignore[assignment]
 
 
 async def log_flight_mode(drone: System) -> None:
@@ -100,7 +99,7 @@ async def observe_in_air(drone: System, comm: Communication) -> None:
         if is_in_air:
             was_in_air = is_in_air
         if was_in_air and not is_in_air:
-            comm.state = StateEnum.Final_State
+            comm.state = StateEnum.FINAL_STATE
             return
 
 
@@ -146,14 +145,12 @@ async def init_drone(sim: bool) -> System:
     try:
         await asyncio.wait_for(wait_for_connect(drone), timeout=5)
     except asyncio.TimeoutError:
-        raise DroneNotFoundError()
+        raise DroneNotFoundError()  # pylint: disable=raise-missing-from
     await config.config_params(drone)
     return drone
 
 
-async def start_flight(
-    comm: Communication, drone: System, state_settings: StateSettings
-) -> None:
+async def start_flight(comm: Communication, drone: System, state_settings: StateSettings) -> None:
     """
     Creates the flight State Machine and monitors for exceptions
 
@@ -172,42 +169,32 @@ async def start_flight(
         initial_state: State = STATES[comm.state](state_settings)
         state_machine: StateMachine = StateMachine(initial_state, drone)
         await state_machine.run()
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         logging.exception("Exception occurred in State Machine")
         try:
             # Stop drone in air
-            await drone.offboard.set_position_ned(
-                mavsdk.offboard.PositionNedYaw(0, 0, 0, 0)
-            )
-            await drone.offboard.set_velocity_ned(
-                mavsdk.offboard.VelocityNedYaw(0, 0, 0, 0)
-            )
-            await drone.offboard.set_velocity_body(
-                mavsdk.offboard.VelocityBodyYawspeed(0, 0, 0, 0)
-            )
+            await drone.offboard.set_position_ned(mavsdk.offboard.PositionNedYaw(0, 0, 0, 0))
+            await drone.offboard.set_velocity_ned(mavsdk.offboard.VelocityNedYaw(0, 0, 0, 0))
+            await drone.offboard.set_velocity_body(mavsdk.offboard.VelocityBodyYawspeed(0, 0, 0, 0))
             # Have the drone pause
             await asyncio.sleep(config.WAIT)
             try:
                 await drone.offboard.stop()
             except mavsdk.offboard.OffboardError as error:
-                logging.exception(
-                    "Stopping offboard mode failed with error code: %s", str(error)
-                )
+                logging.exception("Stopping offboard mode failed with error code: %s", str(error))
             await asyncio.sleep(config.WAIT)
             logging.info("Landing the drone")
             await drone.action.land()
-        except:
+        except Exception:  # pylint: disable=broad-except
             logging.error("No system available")
-            comm.state = StateEnum.Final_State
+            comm.state = StateEnum.FINAL_STATE
             return
-    comm.state = StateEnum.Final_State
+    comm.state = StateEnum.FINAL_STATE
     await termination_task
     flight_mode_task.cancel()
 
 
-async def init_and_begin(
-    comm: Communication, sim: bool, state_settings: StateSettings
-) -> None:
+async def init_and_begin(comm: Communication, sim: bool, state_settings: StateSettings) -> None:
     """
     Creates the drone object to be passed among state machine
 
@@ -226,7 +213,7 @@ async def init_and_begin(
     except DroneNotFoundError:
         logging.exception("Drone not found")
         return
-    except:
+    except Exception:  # pylint: disable=broad-except
         logging.exception("Uncaught error")
         return
 

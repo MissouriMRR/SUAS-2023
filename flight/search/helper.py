@@ -3,9 +3,6 @@ Several useful functions repeatedly used in other files, such as 'calculate_dist
 'get_bounds,' which are used repeatedly when breaking the search area into a grid.
 """
 
-# pylint: disable=C0200
-# NOTE: removes "consider using enumerate" error
-
 from math import sqrt
 
 AIR_DROP_AREA: list[tuple[float, float]] = [
