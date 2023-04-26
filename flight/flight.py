@@ -17,9 +17,7 @@ from flight.states import STATES, State, StateEnum
 from flight.state_settings import StateSettings
 
 SIM_ADDR: str = "udp://:14540"  # Address to connect to drone simulator
-CON_ADDR: str = (
-    "serial:///dev/ttyUSB0:921600"  # Address to connect to pixhawk w/ baud rate
-)
+CON_ADDR: str = "serial:///dev/ttyUSB0:921600"  # Address to connect to pixhawk w/ baud rate
 
 
 class DroneNotFoundError(Exception):
@@ -152,9 +150,7 @@ async def init_drone(sim: bool) -> System:
     return drone
 
 
-async def start_flight(
-    comm: Communication, drone: System, state_settings: StateSettings
-) -> None:
+async def start_flight(comm: Communication, drone: System, state_settings: StateSettings) -> None:
     """
     Creates the flight State Machine and monitors for exceptions
 
@@ -177,23 +173,15 @@ async def start_flight(
         logging.exception("Exception occurred in State Machine")
         try:
             # Stop drone in air
-            await drone.offboard.set_position_ned(
-                mavsdk.offboard.PositionNedYaw(0, 0, 0, 0)
-            )
-            await drone.offboard.set_velocity_ned(
-                mavsdk.offboard.VelocityNedYaw(0, 0, 0, 0)
-            )
-            await drone.offboard.set_velocity_body(
-                mavsdk.offboard.VelocityBodyYawspeed(0, 0, 0, 0)
-            )
+            await drone.offboard.set_position_ned(mavsdk.offboard.PositionNedYaw(0, 0, 0, 0))
+            await drone.offboard.set_velocity_ned(mavsdk.offboard.VelocityNedYaw(0, 0, 0, 0))
+            await drone.offboard.set_velocity_body(mavsdk.offboard.VelocityBodyYawspeed(0, 0, 0, 0))
             # Have the drone pause
             await asyncio.sleep(config.WAIT)
             try:
                 await drone.offboard.stop()
             except mavsdk.offboard.OffboardError as error:
-                logging.exception(
-                    "Stopping offboard mode failed with error code: %s", str(error)
-                )
+                logging.exception("Stopping offboard mode failed with error code: %s", str(error))
             await asyncio.sleep(config.WAIT)
             logging.info("Landing the drone")
             await drone.action.land()
@@ -206,9 +194,7 @@ async def start_flight(
     flight_mode_task.cancel()
 
 
-async def init_and_begin(
-    comm: Communication, sim: bool, state_settings: StateSettings
-) -> None:
+async def init_and_begin(comm: Communication, sim: bool, state_settings: StateSettings) -> None:
     """
     Creates the drone object to be passed among state machine
 
