@@ -11,14 +11,19 @@ import vision.common.bounding_box as bbox
 
 
 # constants
-QUAD_ANG_THRESH: float = 5.0
+RIGHT_ANG_THRESH: float = 5.0
 # When checking if quadrilateral has right angles the max range of angles allowed (ex 85 to 95)
 
-QUAD_LEN_THRESH: float = 0.05
-# when comparing the side lengths of a quadrilateral, the max diff and it still be a square
+SIDE_LEN_EQ_THRESH: float = 0.05
+# when comparing the side lengths of a shape for equality, the max difference allowed
 
-APPROX_CNT_THRESH: float = 0.05
-# Value used to calculate epsilon parameter for polygon contour approximation
+SHAPE_ASPECT_RATIO_RANGE: float = 0.25
+# some shapes are expected to not be oblong (oblong shapes being rectangle, trapezoid, semicircle,
+# etc) this value is the max that the shape can be wider than long (calculated with a rotated,
+# not upright bounding box)
+
+APPROX_CNT_EPSILON: float = 5.0
+# Value used for epsilon parameter for polygon contour approximation in cv2.approxPolyDP()
 # epsilon is the max distance between the approximation's and the original's curves
 
 QUARTER_CIRCLE_RATIO: float = 0.280
@@ -65,33 +70,39 @@ def process_shapes(
         bbox.tlwh_to_vertices(retval_box[0], retval_box[1], retval_box[2], retval_box[3])
         for retval_box in retval_boxes
     ]
-    shape_boxes: list[bbox.BoundingBox] = [
+    boxes: list[bbox.BoundingBox] = [
         bbox.BoundingBox(verts, bbox.ObjectType.STD_OBJECT) for verts in verts_lst
     ]
+
+    shape_boxes: list[bbox.BoundingBox] = []
 
     idx: int
     hier: npt.NDArray[npt.Shape["4"], npt.IntC]
     box: bbox.BoundingBox
     # for each contour (and corresponding elements in hierarchy array and box list)
-    for idx, (hier, box) in enumerate(zip(hierarchy[0], shape_boxes)):
+    for idx, (hier, box) in enumerate(zip(hierarchy[0], boxes)):
+        classification: chars.ODLCShape | None
+
         # as long as the contour is not inside another contour that has been classified as a shape
         if (
             hier[3] == -1
-            or not shape_boxes[hier[3]].attributes()
-            or shape_boxes[hier[3]].attributes()["shape"] is None
+            or not boxes[hier[3]].attributes
+            or boxes[hier[3]].attributes["shape"] is None
         ):
-            box.set_attribute("shape", classify_shape(contours, hierarchy, idx, image_dims))
+            classification = classify_shape(contours[idx], image_dims)
         else:
             # if the contour is inside an identified ODLC shape then it should not be recognized
-            box.set_attribute("shape", None)
+            classification = None
+
+        if classification is not None:
+            box.set_attribute("shape", classification)
+            shape_boxes.append(box)
 
     return shape_boxes
 
 
 def classify_shape(
-    contours: list[consts.Contour],
-    hierarchy: consts.Hierarchy,
-    index: int,
+    contour: consts.Contour,
     image_dims: tuple[int, int],
     approx_contour: consts.Contour | None = None,
 ) -> chars.ODLCShape | None:
@@ -101,15 +112,8 @@ def classify_shape(
 
     Parameters
     ----------
-    contours : list[consts.Contour]
-        The list of contours returned by the contour detection algorithm
-        NOTE: cv2.findContours() returns as a tuple of arbitrary length, so first convert to list
-    hierarchy : consts.Hierarchy
-        The contour hierarchy list returned by the contour detection algorithm
-        (the 2nd value returned by cv2.findContours())
-    index : int
-        The index corresponding to the contour in contours and hierarchy to be checked
-        (must be in bounds of contours tuple and hierarchy array)
+    contour : consts.Contour
+        A contour returned by the contour detection algorithm
     image_dims : tuple[int, int]
         The dimensions of the original entire image
         (only height and width as gotten from image.shape[:2], not the color channels)
@@ -129,34 +133,36 @@ def classify_shape(
         if the given contour is not an ODLC shape (fails filtering or doesnt match any ODLC)
     """
     if approx_contour is None:
-        approx_contour = cv2.approxPolyDP(
-            contours[index], cv2.arcLength(contours[index], True) * APPROX_CNT_THRESH, True
-        )
+        approx_contour = cv2.approxPolyDP(contour, APPROX_CNT_EPSILON, True)
 
     is_shape: bool
     is_circular: bool
-    is_shape, is_circular = filtering.filter_contour(
-        contours, hierarchy, index, image_dims, approx_contour
-    )
+    is_shape, is_circular = filtering.filter_contour(contour, image_dims, approx_contour)
 
     if not is_shape:
         return None
 
-    shape: chars.ODLCShape | None = None
-    if is_circular:
-        shape = classify_circular(contours[index])
+    defects: int = check_concavity(approx_contour)
+
+    shape: chars.ODLCShape | None
+    if defects not in {0, 4, 5}:
+        shape = None  # if has not 0, 4, or 5 defects then not a valid shape
+    elif is_circular and defects == 0:
+        shape = classify_circular(contour)
     else:
-        shape = check_concave_shapes(approx_contour)
-        if shape is None:
-            shape = check_polygons(approx_contour)
+        shape = check_polygons(approx_contour)
+
+        if (defects == 4) ^ (shape == chars.ODLCShape.CROSS):  # logical xor
+            shape = None  # one of above cannot be true while the other is false if valid shape
+        elif (defects == 5) ^ (shape == chars.ODLCShape.STAR):
+            shape = None  # one of above cannot be true while the other is false if valid shape
 
     return shape
 
 
-def check_concave_shapes(approx: consts.Contour) -> chars.ODLCShape | None:
+def check_concavity(approx: consts.Contour) -> int:
     """
-    Checks if the shape is a plus or star because these are concave shapes and will have inside
-    angles that are >180 deg.
+    Counts for the number of convexity defects that a shape has.
 
     Parameters
     ----------
@@ -165,8 +171,8 @@ def check_concave_shapes(approx: consts.Contour) -> chars.ODLCShape | None:
 
     Returns
     -------
-    concave_shape : chars.ODLCShape | None
-        Will return STAR or CROSS from ODLCShape Enum or None if shape is neither of these
+    defects_amt : int
+        The number of defects that the given contour has.
     """
     # cv2.convexHull() will give a new contour that has filled out any concave "dents" in the
     # given contour. Can be thought of as taking the shape a rubber band makes around the contour
@@ -182,12 +188,7 @@ def check_concave_shapes(approx: consts.Contour) -> chars.ODLCShape | None:
         approx, convex_hull
     )
 
-    if defects is not None:
-        if len(defects) == 5:
-            return chars.ODLCShape.STAR
-        if len(defects) == 4:
-            return chars.ODLCShape.CROSS
-    return None
+    return len(defects) if defects is not None else 0
 
 
 def get_angle(
@@ -233,6 +234,9 @@ def get_angle(
     # vector forms of points a (pts[0]) and b (pts[2]) with vertex (pts[1]) as origin
     vec_a: npt.NDArray[npt.Shape["1, 2"], npt.IntC] = pts[0] - pts[1]
     vec_b: npt.NDArray[npt.Shape["1, 2"], npt.IntC] = pts[2] - pts[1]
+
+    vec_a = np.squeeze(vec_a)
+    vec_b = np.squeeze(vec_b)
 
     return np.degrees(
         np.arccos(np.dot(vec_a, vec_b) / (np.linalg.norm(vec_a) * np.linalg.norm(vec_b)))
@@ -288,7 +292,7 @@ def compare_angles(
     idx: int
     ang: npt.Float64  # each individual angle in angles
     for idx, ang in enumerate(angles):
-        are_valid[idx] = -thresh < ang - compare_angle < thresh
+        are_valid[idx] = abs(ang - compare_angle) < thresh
 
     return are_valid
 
@@ -323,8 +327,7 @@ def get_lengths(cnt: consts.Contour) -> npt.NDArray[npt.Shape["*"], npt.Float64]
 
 def check_polygons(approx: consts.Contour) -> chars.ODLCShape | None:
     """
-    Checks the shape against the possible "regular" odlc polygons, not regular the geometric term,
-    regular as in not concave or (partly) circular.
+    Checks the shape against the possible noncircular odlc polygons based on number of sides.
 
     Parameters
     ----------
@@ -334,9 +337,13 @@ def check_polygons(approx: consts.Contour) -> chars.ODLCShape | None:
     Returns
     -------
     polygonal_shape : chars.ODLCShape | None
-        Will return one of TRIANGLE, SQUARE, RECTANGLE, TRAPEZOID, PENTAGON, HEXAGON, or OCTAGON
-        from ODLCShape Enum or None if shape does not match any of these.
+        Will return one of TRIANGLE, SQUARE, RECTANGLE, TRAPEZOID, PENTAGON, HEXAGON, OCTAGON,
+        STAR, or CROSS from ODLCShape Enum or None if shape does not match any of these.
     """
+    lengths: npt.NDArray[npt.Shape["*"], npt.Float64] = get_lengths(approx)
+    has_eq_side_lengths: bool = compare_side_len_eq(lengths)
+    good_aspect_ratio: bool = filtering.test_min_area_box(approx, SHAPE_ASPECT_RATIO_RANGE)
+
     shape: chars.ODLCShape | None = None
     match len(approx):
         case 3:
@@ -344,28 +351,53 @@ def check_polygons(approx: consts.Contour) -> chars.ODLCShape | None:
         case 4:
             angles: npt.NDArray[npt.Shape["*"], npt.Float64] = get_angles(approx)
             # if all angles approximately 90 deg, square or rectangle, else trapezoid
-            if np.all(compare_angles(angles, 90, QUAD_ANG_THRESH)):
-                lengths: npt.NDArray[npt.Shape["*"], npt.Float64] = get_lengths(approx)
-                avg_len: npt.Float64 = (np.sum(lengths) / 4).astype(npt.Float64)
+            if np.all(compare_angles(angles, 90, RIGHT_ANG_THRESH)):
                 # if all side lengths are (approximately) equal then square, else rectangle
-                if np.all(np.where(abs((lengths / avg_len) - 1) < QUAD_LEN_THRESH, True, False)):
+                if has_eq_side_lengths and good_aspect_ratio:
                     shape = chars.ODLCShape.SQUARE
                 else:
                     shape = chars.ODLCShape.RECTANGLE
             else:
                 shape = chars.ODLCShape.TRAPEZOID
         case 5:
-            shape = chars.ODLCShape.PENTAGON
+            if good_aspect_ratio:
+                shape = chars.ODLCShape.PENTAGON
         case 6:
-            shape = chars.ODLCShape.HEXAGON
+            if good_aspect_ratio:
+                shape = chars.ODLCShape.HEXAGON
         case 7:
-            shape = chars.ODLCShape.HEPTAGON
+            if good_aspect_ratio:
+                shape = chars.ODLCShape.HEPTAGON
         case 8:
-            shape = chars.ODLCShape.OCTAGON
+            if good_aspect_ratio:
+                shape = chars.ODLCShape.OCTAGON
+        case 10:
+            shape = chars.ODLCShape.STAR
+        case 12:
+            shape = chars.ODLCShape.CROSS
         case _:
             shape = None
 
     return shape
+
+
+def compare_side_len_eq(lengs: npt.NDArray[npt.Shape["*"], npt.Float64]) -> bool:
+    """
+    Checks if all of the side lengths given are (approximately) equal.
+
+    Parameters
+    ----------
+    lengths : npt.NDArray[npt.Shape["*"], npt.Float64]
+        An array of all the side lengths of a polygon (from get_lengths())
+
+    Returns
+    -------
+    eq_side_lengths : bool
+        True if all of the given side lengths are approximately equal
+    """
+    return bool(
+        np.all(np.where(abs((lengs / np.mean(lengs)) - 1) < SIDE_LEN_EQ_THRESH, True, False))
+    )
 
 
 def classify_circular(contour: consts.Contour) -> chars.ODLCShape:
@@ -407,13 +439,11 @@ if __name__ == "__main__":
         [[[0, 0]], [[5, 5]], [[0, 10]], [[10, 10]], [[5, 5]], [[10, 0]]]
     )
     # make an approximation
-    main_approx: consts.Contour = cv2.approxPolyDP(
-        main_shape, cv2.arcLength(main_shape, True) * APPROX_CNT_THRESH, True
-    )
+    main_approx: consts.Contour = cv2.approxPolyDP(main_shape, APPROX_CNT_EPSILON, True)
 
     print(type(main_shape), main_shape.shape, main_shape)
     print(type(main_approx), main_approx.shape, main_approx)
     # run each individual internal testing function to check behavior
-    print(check_concave_shapes(main_shape))
+    print(check_concavity(main_shape))
     print(check_polygons(main_approx))
     print(classify_circular(main_shape))
