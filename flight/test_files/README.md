@@ -4,5 +4,3 @@ Contains files and coordinates for running test flights at both the golf course 
 
 Both files have basic drone functions for creating connection with drone,
 logging takeoff status, flying to each given waypoint, and returning home.
-
-Altitude is set to 100 feet for both.
