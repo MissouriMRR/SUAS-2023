@@ -11,13 +11,16 @@ import vision.common.bounding_box as bbox
 
 
 # constants
+MAX_CHILD_AMT: int = 2
+# The max number of (direct) child contours that a contour can have and be considered
+
 RIGHT_ANG_THRESH: float = 5.0
 # When checking if quadrilateral has right angles the max range of angles allowed (ex 85 to 95)
 
 SIDE_LEN_EQ_THRESH: float = 0.05
 # when comparing the side lengths of a shape for equality, the max difference allowed
 
-SHAPE_ASPECT_RATIO_RANGE: float = 0.25
+SHAPE_ASPECT_RATIO_RANGE: float = 0.15
 # some shapes are expected to not be oblong (oblong shapes being rectangle, trapezoid, semicircle,
 # etc) this value is the max that the shape can be wider than long (calculated with a rotated,
 # not upright bounding box)
@@ -30,11 +33,11 @@ QUARTER_CIRCLE_RATIO: float = 0.280
 # 0.280 is ratio of radius to total perimeter of quarter circle = r / (r + r + pi*r/2)
 
 SEMICIRCLE_RATIO: float = 0.389
-# 0.388 is ratio of diameter to total perimeter of semi circle = 2r / (2r + pi*r)
+# 0.389 is ratio of diameter to total perimeter of semi circle = 2r / (2r + pi*r)
 
-CIRCULAR_RATIO_RANGE: float = 0.1
+CIRCULAR_RATIO_RANGE: float = 0.054
 # The max amount that the calculated ratio in classify_circular() may differ from the exact value
-# NOTE: do not set to above 0.109, this will result in overlap between two ratios
+# NOTE: do not set to above 0.054, this will result in overlap between two ratio ranges
 
 
 def process_shapes(
@@ -88,7 +91,7 @@ def process_shapes(
             hier[3] == -1
             or not boxes[hier[3]].attributes
             or boxes[hier[3]].attributes["shape"] is None
-        ):
+        ) and get_child_amt(idx, hierarchy) <= MAX_CHILD_AMT:
             classification = classify_shape(contours[idx], image_dims)
         else:
             # if the contour is inside an identified ODLC shape then it should not be recognized
@@ -158,6 +161,36 @@ def classify_shape(
             shape = None  # one of above cannot be true while the other is false if valid shape
 
     return shape
+
+
+def get_child_amt(idx: int, hier: consts.Hierarchy) -> int:
+    """
+    Returns the number of child contours that the contour at the given idx has.
+    Does not count children of children.
+
+    Parameters
+    ----------
+    idx : int
+        The index of the contour to count the number of children of (idx < len(hier))
+    hier : consts.Hierarchy
+        The structure that contains the contour hierarchy information
+
+    Returns
+    -------
+    count : int
+        The number of (direct) children that the given contour has
+    """
+    count: int = 1
+    curr: int = hier[0, idx, 2]
+
+    if curr == -1:
+        return 0
+
+    while hier[0, curr, 0] != -1:
+        curr = hier[0, curr, 0]
+        count += 1
+
+    return count
 
 
 def check_concavity(approx: consts.Contour) -> int:
@@ -344,12 +377,13 @@ def check_polygons(approx: consts.Contour) -> chars.ODLCShape | None:
     has_eq_side_lengths: bool = compare_side_len_eq(lengths)
     good_aspect_ratio: bool = filtering.test_min_area_box(approx, SHAPE_ASPECT_RATIO_RANGE)
 
+    angles: npt.NDArray[npt.Shape["*"], npt.Float64]
     shape: chars.ODLCShape | None = None
     match len(approx):
         case 3:
             shape = chars.ODLCShape.TRIANGLE
         case 4:
-            angles: npt.NDArray[npt.Shape["*"], npt.Float64] = get_angles(approx)
+            angles = get_angles(approx)
             # if all angles approximately 90 deg, square or rectangle, else trapezoid
             if np.all(compare_angles(angles, 90, RIGHT_ANG_THRESH)):
                 # if all side lengths are (approximately) equal then square, else rectangle
@@ -372,9 +406,13 @@ def check_polygons(approx: consts.Contour) -> chars.ODLCShape | None:
             if good_aspect_ratio:
                 shape = chars.ODLCShape.OCTAGON
         case 10:
-            shape = chars.ODLCShape.STAR
+            if has_eq_side_lengths:
+                shape = chars.ODLCShape.STAR
         case 12:
-            shape = chars.ODLCShape.CROSS
+            angles = get_angles(approx)
+            # a plus shape should have exactly 8 right angles *inside* of it (2 on each bar)
+            if np.count_nonzero(compare_angles(angles, 90, RIGHT_ANG_THRESH)) == 8:
+                shape = chars.ODLCShape.CROSS
         case _:
             shape = None
 
