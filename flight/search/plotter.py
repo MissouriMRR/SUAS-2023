@@ -1,5 +1,5 @@
 """
-Provides plotting functionality for visaulizing coordinate data
+Provides plotting functionality for visualizing coordinate data
 """
 
 from copy import deepcopy
