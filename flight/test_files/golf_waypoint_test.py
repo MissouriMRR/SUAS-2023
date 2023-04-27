@@ -96,7 +96,7 @@ async def run() -> None:
     and will stay in that loop until the drone has reached each of locations
     specified by the latitude and longitude and continues to run until forced disconnect
     """
-    # Put all latitudes, longitudes and altitudes into seperate arrays
+    # Put all latitudes, longitudes and altitudes into separate arrays
     lats: List[float] = [37.948658, 37.948200, 37.948358, 37.948800]
     longs: List[float] = [-91.784431, -91.783406, -91.783253, -91.784169]
 
