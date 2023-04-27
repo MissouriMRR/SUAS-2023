@@ -390,9 +390,7 @@ class Start(State):
         Start the state machine & proceed to PreProcess state
     """
 
-    async def begin(
-        self, drone: System
-    ) -> PreProcess:  # pylint: disable=unused-argument
+    async def begin(self, drone: System) -> PreProcess:  # pylint: disable=unused-argument
         """
         Start state machine and pass to PreProcess state
 
