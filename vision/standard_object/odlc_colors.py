@@ -181,7 +181,7 @@ def get_color_vals(
         color_vals[0] if min(dist_1, dist_2) == dist_1 else color_vals[1]
     )
     shape_color_val: NDArray[Shape["3"], UInt8] = (
-        color_vals[0] if text_color_val == color_vals[1] else color_vals[1]
+        color_vals[0] if np.all(text_color_val == color_vals[1]) else color_vals[1]
     )
 
     return shape_color_val, text_color_val
