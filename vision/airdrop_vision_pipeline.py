@@ -18,6 +18,8 @@ import vision.pipeline.pipeline_utils as pipe_utils
 MAX_JUDGE_MOVEMENT_FT: float = 15
 
 
+# Disable duplicate code checking because the flyover pipeline is similar
+# pylint: disable=duplicate-code
 def airdrop_pipeline(camera_data_path: str, state_path: str, output_path: str) -> None:
     """
     Finds all judges in the images in the camera_data_path json file.
@@ -74,7 +76,7 @@ def airdrop_pipeline(camera_data_path: str, state_path: str, output_path: str) -
                 camera_parameters: consts.CameraParameters = image_parameters[image_path]
 
                 # Find potential judges in the image
-                current_humanoids = emg_obj.find_humanoids(
+                current_humanoids: list[BoundingBox] = emg_obj.find_humanoids(
                     image, emg_model, camera_parameters, image_path
                 )
 
@@ -113,7 +115,7 @@ def compare_data(
 
     current_detection: BoundingBox
     for current_detection in current_humanoids:
-        min_distance = calc_emerg_obj_min_dist(prev_humanoids, current_detection)
+        min_distance: float = calc_emerg_obj_min_dist(prev_humanoids, current_detection)
 
         # Ensures that a detection in the current image that was not in the previous image
         #   will be ignored
