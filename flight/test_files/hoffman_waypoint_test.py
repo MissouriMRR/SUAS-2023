@@ -39,7 +39,7 @@ async def run() -> None:
     continues to run until forced disconnect
     """
 
-    # Put all latitudes, longitudes and altitudes into seperate arrays
+    # Put all latitudes, longitudes and altitudes into separate arrays
     lats: list[float] = []
     longs: list[float] = []
     altitudes: list[float] = []
