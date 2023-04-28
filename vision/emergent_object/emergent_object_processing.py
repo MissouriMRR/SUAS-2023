@@ -7,7 +7,7 @@ import geopy.distance
 
 from vision.common.bounding_box import BoundingBox, ObjectType, Vertices
 
-from vision.common.constants import Location, ODLC_Dict
+from vision.common.constants import Location, ODLCDict
 
 
 # Weights for each metric in pick_emergent_object()
@@ -16,7 +16,7 @@ from vision.common.constants import Location, ODLC_Dict
 CATEGORY_WEIGHTS: NDArray[Shape[4], Float64] = np.array([0.5, 0.25, 0.20, 0.05])
 
 
-def pick_emergent_object(humanoids: list[BoundingBox], odlcs: ODLC_Dict) -> BoundingBox:
+def pick_emergent_object(humanoids: list[BoundingBox], odlcs: ODLCDict) -> BoundingBox:
     """
     Evaluates all of the potential emergent objects to pick the most likely candidate.
 
@@ -64,6 +64,9 @@ def pick_emergent_object(humanoids: list[BoundingBox], odlcs: ODLC_Dict) -> Boun
         # Get the distance to the closest emergent object that's not in the same image
         min_humanoid_distance: float = calc_emerg_obj_min_dist(humanoids, subject_humanoid)
 
+        # invert the humanoid distance to prioritize closest humanoids
+        min_humanoid_distance *= -1
+
         evaluation: tuple[float, float, float, float] = (
             min_odlc_distance,
             min_humanoid_distance,
@@ -78,7 +81,7 @@ def pick_emergent_object(humanoids: list[BoundingBox], odlcs: ODLC_Dict) -> Boun
     return humanoids[emergent_obj_selection(evaluation_array)]
 
 
-def calc_std_odlc_min_dist(humanoid: BoundingBox, odlcs: ODLC_Dict) -> float:
+def calc_std_odlc_min_dist(humanoid: BoundingBox, odlcs: ODLCDict) -> float:
     """
     Calculates the distance from the given humanoid to the closest standard odlc object.
 
@@ -143,9 +146,6 @@ def calc_emerg_obj_min_dist(humanoids: list[BoundingBox], subject_humanoid: Boun
             if humanoid_distance < min_humanoid_distance:
                 min_humanoid_distance = humanoid_distance
 
-    # invert the humanoid distance to prioritize closest humanoids
-    min_humanoid_distance *= -1
-
     return min_humanoid_distance
 
 
@@ -193,7 +193,7 @@ def emergent_obj_selection(evaluation_array: NDArray[Shape["*, 4"], Float64]) ->
 
 
 if __name__ == "__main__":
-    saved_odlcs: ODLC_Dict = {
+    saved_odlcs: ODLCDict = {
         "0": {"latitude": 52.10025, "longitude": 20.21222},
         "3": {"latitude": 52.80085, "longitude": 21.91021},
     }

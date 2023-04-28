@@ -230,7 +230,7 @@ def get_bottle_index(shape: BoundingBox, bottle_info: list[BottleData]) -> int:
     return -1
 
 
-def create_odlc_dict(sorted_odlcs: list[list[BoundingBox]]) -> consts.ODLC_Dict:
+def create_odlc_dict(sorted_odlcs: list[list[BoundingBox]]) -> consts.ODLCDict:
     """
     Creates the ODLC_Dict dictionary from a list of shape bounding boxes
 
@@ -245,7 +245,7 @@ def create_odlc_dict(sorted_odlcs: list[list[BoundingBox]]) -> consts.ODLC_Dict:
         The dictionary of ODLCs matching the output format
     """
 
-    odlc_dict: consts.ODLC_Dict = {}
+    odlc_dict: consts.ODLCDict = {}
 
     i: int
     bottle: list[BoundingBox]
