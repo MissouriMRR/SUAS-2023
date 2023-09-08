@@ -1,5 +1,7 @@
-from state_machine.test import run
+"""Tests the state machine."""
+
 import asyncio
 
-asyncio.run(run())
+from state_machine.test import test
 
+asyncio.run(test())

@@ -1,18 +1,18 @@
-from state_machine.states import State
-from state_machine.states.takeoff import Takeoff
-import logging
+"""Declares the Start state class."""
+
+from typing import Awaitable, Callable
+
+from .state import State
+
 
 class Start(State):
-    """
-    The Start state of the state machine.
-    """
+    """The Start state of the state machine."""
 
-    async def run(self) -> State:
-        """
-        Runs the Start state of the state machine.
-        """
-        print("Starting State Machine")
-        print("Waiting for drone to connect...")
-        await self.connect_drone()
-        print("Starting State Machine")
-        return Takeoff
+    run_callable: Callable[["Start"], Awaitable[State]]
+
+    @property
+    def run(self) -> Callable[[], Awaitable[State]]:
+        async def run() -> State:
+            return await Start.run_callable(self)
+
+        return run

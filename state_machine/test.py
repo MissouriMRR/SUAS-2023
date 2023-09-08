@@ -1,10 +1,11 @@
-from state_machine.state_machine import StateMachine
-from state_machine.drone import Drone
-from state_machine.states.start import Start
-import asyncio
+"""Tests the state machine."""
 
-async def run():
+from .drone import Drone
+from .state_machine import StateMachine
+from .states import Start
 
+
+async def test() -> None:
+    """Test the state machine."""
     drone = Drone()
-    state_machine = StateMachine(Start, drone)
-    await state_machine.run()
+    await StateMachine(Start(drone), drone).run()
