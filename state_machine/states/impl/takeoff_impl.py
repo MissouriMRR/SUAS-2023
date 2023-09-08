@@ -1,4 +1,4 @@
-"""Implements the run method of the Takeoff state class."""
+"""Implements the run_callable class attribute of the Takeoff class."""
 
 import asyncio
 

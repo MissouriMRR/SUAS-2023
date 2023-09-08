@@ -1,4 +1,4 @@
-"""Implements the run method of the Start state class."""
+"""Implements the run_callable class attribute of the Start class."""
 
 import asyncio
 

@@ -1,4 +1,4 @@
-"""Implements the run method of the state classes."""
+"""Implements the run_callable class attributes of the state classes."""
 
 from .land_impl import Land
 from .start_impl import Start

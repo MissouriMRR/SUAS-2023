@@ -1,4 +1,4 @@
-"""Implements the run method of the Waypoint state class."""
+"""Implements the run_callable class attribute of the Waypoint class."""
 
 import asyncio
 
