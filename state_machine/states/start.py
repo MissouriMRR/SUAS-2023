@@ -12,7 +12,7 @@ class Start(State):
 
     @property
     def run(self) -> Callable[[], Awaitable[State]]:
-        async def run() -> State:
-            return await Start.run_callable(self)
+        def run() -> Awaitable[State]:
+            return Start.run_callable(self)
 
         return run

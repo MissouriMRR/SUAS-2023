@@ -12,7 +12,7 @@ class Waypoint(State):
 
     @property
     def run(self) -> Callable[[], Awaitable[State]]:
-        async def run() -> State:
-            return await Waypoint.run_callable(self)
+        def run() -> Awaitable[State]:
+            return Waypoint.run_callable(self)
 
         return run

@@ -12,7 +12,7 @@ class Land(State):
 
     @property
     def run(self) -> Callable[[], Awaitable[State]]:
-        async def run() -> State:
-            return await Land.run_callable(self)
+        def run() -> Awaitable[State]:
+            return Land.run_callable(self)
 
         return run

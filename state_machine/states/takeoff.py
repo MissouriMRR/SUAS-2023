@@ -12,7 +12,7 @@ class Takeoff(State):
 
     @property
     def run(self) -> Callable[[], Awaitable[State]]:
-        async def run() -> State:
-            return await Takeoff.run_callable(self)
+        def run() -> Awaitable[State]:
+            return Takeoff.run_callable(self)
 
         return run
