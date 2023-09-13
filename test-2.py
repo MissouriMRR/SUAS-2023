@@ -7,3 +7,7 @@ from state_machine.test import test
 
 logging.basicConfig(level=logging.INFO)
 asyncio.run(test(10.0))
+
+
+#asyncio.run(test()) for the other one
+
