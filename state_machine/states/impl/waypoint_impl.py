@@ -9,9 +9,15 @@ from ..waypoint import Waypoint
 
 async def run(self: Waypoint) -> State:
     """Implements the run method."""
-    print("Moving to waypoint")
-    await asyncio.sleep(1.0)
-    return Land(self.drone)
+    try:
+        print("Moving to waypoint")
+        await asyncio.sleep(1.0)
+        return Land(self.drone)
+    except asyncio.CancelledError as ex:
+        print("Waypoint state canceled")
+        raise ex
+    finally:
+        pass
 
 
 Waypoint.run_callable = run

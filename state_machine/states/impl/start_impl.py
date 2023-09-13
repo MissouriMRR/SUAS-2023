@@ -9,9 +9,15 @@ from ..takeoff import Takeoff
 
 async def run(self: Start) -> State:
     """Implements the run method."""
-    print("Starting")
-    await asyncio.sleep(1.0)
-    return Takeoff(self.drone)
+    try:
+        print("Starting")
+        await asyncio.sleep(1.0)
+        return Takeoff(self.drone)
+    except asyncio.CancelledError as ex:
+        print("Start state canceled")
+        raise ex
+    finally:
+        pass
 
 
 Start.run_callable = run
