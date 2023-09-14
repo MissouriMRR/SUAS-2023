@@ -1,6 +1,6 @@
 """Declares the Waypoint state class."""
 
-from typing import Awaitable, Callable
+from typing import Awaitable, Callable, ClassVar
 
 from .state import State
 
@@ -8,11 +8,7 @@ from .state import State
 class Waypoint(State):
     """The Waypoint state of the state machine."""
 
-    run_callable: Callable[["Waypoint"], Awaitable[State]]
+    run_callable: ClassVar[Callable[["Waypoint"], Awaitable[State]]]
 
-    @property
-    def run(self) -> Callable[[], Awaitable[State]]:
-        def run() -> Awaitable[State]:
-            return Waypoint.run_callable(self)
-
-        return run
+    def run(self) -> Awaitable[State]:
+        return self.run_callable()

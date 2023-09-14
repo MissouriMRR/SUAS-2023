@@ -1,6 +1,6 @@
 """Declares the Start state class."""
 
-from typing import Awaitable, Callable
+from typing import Awaitable, Callable, ClassVar
 
 from .state import State
 
@@ -8,11 +8,7 @@ from .state import State
 class Start(State):
     """The Start state of the state machine."""
 
-    run_callable: Callable[["Start"], Awaitable[State]]
+    run_callable: ClassVar[Callable[["Start"], Awaitable[State]]]
 
-    @property
-    def run(self) -> Callable[[], Awaitable[State]]:
-        def run() -> Awaitable[State]:
-            return Start.run_callable(self)
-
-        return run
+    def run(self) -> Awaitable[State]:
+        return self.run_callable()

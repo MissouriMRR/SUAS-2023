@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 import logging
-from typing import Awaitable, Callable
+from typing import Awaitable
 
 from ..drone import Drone
 
@@ -32,7 +32,6 @@ class State(ABC):
         """Get the drone this state is bound to."""
         return self._drone
 
-    @property
     @abstractmethod
-    def run(self) -> Callable[[], Awaitable["State"]]:
-        """Get an async callable bound to this object that runs this state."""
+    def run(self) -> Awaitable["State"]:
+        """Run this state."""
