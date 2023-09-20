@@ -1,13 +1,22 @@
 """Tests the state machine."""
 
 import asyncio
+from multiprocessing import Process
+import time
 
 from .drone import Drone
 from .state_machine import StateMachine
 from .states import Start
 
 
-async def test(cancel_delay: float = 1e9) -> None:
+def run_new_state_machine() -> None:
+    """Creat and run a state machine. This function is synchronous."""
+    drone = Drone()
+    state_machine = StateMachine(Start(drone), drone)
+    asyncio.new_event_loop().run_until_complete(state_machine.run())
+
+
+def test(cancel_delay: float = 1e9) -> None:
     """Test the state machine.
 
     Parameters
@@ -17,10 +26,9 @@ async def test(cancel_delay: float = 1e9) -> None:
     """
     print(f"The state machine will be canceled after {cancel_delay} seconds.")
 
-    drone = Drone()
-    state_machine = StateMachine(Start(drone), drone)
-    asyncio.ensure_future(state_machine.run())
+    state_machine_process = Process(target=run_new_state_machine, name="Multirotor State Machine")
 
-    await asyncio.sleep(cancel_delay)
-    state_machine.cancel()
-    await asyncio.sleep(1.0)
+    state_machine_process.start()
+    time.sleep(cancel_delay)
+    state_machine_process.terminate()
+    print("State machine terminated")
