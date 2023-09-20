@@ -3,10 +3,10 @@
 import asyncio
 import logging
 
-from state_machine.test import test
+from state_machine.test2 import process_test
 
 logging.basicConfig(level=logging.INFO)
-asyncio.run(test(10.0))
+process_test()
 
 
 #asyncio.run(test()) for the other one
