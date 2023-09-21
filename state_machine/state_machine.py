@@ -30,7 +30,7 @@ class StateMachine:
         if initial_state is not None:
             self.current_state = initial_state
 
-        run_task = asyncio.ensure_future(self._run())
+        run_task: Task[None] = asyncio.ensure_future(self._run())
         self.run_task = run_task
         logging.info("State Machine started")
         await run_task
