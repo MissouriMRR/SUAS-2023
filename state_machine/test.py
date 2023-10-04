@@ -10,7 +10,7 @@ from .states import Start
 
 
 def run_new_state_machine() -> None:
-    """Creat and run a state machine. This function is synchronous."""
+    """Create and run a state machine. This function is synchronous."""
     drone: Drone = Drone()
     state_machine = StateMachine(Start(drone), drone)
     asyncio.new_event_loop().run_until_complete(state_machine.run())
