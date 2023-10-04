@@ -10,7 +10,7 @@ from typing import List
 
 from mavsdk import System
 
-from flight.waypoint import goto
+from ..waypoint import goto
 
 SIM_ADDR: str = "udp://:14540"
 CON_ADDR: str = "serial:///dev/ttyUSB0:921600"

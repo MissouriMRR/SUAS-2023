@@ -1,8 +1,10 @@
 """Tests the state machine."""
 
 import asyncio
+import logging
 from multiprocessing import Process
 import time
+from mavsdk.telemetry import FlightMode
 
 from .drone import Drone
 from .state_machine import StateMachine
@@ -22,12 +24,12 @@ def run_drone(drone: Drone) -> None:
 
 
 def process_test() -> None:
-    """Test running the state machine in a separate process."""
+    """Test running the state machine in a@@ separate process."""
     drone_obj: Drone = Drone()
 
     print("Starting processes")
     state_machine: Process = Process(target=run_drone, args=(drone_obj,))
-    kill_switch_process: Process = Process(target=kill_switch, args=(state_machine,))
+    kill_switch_process: Process = Process(target=start_kill_switch, args=(state_machine, drone_obj))
 
     state_machine.start()
     kill_switch_process.start()
@@ -38,11 +40,21 @@ def process_test() -> None:
     print("Kill switch joined")
 
     print("Done!")
-
-
-def kill_switch(state_machine_process: Process) -> None:
-    """Kill the state machine after approximately 20 seconds"""
-    for i in range(20):
-        print(f"Kill switch is on cycle {i}")
+    
+def start_kill_switch(process, drone):
+    asyncio.ensure_future(kill_switch(process, drone))
+    
+async def kill_switch(state_machine_process: Process, drone: Drone):
+    """continously check for whether or not the kill switch has been activated"""
+    
+    # connect to the drone
+    logging.info("Waiting for drone to connect...")
+    async for state in drone.system.core.connection_state():
+        if state.is_connected:
+            logging.info("Drone discovered!")
+            break
+    
+    while drone.system.telemetry.flight_mode() != FlightMode.MANUAL:
+        print(drone.system.telemetry.flight_mode())
         time.sleep(1)
     state_machine_process.terminate()
