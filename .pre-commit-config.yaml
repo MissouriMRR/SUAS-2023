@@ -4,7 +4,7 @@ ci:
 
 repos:
 -   repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: 23.9.1
     hooks:
     -   id: black
         additional_dependencies: ['click<8.1']
@@ -36,7 +36,7 @@ repos:
         additional_dependencies: ['numpy>=1.21.2']
 
 -   repo: https://github.com/PyCQA/pylint
-    rev: 'v3.0.0a7'
+    rev: 'v3.0.0'
     hooks:
     -   id: pylint
         name: pylint
