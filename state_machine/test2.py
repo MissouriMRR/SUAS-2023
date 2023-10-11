@@ -29,7 +29,9 @@ def process_test() -> None:
 
     print("Starting processes")
     state_machine: Process = Process(target=run_drone, args=(drone_obj,))
-    kill_switch_process: Process = Process(target=start_kill_switch, args=(state_machine, drone_obj))
+    kill_switch_process: Process = Process(
+        target=start_kill_switch, args=(state_machine, drone_obj)
+    )
 
     state_machine.start()
     kill_switch_process.start()
@@ -40,20 +42,25 @@ def process_test() -> None:
     print("Kill switch joined")
 
     print("Done!")
-    
-def start_kill_switch(process, drone):
+
+
+def start_kill_switch(process: Process, drone: Drone) -> None:
+    """Start the kill switch task"""
     asyncio.ensure_future(kill_switch(process, drone))
-    
-async def kill_switch(state_machine_process: Process, drone: Drone):
-    """continously check for whether or not the kill switch has been activated"""
-    
+
+
+async def kill_switch(state_machine_process: Process, drone: Drone) -> None:
+    """
+    Continuously check for whether or not the kill switch has been activated
+    """
+
     # connect to the drone
     logging.info("Waiting for drone to connect...")
     async for state in drone.system.core.connection_state():
         if state.is_connected:
             logging.info("Drone discovered!")
             break
-    
+
     while drone.system.telemetry.flight_mode() != FlightMode.MANUAL:
         print(drone.system.telemetry.flight_mode())
         time.sleep(1)
