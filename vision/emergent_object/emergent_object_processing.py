@@ -13,7 +13,7 @@ from vision.common.constants import Location, ODLCDict
 # Weights for each metric in pick_emergent_object()
 # is [standard_object_dist, emergent_object_dist, bounding_box_area, ai_confidence]
 # see pick_emergent_object() notes
-CATEGORY_WEIGHTS: NDArray[Shape[4], Float64] = np.array([0.5, 0.25, 0.20, 0.05])
+CATEGORY_WEIGHTS: NDArray[Shape["4"], Float64] = np.array([0.5, 0.25, 0.20, 0.05])
 
 
 def pick_emergent_object(humanoids: list[BoundingBox], odlcs: ODLCDict) -> BoundingBox:
