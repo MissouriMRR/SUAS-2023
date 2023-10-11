@@ -1,4 +1,6 @@
-"""Implements the run_callable class attribute of the Start class."""
+"""
+Implements the run_callable class attribute of the Start class.
+"""
 
 import asyncio
 import logging
@@ -9,11 +11,33 @@ from ..takeoff import Takeoff
 
 
 async def run(self: Start) -> State:
-    """Implements the run method."""
+    """
+    Implements the run method for the Start state.
+
+    This method establishes a connection with the drone, waits for the drone to be 
+    discovered, ensures the drone has a global position estimate, arms the drone, 
+    and transitions to the Takeoff state.
+
+    Parameters
+    ----------
+    self : Start
+        An instance of the Start state.
+
+    Returns
+    -------
+    Takeoff : State
+        The next state after the Start state has successfully run.
+
+    Raises
+    ------
+    asyncio.CancelledError
+        If the execution of the Start state is canceled.
+
+    """
     try:
         logging.info("Start state running")
         await self.drone.connect_drone()
-        
+
         # connect to the drone
         logging.info("Waiting for drone to connect...")
         async for state in self.drone.system.core.connection_state():
@@ -29,14 +53,15 @@ async def run(self: Start) -> State:
 
         logging.info("-- Arming")
         await self.drone.system.action.arm()
-        
+
         logging.info("Start state complete")
         return Takeoff(self.drone)
     except asyncio.CancelledError as ex:
-        print("Start state canceled")
+        logging.error("Start state canceled")
         raise ex
     finally:
         pass
 
 
+# Setting the run_callable attribute of the Start class to the run function
 Start.run_callable = run
