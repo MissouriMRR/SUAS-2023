@@ -45,17 +45,23 @@ def process_test() -> None:
         logging.info("Done!")
     except KeyboardInterrupt:
         logging.critical("Keyboard interrupt detected. Killing state machine and landing drone.")
-        asyncio.ensure_future(graceful_exit(drone_obj))
+        start_graceful_exit(drone_obj)
         state_machine.terminate()
         return
 
 
-def start_kill_switch(process: Process, drone: Drone):
+def start_kill_switch(process: Process, drone: Drone) -> None:
+    """
+    Start a future to continuously check for whether or not the kill switch
+    has been activated.
+    """
     asyncio.ensure_future(kill_switch(process, drone))
 
 
-async def kill_switch(state_machine_process: Process, drone: Drone):
-    """continously check for whether or not the kill switch has been activated"""
+async def kill_switch(state_machine_process: Process, drone: Drone) -> None:
+    """
+    Continuously check for whether or not the kill switch has been activated.
+    """
 
     # connect to the drone
     logging.info("Waiting for drone to connect...")
@@ -72,7 +78,12 @@ async def kill_switch(state_machine_process: Process, drone: Drone):
     state_machine_process.terminate()
 
 
-async def graceful_exit(drone: Drone):
+def start_graceful_exit(drone: Drone) -> None:
+    """Start a future to land the drone and exit the program."""
+    asyncio.ensure_future(graceful_exit(drone))
+
+
+async def graceful_exit(drone: Drone) -> None:
     """Land the drone and exit the program."""
     logging.critical("Ctrl-C detected. Landing drone...")
     await drone.system.action.return_to_launch()
@@ -81,4 +92,4 @@ async def graceful_exit(drone: Drone):
             logging.info("Drone landed successfully.")
             break
     logging.info("Drone landed. Exiting program...")
-    exit()
+    raise SystemExit(0)
