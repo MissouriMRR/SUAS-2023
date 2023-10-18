@@ -1,14 +1,9 @@
-"""
-Implements the run_callable class attribute of the Start class.
-"""
-
 import asyncio
 import logging
 
 from ..start import Start
 from ..state import State
 from ..takeoff import Takeoff
-
 
 async def run(self: Start) -> State:
     """
@@ -32,6 +27,11 @@ async def run(self: Start) -> State:
     ------
     asyncio.CancelledError
         If the execution of the Start state is canceled.
+
+    Notes
+    -----
+    This method is responsible for initializing the drone and transitioning it to the
+    Takeoff state, which is the next step in the state machine.
 
     """
     try:
@@ -61,7 +61,6 @@ async def run(self: Start) -> State:
         raise ex
     finally:
         pass
-
 
 # Setting the run_callable attribute of the Start class to the run function
 Start.run_callable = run
