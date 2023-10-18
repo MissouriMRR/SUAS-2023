@@ -94,7 +94,7 @@ def set_generic_attributes(
     return True
 
 
-def output_odlc_json(output_path: str, odlc_dict: consts.ODLC_Dict) -> None:
+def output_odlc_json(output_path: str, odlc_dict: consts.ODLCDict) -> None:
     """
     Saves the ODLC_Dict to a file
 

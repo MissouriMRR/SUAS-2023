@@ -5,7 +5,7 @@ import numpy as np
 
 def latitude_length(latitude_deg: float) -> float:
     """
-    Returns the distance in meters of one degree of latitude at a particular longitude
+    Returns the distance in meters of one degree of latitude at a particular latitude
 
     Parameters
     ---------
@@ -38,7 +38,7 @@ def latitude_length(latitude_deg: float) -> float:
 
 def longitude_length(latitude_deg: float) -> float:
     """
-    Calculates the distance in meters of one degree of longitude at that longitude
+    Calculates the distance in meters of one degree of longitude at that latitude
 
     Parameters
     ---------

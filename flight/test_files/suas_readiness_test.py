@@ -10,13 +10,14 @@ from typing import List
 
 from mavsdk import System
 
-# from flight.waypoint import goto
+# sys.path.append("././SUAS-2023/flight")
+# from flight.waypoint.goto import move_to
 
 SIM_ADDR: str = "udp://:14540"
 CON_ADDR: str = "serial:///dev/ttyUSB0:921600"
 
 
-# Python imports made me angry so I copied move_to here
+# Python imports made me angry so I just copied move_to here
 async def move_to(
     drone: System, latitude: float, longitude: float, altitude: float, fast_param: float
 ) -> None:
@@ -73,7 +74,7 @@ async def move_to(
                 logging.info("arrived")
                 # sleeps for 15 seconds to give substantial time for the airdrop,
                 # can be changed later.
-                await asyncio.sleep(3)
+                await asyncio.sleep(1)
                 break
 
         # tell machine to sleep to prevent contstant polling, preventing battery drain
@@ -85,27 +86,21 @@ async def move_to(
 # pylint: disable=duplicate-code
 async def run() -> None:
     """
-    This function is a driver to test the goto function and runs through the
-    given waypoints in the lats and longs lists at the altitude of 100.
-    Makes the drone move to each location in the lats and longs arrays
-    at the altitude of 100 and
-
-    Notes
-    -----
-    Currently has 4 values in each the Lats and Longs array and code is looped
-    and will stay in that loop until the drone has reached each of locations
-    specified by the latitude and longitude and continues to run until forced disconnect
+    Runs
     """
-    # Put all latitudes, longitudes and altitudes into separate arrays
-    lats: List[float] = [37.948658, 37.948200, 37.948358, 37.948800]
-    longs: List[float] = [-91.784431, -91.783406, -91.783253, -91.784169]
+    # Save GPS coordinates for two waypoints to fly between
+    start_waypoint: tuple[float, float] = (37.94893290, -91.784668343)
+    end_waypoint: tuple[float, float] = (37.947899284, -91.782420970)
 
+    lats: list[float] = [37.94893290, 37.947899284]
+    longs: list[float] = [-91.784668343, -91.782420970]
+    # rando_waypoint: tuple[float, float] = ()
     # create a drone object
     drone: System = System()
     await drone.connect(system_address=SIM_ADDR)
 
     # initilize drone configurations
-    await drone.action.set_takeoff_altitude(12)
+    await drone.action.set_takeoff_altitude(25)
     await drone.action.set_maximum_speed(20)
 
     # connect to the drone
@@ -121,24 +116,45 @@ async def run() -> None:
             logging.info("Global position estimate ok")
             break
 
+    print("Fetching amsl altitude at home location....")
+    async for terrain_info in drone.telemetry.home():
+        absolute_altitude = terrain_info.absolute_altitude_m
+        break
+
     logging.info("-- Arming")
     await drone.action.arm()
 
     logging.info("-- Taking off")
+    print("Taking off")
     await drone.action.takeoff()
 
     # wait for drone to take off
-    await asyncio.sleep(10)
+    await asyncio.sleep(15)
 
-    # move to each waypoint in mission
-    for i in range(6):
+    # Fly to first waypoint
+    print("Going to first waypoint")
+    await drone.action.goto_location(
+        start_waypoint[0], start_waypoint[1], 25 + absolute_altitude, 0
+    )
+    await asyncio.sleep(5)
+    print("Reached first waypoint")
+
+    # Begin 12 mile flight
+    print("Starting the line")
+    iteration: int = 0
+    for i in range(43):
+        point: int
         for point in range(len(lats)):
-            await move_to(drone, lats[point], longs[point], 100, 0.67)
+            await move_to(drone, lats[point], longs[point], 75, 0.5)
+            print("Reached waypoint")
+        print("Iteration:", i)
+        # iteration += 1
 
     # return home
-    logging.info("Last waypoint reached")
+    logging.info("12 miles accomplished")
     logging.info("Returning to home")
     await drone.action.return_to_launch()
+    print("Returned to launch")
     print("Staying connected, press Ctrl-C to exit")
 
     # infinite loop till forced disconnect

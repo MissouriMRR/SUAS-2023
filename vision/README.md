@@ -6,6 +6,8 @@ Run `flyover_pipeline()` from `vision/flyover_vision_pipeline.py`.
 
 The pipeline will loop through any new images until it is given the signal to stop.
 
+Outputs the file once at the end of the run.
+
 Takes three inputs:
 - `camera_data_path`, which is the path to the json file with the necessary data for each image.
   - Keys are file paths to each image, and should be a path such that the image can be opened directly from the path in the pipeline.
@@ -15,3 +17,11 @@ Takes three inputs:
 - `output_path` - The location for where the output json file will be once the pipeline is done.
   - Keys will be the bottle indices converted to strings
   - Values are the locations in dictionary form, matching the `Location` TypedDict in `vision/common/constants.py`
+
+### Airdrop Vision Pipeline
+
+Run `airdrop_pipeline()` from `vision/airdrop_vision_pipeline.py`.
+
+Inputs are the same as `flyover_pipeline()`.
+
+Unlike the Flyover pipeline, Updates the file as new images are processed.

@@ -83,7 +83,7 @@ def flyover_pipeline(camera_data_path: str, state_path: str, output_path: str) -
 
     # Sort and output the locations of all ODLCs
     sorted_odlcs: list[list[BoundingBox]] = std_obj.sort_odlcs(bottle_info, saved_odlcs)
-    odlc_dict: consts.ODLC_Dict = std_obj.create_odlc_dict(sorted_odlcs)
+    odlc_dict: consts.ODLCDict = std_obj.create_odlc_dict(sorted_odlcs)
     pipe_utils.output_odlc_json(output_path, odlc_dict)
 
     # Pick the emergent object and save the image cropped in on the emergent object
