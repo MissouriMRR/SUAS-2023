@@ -5,12 +5,13 @@ from ..start import Start
 from ..state import State
 from ..takeoff import Takeoff
 
+
 async def run(self: Start) -> State:
     """
     Implements the run method for the Start state.
 
-    This method establishes a connection with the drone, waits for the drone to be 
-    discovered, ensures the drone has a global position estimate, arms the drone, 
+    This method establishes a connection with the drone, waits for the drone to be
+    discovered, ensures the drone has a global position estimate, arms the drone,
     and transitions to the Takeoff state.
 
     Parameters
@@ -61,6 +62,7 @@ async def run(self: Start) -> State:
         raise ex
     finally:
         pass
+
 
 # Setting the run_callable attribute of the Start class to the run function
 Start.run_callable = run

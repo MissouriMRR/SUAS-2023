@@ -3,6 +3,7 @@ from typing import Awaitable, Callable, ClassVar
 
 from .state import State
 
+
 class Takeoff(State):
     """
     The Takeoff state of the state machine.
@@ -29,7 +30,7 @@ class Takeoff(State):
         Awaitable[State]
             The next state to transition to after the Takeoff phase is complete.
     """
-    
+
     run_callable: ClassVar[Callable[["Takeoff"], Awaitable[State]]]
 
     def run(self) -> Awaitable[State]:

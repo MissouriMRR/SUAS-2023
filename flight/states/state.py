@@ -21,7 +21,8 @@ from flight.state_settings import StateSettings
 from flight.waypoint.goto import move_to
 from flight.extract_gps import extract_gps, Waypoint, GPSData
 
-StateType = TypeVar("StateType", bound = 'State')
+StateType = TypeVar("StateType", bound="State")
+
 
 class State:
     """
@@ -53,9 +54,7 @@ class State:
         logging.info("State %s has begun", self.name)
         self.state_settings: StateSettings = state_settings
 
-    async def run(
-        self, drone: System
-    ) -> StateType | None:
+    async def run(self, drone: System) -> StateType | None:
         """
         Flight mission code for each state
 
@@ -391,6 +390,7 @@ class Waypoints(State):
 
         return ODLC(self.state_settings)
 
+
 class Takeoff(State):
     """
     Runs takeoff procedure to lift the drone to preset altitude
@@ -430,6 +430,7 @@ class Takeoff(State):
 
         # Go to Waypoint State
         return Waypoints(self.state_settings)
+
 
 class PreProcess(State):
     """

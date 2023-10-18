@@ -3,6 +3,7 @@ from typing import Awaitable, Callable, ClassVar
 
 from .state import State
 
+
 class Waypoint(State):
     """
     The Waypoint state of the state machine.
@@ -29,7 +30,7 @@ class Waypoint(State):
         Awaitable[State]
             The next state to transition to after reaching the specified waypoint.
     """
-    
+
     run_callable: ClassVar[Callable[["Waypoint"], Awaitable[State]]]
 
     def run(self) -> Awaitable[State]:

@@ -38,16 +38,17 @@ async def run(self: Waypoint) -> State:
     try:
         logging.info("Waypoint state running")
         print("Moving to waypoint")
-        
+
         # Use the move_to function to navigate to the waypoint
         await move_to(self.drone.system, 38, -92, 10, 0)
-        
+
         return Land(self.drone)
     except asyncio.CancelledError as ex:
         logging.error("Waypoint state canceled")
         raise ex
     finally:
         pass
+
 
 # Set the run_callable attribute of the Waypoint class to the run function
 Waypoint.run_callable = run

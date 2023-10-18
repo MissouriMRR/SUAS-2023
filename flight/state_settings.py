@@ -5,7 +5,6 @@ DEFAULT_RUN_TITLE: str = "SUAS Test Flight"
 DEFAULT_RUN_DESCRIPTION: str = "Test flight for SUAS 2023"
 
 
-
 class StateSettings:
     """
     Class to contain basic information for a flight, as well as some flight parameters

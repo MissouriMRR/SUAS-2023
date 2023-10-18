@@ -4,6 +4,7 @@ from typing import Awaitable
 
 from ..drone import Drone
 
+
 class State(ABC):
     """
     Defines the State abstract base class.

@@ -5,6 +5,7 @@ from ..state import State
 from ..takeoff import Takeoff
 from ..waypoint import Waypoint
 
+
 async def run(self: Takeoff) -> State:
     """
     Implements the run method for the Takeoff state.
@@ -34,15 +35,16 @@ async def run(self: Takeoff) -> State:
     """
     try:
         logging.info("Takeoff state running")
-        
+
         await self.drone.system.action.takeoff()
-        
+
         return Waypoint(self.drone)
     except asyncio.CancelledError as ex:
         logging.error("Takeoff state canceled")
         raise ex
     finally:
         pass
+
 
 # Setting the run_callable attribute of the Takeoff class to the run function
 Takeoff.run_callable = run

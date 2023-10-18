@@ -5,6 +5,7 @@ from ..land import Land
 from ..start import Start
 from ..state import State
 
+
 async def run(self: Land) -> State:
     """
     Implements the run method for the Land state.
@@ -34,16 +35,17 @@ async def run(self: Land) -> State:
     """
     try:
         logging.info("Landing")
-        
+
         # Instruct the drone to land
         await self.drone.system.action.land()
-        
+
         return Start(self.drone)
     except asyncio.CancelledError as ex:
         logging.error("Land state canceled")
         raise ex
     finally:
         pass
+
 
 # Setting the run_callable attribute of the Land class to the run function
 Land.run_callable = run
