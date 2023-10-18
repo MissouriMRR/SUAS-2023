@@ -2,13 +2,12 @@
 import logging
 import asyncio
 
-from state_machine.test2 import process_test
+from state_machine.flight_manager import start_processes
 from flight.test_files.golf_waypoint_test import run
 
 logging.basicConfig(level=logging.INFO)
-process_test()
-#asyncio.run(run())
+start_processes()
+# asyncio.run(run())
 
 
-#asyncio.run(test()) for the other one
-
+# asyncio.run(test()) for the other one

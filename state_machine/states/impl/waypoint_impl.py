@@ -10,9 +10,9 @@ from flight.waypoint.goto import move_to
 
 async def run(self: Waypoint) -> State:
     """
-    Implements the run method for the Waypoint state.
+    Run method implementation for the Waypoint state.
 
-    This method instructs the drone to move to a specified waypoint and transitions to the Land state.
+    This method instructs the drone to navigate to a specified waypoint and transitions to the Land state upon arrival.
 
     Parameters
     ----------
@@ -22,7 +22,7 @@ async def run(self: Waypoint) -> State:
     Returns
     -------
     Land : State
-        The next state after reaching the specified waypoint and landing.
+        The next state after successfully reaching the specified waypoint and initiating the landing process.
 
     Raises
     ------
@@ -31,8 +31,8 @@ async def run(self: Waypoint) -> State:
 
     Notes
     -----
-    This method is responsible for instructing the drone to navigate to a specified waypoint.
-    Once the waypoint is reached, the drone transitions to the Land state.
+    This method is responsible for guiding the drone to a predefined waypoint in its flight path.
+    Upon reaching the waypoint, it transitions the drone to the Land state to initiate landing.
 
     """
     try:
@@ -49,5 +49,5 @@ async def run(self: Waypoint) -> State:
     finally:
         pass
 
-# Setting the run_callable attribute of the Waypoint class to the run function
+# Set the run_callable attribute of the Waypoint class to the run function
 Waypoint.run_callable = run
