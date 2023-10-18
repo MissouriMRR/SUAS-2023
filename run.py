@@ -3,15 +3,15 @@
 
 import logging
 
-from flight_manager import FlightManager
-from flight.state_settings import StateSettings
+from state_machine.flight_manager import FlightManager
 
 
 if __name__ == "__main__":
     # Run multiprocessing function
     try:
-        state_settings: StateSettings = StateSettings()
-        flight_manager: FlightManager = FlightManager(state_settings)
-        flight_manager.main()
-    except:
-        logging.exception("Unfixable error detected")
+        logging.basicConfig(level=logging.INFO)
+        logging.info("Starting processes")
+        flight_manager: FlightManager = FlightManager()
+        flight_manager.start_manager()
+    finally:
+        logging.info("Done!")
