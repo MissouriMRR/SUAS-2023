@@ -18,7 +18,7 @@ COLOR_LOG_FORMAT: str = (
 )
 
 
-def init_logger(queue: Queue) -> QueueListener:
+def init_logger(queue: Queue[str]) -> QueueListener:
     """
     Initializes a QueueListener object to be used throughout the competition
     code to contain log messages
@@ -44,7 +44,7 @@ def init_logger(queue: Queue) -> QueueListener:
     return QueueListener(queue, file, console)
 
 
-def worker_configurer(queue: Queue) -> None:
+def worker_configurer(queue: Queue[str]) -> None:
     """
     Configures the logger to send logging messages to QueueListener process
 
