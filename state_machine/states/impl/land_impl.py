@@ -1,3 +1,4 @@
+"""Implements the behavior of the Land state."""
 import asyncio
 import logging
 
@@ -12,20 +13,10 @@ async def run(self: Land) -> State:
 
     This method initiates the landing process of the drone and transitions to the Start state.
 
-    Parameters
-    ----------
-    self : Land
-        An instance of the Land state.
-
     Returns
     -------
     Start : State
         The next state after the drone has successfully landed.
-
-    Raises
-    ------
-    asyncio.CancelledError
-        If the execution of the Land state is canceled.
 
     Notes
     -----

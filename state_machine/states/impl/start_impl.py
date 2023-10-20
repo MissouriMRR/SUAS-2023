@@ -1,3 +1,4 @@
+"""Implements the behavior of the Start state."""
 import asyncio
 import logging
 
@@ -14,20 +15,10 @@ async def run(self: Start) -> State:
     discovered, ensures the drone has a global position estimate, arms the drone,
     and transitions to the Takeoff state.
 
-    Parameters
-    ----------
-    self : Start
-        An instance of the Start state.
-
     Returns
     -------
     Takeoff : State
         The next state after the Start state has successfully run.
-
-    Raises
-    ------
-    asyncio.CancelledError
-        If the execution of the Start state is canceled.
 
     Notes
     -----

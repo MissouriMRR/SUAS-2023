@@ -1,3 +1,4 @@
+"""Defines the State abstract base class, which all states should inherit from."""
 from abc import ABC, abstractmethod
 import logging
 from typing import Awaitable
@@ -7,7 +8,7 @@ from ..drone import Drone
 
 class State(ABC):
     """
-    Defines the State abstract base class.
+    Defines the State abstract base class, which all states should inherit from.
 
     This abstract base class serves as the foundation for all state types in the state machine.
 
@@ -18,7 +19,7 @@ class State(ABC):
 
     Methods
     -------
-    __init__(drone: Drone)
+    __init__(drone: Drone) -> None
         Initialize a new state object.
 
     name() -> str
@@ -31,7 +32,7 @@ class State(ABC):
         Run this state.
     """
 
-    def __init__(self, drone: Drone):
+    def __init__(self, drone: Drone) -> None:
         """
         Initialize a new state object.
 
@@ -70,7 +71,8 @@ class State(ABC):
     @abstractmethod
     def run(self) -> Awaitable["State"]:
         """
-        Run this state.
+        Execute the logic associated with this state and return the next state
+        to transition to.
 
         This method must be implemented by subclasses to define the behavior of the state.
 
@@ -79,3 +81,4 @@ class State(ABC):
         Awaitable["State"]
             An awaitable state representing the next state to transition to.
         """
+        # type: ignore

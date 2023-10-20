@@ -1,3 +1,4 @@
+"""Implements the behavior of the Takeoff state."""
 import asyncio
 import logging
 
@@ -11,11 +12,6 @@ async def run(self: Takeoff) -> State:
     Implements the run method for the Takeoff state.
 
     This method initiates the drone takeoff process and transitions to the Waypoint state.
-
-    Parameters
-    ----------
-    self : Takeoff
-        An instance of the Takeoff state.
 
     Returns
     -------

@@ -1,4 +1,4 @@
-# Declares the Start state class.
+"""Declares the Start state class."""
 from typing import Awaitable, Callable, ClassVar
 
 from .state import State
@@ -11,28 +11,17 @@ class Start(State):
     Attributes
     ----------
     run_callable : Callable[["Start"], Awaitable[State]]
-        The callable object which gets executed when the `run` method is called.
+        The callable object to call when this state is run. This object is
+        shared between all instances of this class.
 
     Methods
     -------
-    run() -> Awaitable[State]
-        Executes the start state using the defined callable and transitions to the next state.
-
-        Returns
-        -------
-        Awaitable[State]
-            An awaitable state resulting from the execution of run_callable.
+    run() -> Awaitable[State]:
+        Execute the logic associated with this state and return the next state
+        to transition to.
     """
 
     run_callable: ClassVar[Callable[["Start"], Awaitable[State]]]
 
     def run(self) -> Awaitable[State]:
-        """
-        Executes the run_callable associated with the Start state.
-
-        Returns
-        -------
-        Awaitable[State]
-            An awaitable state resulting from the execution of run_callable.
-        """
         return self.run_callable()

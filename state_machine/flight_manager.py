@@ -17,21 +17,24 @@ class FlightManager:
 
     Methods
     -------
-    start_manager()
-        Starts the state machine and kill switch in separate processes.
-    start_state_machine(drone: Drone)
-        Creates and runs a state machine in the process.
-    start_kill_switch(process: Process, drone: Drone)
-        Creates and runs a kill switch in the process.
-    kill_switch(state_machine_process: Process, drone: Drone)
-        Continuously checks for whether or not the kill switch has been activated.
-        Kills the state machine if the kill switch has been activated.
-    graceful_exit(drone: Drone)
+    __init__(self) -> None
+        Initialize a flight manager object.
+    start_manager() -> None
+        Test running the state machine in a separate process.
+    start_state_machine(drone: Drone) -> None
+        Create and start a state machine in the event loop. This method should
+        be called in its own process.
+    start_kill_switch(state_machine_process: Process, drone: Drone) -> None
+        Create and start a kill switch in the event loop.
+    kill_switch(state_machine_process: Process, drone: Drone) -> Awaitable[None]
+        Enable the kill switch and wait until it activates. The drone should be
+        in manual mode after this method returns.
+    graceful_exit(drone: Drone) -> Awaitable[None]
         Lands the drone and exits the program.
     """
 
     def __init__(self) -> None:
-        pass
+        """Initialize a flight manager object."""
 
     def start_manager(self) -> None:
         """Test running the state machine in a separate process."""
@@ -62,21 +65,46 @@ class FlightManager:
             asyncio.run(self.graceful_exit(drone_obj))
 
     def start_state_machine(self, drone: Drone) -> None:
-        """Create and run a state machine in the event loop."""
+        """
+        Create and start a state machine in the event loop. This method should
+        be called in its own process.
+
+        Parameters
+        ----------The callable object which gets executed when the `run` method is called.
+        drone : Drone
+            The drone the state machine will control.
+        """
         logging.info("-- Starting state machine")
         asyncio.run(StateMachine(Start(drone), drone).run())
 
-    def start_kill_switch(self, process: Process, drone: Drone) -> None:
-        """Create and run a kill switch in the event loop."""
+    def start_kill_switch(self, state_machine_process: Process, drone: Drone) -> None:
+        """
+        Create and start a kill switch in the event loop.
+
+        Parameters
+        ----------
+        state_machine_process : Process
+            The process running the state machine to kill.
+        drone : Drone
+            The drone that is controlled by the state machine.
+        """
         logging.info("-- Starting kill switch")
-        asyncio.run(self.kill_switch(process, drone))
+        asyncio.run(self.kill_switch(state_machine_process, drone))
 
     async def kill_switch(self, state_machine_process: Process, drone: Drone) -> None:
         """
-        Continuously check for whether or not the kill switch has been activated.
+        Enable the kill switch and wait until it activates. The drone should be
+        in manual mode after this method returns.
+
+        Parameters
+        ----------
+        state_machine_process : Process
+            The process running the state machine to kill. This process will
+            be terminated.
+        drone : Drone
+            The drone that is controlled by the state machine.
         """
 
-        # connect to the drone
         logging.debug("Kill switch running")
         logging.info("Waiting for drone to connect...")
         await drone.connect_drone()
@@ -91,10 +119,17 @@ class FlightManager:
 
         logging.critical("Kill switch activated. Terminating state machine.")
         state_machine_process.terminate()
-        return
 
     async def graceful_exit(self, drone: Drone) -> None:
-        """Land the drone and exit the program."""
+        """
+        Land the drone and exit the program.
+
+        Parameters
+        ----------
+        drone : Drone
+            The drone to land.
+        """
+
         await drone.connect_drone()
         logging.critical("Beginning graceful exit. Landing drone...")
         await drone.system.action.return_to_launch()
@@ -103,4 +138,3 @@ class FlightManager:
                 logging.info("Drone landed successfully.")
                 break
         logging.info("Drone landed. Exiting program...")
-        return

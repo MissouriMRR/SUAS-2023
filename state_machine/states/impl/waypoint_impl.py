@@ -1,33 +1,26 @@
+"""Implement the behavior of the Waypoint state."""
 import asyncio
 import logging
+
+from flight.waypoint.goto import move_to
 
 from ..land import Land
 from ..state import State
 from ..waypoint import Waypoint
-
-from flight.waypoint.goto import move_to
 
 
 async def run(self: Waypoint) -> State:
     """
     Run method implementation for the Waypoint state.
 
-    This method instructs the drone to navigate to a specified waypoint and transitions to the Land state upon arrival.
-
-    Parameters
-    ----------
-    self : Waypoint
-        An instance of the Waypoint state.
+    This method instructs the drone to navigate to a specified waypoint and
+    transitions to the Land state upon arrival.
 
     Returns
     -------
     Land : State
-        The next state after successfully reaching the specified waypoint and initiating the landing process.
-
-    Raises
-    ------
-    asyncio.CancelledError
-        If the execution of the Waypoint state is canceled.
+        The next state after successfully reaching the specified waypoint and
+        initiating the landing process.
 
     Notes
     -----

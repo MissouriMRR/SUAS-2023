@@ -1,4 +1,4 @@
-"""File that runs the state machine and kill switch in separate processes in order to test them."""
+"""Runs the state machine and kill switch in separate processes in order to test them."""
 import asyncio
 from state_machine.flight_manager import FlightManager
 
@@ -7,14 +7,16 @@ CONTROLLER_ADDR: str = "serial:///dev/ttyUSB0"  # Address to connect to a pixhaw
 
 
 async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
-    """Runs the state machine.
+    """
+    Run the state machine.
 
-    Args:
-        _sim (bool): Whether or not to run the state machine in simulation mode.
+    Parameters
+    ----------
+    _sim : bool
+        Whether to run the state machine in simulation mode.
     """
     FlightManager().start_manager()
 
 
 if __name__ == "__main__":
-    # sim = input("Simulate? (y/n): ").lower() == "y"
     asyncio.run(run_test(True))

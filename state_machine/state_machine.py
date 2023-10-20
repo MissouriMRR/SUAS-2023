@@ -9,15 +9,47 @@ from .states import State
 
 
 class StateMachine:
-    """A state machine controlling a drone."""
+    """
+    A state machine controlling a drone.
 
-    def __init__(self, initial_state: State, drone: Drone) -> None:
+    Attributes
+    ----------
+    current_state : State
+        The state this state machine is currently running.
+    drone : Drone
+        The drone this state machine controls.
+    run_task : Task[None] | None
+        The task that runs through the states in a loop. If the state machine
+        is not running, this should be None.
+
+    Methods
+    -------
+    __init__(initial_state: State, drone: Drone)
+        Initialize a new state machine object.
+    run(initial_state: State | None) -> Awaitable[None]
+        Run the flight code specific to each state until completion.
+    cancel() -> Awaitable[None]
+        Cancel the currently running state loop.
+    """
+
+    def __init__(self, initial_state: State, drone: Drone):
+        """
+        Initialize a new state machine object.
+
+        Parameters
+        ----------
+        initial_state : State
+            The first state that runs when the state machine is started by the
+            `run()` method.
+        drone : Drone
+            The drone this state machine will control.
+        """
         self.current_state: State = initial_state
         self.drone: Drone = drone
         self.run_task: Task[None] | None = None
 
     async def run(self, initial_state: State | None = None) -> None:
-        """Runs the flight code specific to each state until completion.
+        """Run the flight code specific to each state until completion.
 
         Parameters
         ----------
@@ -44,7 +76,7 @@ class StateMachine:
             self.current_state = await self.current_state.run()
 
     def cancel(self) -> None:
-        """Cancel the state machine's state loop."""
+        """Cancel the currently running state loop.."""
         if self.run_task is None:
             return
 

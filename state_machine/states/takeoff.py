@@ -1,4 +1,4 @@
-# Declares the Takeoff state class.
+"""Declares the Takeoff state class."""
 from typing import Awaitable, Callable, ClassVar
 
 from .state import State
@@ -13,33 +13,17 @@ class Takeoff(State):
     Attributes
     ----------
     run_callable : ClassVar[Callable[["Takeoff"], Awaitable[State]]]
-        Class-level variable that holds a callable function signature.
-        It's a Callable that takes an instance of Takeoff and returns an Awaitable[State].
+        The callable object to call when this state is run. This object is
+        shared between all instances of this class.
 
     Methods
     -------
     run() -> Awaitable[State]:
-        Execute the logic associated with the Takeoff state.
-
-        This method is called to perform the logic associated with the Takeoff state.
-        It should return an Awaitable[State], which represents the next state
-        to transition to in the state machine.
-
-        Returns
-        -------
-        Awaitable[State]
-            The next state to transition to after the Takeoff phase is complete.
+        Execute the logic associated with this state and return the next state
+        to transition to.
     """
 
     run_callable: ClassVar[Callable[["Takeoff"], Awaitable[State]]]
 
     def run(self) -> Awaitable[State]:
-        """
-        Execute the logic associated with the Takeoff state.
-
-        Returns
-        -------
-        Awaitable[State]
-            The next state to transition to after the Takeoff phase is complete.
-        """
         return self.run_callable()
