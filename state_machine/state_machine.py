@@ -4,8 +4,8 @@ import asyncio
 from asyncio import Task
 import logging
 
-from .drone import Drone
-from .states import State
+from state_machine.drone import Drone
+from state_machine.states import State
 
 
 class StateMachine:

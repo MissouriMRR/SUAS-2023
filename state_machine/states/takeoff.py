@@ -1,7 +1,7 @@
 """Declares the Takeoff state class."""
 from typing import Awaitable, Callable, ClassVar
 
-from .state import State
+from state_machine.states.state import State
 
 
 class Takeoff(State):

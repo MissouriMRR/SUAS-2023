@@ -2,8 +2,8 @@
 import asyncio
 import logging
 
-from ..start import Start
-from ..state import State
+from state_machine.states.start import Start
+from state_machine.states.state import State
 from ..takeoff import Takeoff
 
 

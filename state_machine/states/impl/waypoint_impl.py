@@ -4,9 +4,9 @@ import logging
 
 from flight.waypoint.goto import move_to
 
-from ..land import Land
-from ..state import State
-from ..waypoint import Waypoint
+from state_machine.states.land import Land
+from state_machine.states.state import State
+from state_machine.states.waypoint import Waypoint
 
 
 async def run(self: Waypoint) -> State:

@@ -6,9 +6,9 @@ from multiprocessing import Process
 import time
 from mavsdk.telemetry import FlightMode, LandedState
 
-from .drone import Drone
-from .state_machine import StateMachine
-from .states import Start
+from state_machine.drone import Drone
+from state_machine.state_machine import StateMachine
+from state_machine.states import Start
 
 
 class FlightManager:

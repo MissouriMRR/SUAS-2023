@@ -2,9 +2,9 @@
 import asyncio
 import logging
 
-from ..state import State
-from ..takeoff import Takeoff
-from ..waypoint import Waypoint
+from state_machine.states.state import State
+from state_machine.states.takeoff import Takeoff
+from state_machine.states.waypoint import Waypoint
 
 
 async def run(self: Takeoff) -> State:

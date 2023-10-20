@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import logging
 from typing import Awaitable
 
-from ..drone import Drone
+from state_machine.drone import Drone
 
 
 class State(ABC):
