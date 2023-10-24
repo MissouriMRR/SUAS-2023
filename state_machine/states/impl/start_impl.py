@@ -4,7 +4,7 @@ import logging
 
 from state_machine.states.start import Start
 from state_machine.states.state import State
-from ..takeoff import Takeoff
+from state_machine.states.takeoff import Takeoff
 
 
 async def run(self: Start) -> State:
