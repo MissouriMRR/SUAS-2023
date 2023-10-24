@@ -47,7 +47,7 @@ async def run(self: Start) -> State:
         await self.drone.system.action.arm()
 
         logging.info("Start state complete")
-        return Takeoff(self.drone)
+        return Takeoff(self.drone, self.flight_settings)
     except asyncio.CancelledError as ex:
         logging.error("Start state canceled")
         raise ex

@@ -34,7 +34,7 @@ async def run(self: Takeoff) -> State:
 
         await self.drone.system.action.takeoff()
 
-        return Waypoint(self.drone)
+        return Waypoint(self.drone, self.flight_settings)
     except asyncio.CancelledError as ex:
         logging.error("Takeoff state canceled")
         raise ex
