@@ -1,8 +1,9 @@
 """Class to contain setters, getters & parameters for current flight"""
+from typing import Final
 
-DEFAULT_WAYPOINTS: int = 5
-DEFAULT_RUN_TITLE: str = "SUAS Test Flight"
-DEFAULT_RUN_DESCRIPTION: str = "Test flight for SUAS 2023"
+DEFAULT_WAYPOINTS: Final[int] = 5
+DEFAULT_RUN_TITLE: Final[str] = "SUAS Test Flight"
+DEFAULT_RUN_DESCRIPTION: Final[str] = "Test flight for SUAS 2023"
 
 
 class FlightSettings:
