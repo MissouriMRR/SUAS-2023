@@ -33,9 +33,14 @@ class FlightManager:
     def __init__(self) -> None:
         pass
 
-    def start_manager(self) -> None:
+    def start_manager(self, simflag) -> None:
         """Test running the state machine in a separate process."""
         drone_obj: Drone = Drone()
+        if simflag == True:
+            Drone.address = "udp://:14540"
+        else:
+            Drone.address = "serial:///dev/ttyUSB0:921600"
+
 
         logging.info("Starting processes")
         state_machine: Process = Process(target=self.start_state_machine, args=(drone_obj,))
