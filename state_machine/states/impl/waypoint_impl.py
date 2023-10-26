@@ -35,7 +35,7 @@ async def run(self: Waypoint) -> State:
         # Use the move_to function to navigate to the waypoint
         await move_to(self.drone.system, 38, -92, 10, 0)
 
-        return Land(self.drone)
+        return Land(self.drone, self.flight_settings)
     except asyncio.CancelledError as ex:
         logging.error("Waypoint state canceled")
         raise ex

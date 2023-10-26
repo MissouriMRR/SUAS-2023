@@ -4,6 +4,7 @@ import logging
 from typing import Awaitable
 
 from state_machine.drone import Drone
+from state_machine.flight_settings import FlightSettings
 
 
 class State(ABC):
@@ -16,10 +17,12 @@ class State(ABC):
     ----------
     _drone : Drone
         The drone to which this state is bound.
+    _flight_settings : FlightSettings
+        The flight settings to which this state is bound.
 
     Methods
     -------
-    __init__(drone: Drone) -> None
+    __init__(drone: Drone, flight_settings: FlightSettings) -> None
         Initialize a new state object.
 
     name() -> str
@@ -28,11 +31,14 @@ class State(ABC):
     drone() -> Drone
         Get the drone this state is bound to.
 
+    flight_settings() -> FlightSettings
+        Get the flight settings this state is bound to.
+
     run() -> Awaitable["State"]
         Run this state.
     """
 
-    def __init__(self, drone: Drone) -> None:
+    def __init__(self, drone: Drone, flight_settings: FlightSettings) -> None:
         """
         Initialize a new state object.
 
@@ -40,8 +46,11 @@ class State(ABC):
         ----------
         drone : Drone
             The drone to bind this state to.
+        flight_settings : FlightSettings
+            The drone to bind this state to.
         """
         self._drone: Drone = drone
+        self._flight_settings: FlightSettings = flight_settings
         logging.info("Entering %s state", self.name)
 
     @property
@@ -67,6 +76,18 @@ class State(ABC):
             The drone object this state is bound to.
         """
         return self._drone
+
+    @property
+    def flight_settings(self) -> FlightSettings:
+        """
+        Get the flight settings this state is bound to.
+
+        Returns
+        -------
+        Drone
+            The flight settings object this state is bound to.
+        """
+        return self._flight_settings
 
     @abstractmethod
     def run(self) -> Awaitable["State"]:
