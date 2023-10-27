@@ -16,6 +16,9 @@ class Drone:
     address : str
         The address used to connect to the drone when the `connect_drone()`
         method is called.
+    odlc_scan : boolean
+        A boolean to tell if the odlc zone needs to be scanned, used the
+        first run and if odlc needs to be scanned any other time
 
     Methods
     -------
@@ -37,6 +40,7 @@ class Drone:
         """
         self.system = mavsdk.System()
         self.address = address
+        self.odlc_scan = True
 
     async def connect_drone(self) -> None:
         """Connect to a drone."""
