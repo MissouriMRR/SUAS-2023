@@ -41,7 +41,6 @@ class FlightManager:
         else:
             Drone.address = "serial:///dev/ttyUSB0:921600"
 
-
         logging.info("Starting processes")
         state_machine: Process = Process(target=self.start_state_machine, args=(drone_obj,))
         kill_switch_process: Process = Process(
