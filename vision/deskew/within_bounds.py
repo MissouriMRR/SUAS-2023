@@ -16,14 +16,14 @@ def on_line(point1: list[float], point2: list[float], point3: list[float]) -> bo
 
     Parameters
     ----------
-    point1: [float]
+    point1: list[float]
         The first point on the line segment.
         An Array that contains the x and y coordinates of the point.
-    point2: [float]
+    point2: list[float]
         A point that may or may not lie on the line segment that is
         created by point1 and point3.
         An Array that contains the x and y coordinates of the point.
-    point3: [float]
+    point3: list[float]
         The end point on the line segment.
         An Array that contains the x and y coordinates of the point.
 
@@ -55,13 +55,13 @@ def find_orientation(point1: list[float], point2: list[float], point3: list[floa
 
     Parameters
     ----------
-    point1: [float]
+    point1: list[float]
         The first point of a shape or possibly line.
         An Array that contains the x and y coordinates of the point.
-    point2: [float]
+    point2: list[float]
         The second point of a shape or possibly line.
         An Array that contains the x and y coordinates of the point.
-    point3: [float]
+    point3: list[float]
         The third point of a shape or possibly line.
         An Array that contains the x and y coordinates of the point.
 
@@ -82,7 +82,7 @@ def find_orientation(point1: list[float], point2: list[float], point3: list[floa
     to_return: int = 0  # Defaults to_return as Colinear
 
     # GeeksforGeeks algorithm
-    val: int = ((point2[1] - point1[1]) * (point3[0] - point2[0])) - (
+    val: float = ((point2[1] - point1[1]) * (point3[0] - point2[0])) - (
         (point2[0] - point1[0]) * (point3[1] - point2[1])
     )
 
@@ -101,11 +101,11 @@ def lines_intersect(line1: list[list[float]], line2: list[list[float]]) -> bool:
 
     Parameters
     ----------
-    line1: [[float]]
+    line1: list[list[float]]
         The first line that may or may not intersect with line2.
         A 2D array that contains two points and each point is made up of
         x and y coordinates.
-    line2: [[float]]
+    line2: list[list[float]]
         The second line that may or may not intersect with line1.
         A 2D array that contains two points and each point is made up of
         x and y coordinates.
@@ -150,11 +150,11 @@ def inside_bounds(boundary: list[list[float]], location_point: list[float]) -> b
 
     Parameters
     ----------
-    boundary: [[float]]
+    boundary: list[list[float]]
         Contains a number of points which create a shape.
         A 2D array which contains a number of points where each point
         is made up of x and y coordinates.
-    location_point: [float]
+    location_point: list[float]
         A point that may or may not be located within the shape created
         by boundary.
         An Array that contains the x and y coordinates of the point.
@@ -194,11 +194,11 @@ def contains_airdrop_boundary(
 
     Parameters
     ----------
-    image_corners: [[float]]
+    image_corners: list[list[float]]
         Contains a number of points which create a shape.
         A 2D array which contains a number of points where each point
         is made up of x and y coordinates.
-    airdrop_boundary : [[float]]
+    airdrop_boundary : list[list[float]]
         Contains a number of points which create a shape.
         A 2D array which contains a number of points where each point
         is made up of x and y coordinates.
