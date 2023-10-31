@@ -28,7 +28,7 @@ async def run(self: ODLC) -> State:
         logging.info("ODLC")
         # code for the ODLC logic
 
-        return Airdrop(self.drone)
+        return Airdrop(self.drone, self.flight_settings)
     except asyncio.CancelledError as ex:
         logging.error("ODLC state canceled")
         raise ex
