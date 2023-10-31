@@ -5,6 +5,7 @@ from asyncio import Task
 import logging
 
 from state_machine.drone import Drone
+from state_machine.flight_settings import FlightSettings
 from state_machine.states import State
 
 
@@ -18,13 +19,15 @@ class StateMachine:
         The state this state machine is currently running.
     drone : Drone
         The drone this state machine controls.
+    flight_settings : FlightSettings
+        The flight settings this flight uses.
     run_task : Task[None] | None
         The task that runs through the states in a loop. If the state machine
         is not running, this should be None.
 
     Methods
     -------
-    __init__(initial_state: State, drone: Drone)
+    __init__(initial_state: State, drone: Drone, flight_settings: FlightSettings)
         Initialize a new state machine object.
     run(initial_state: State | None) -> Awaitable[None]
         Run the flight code specific to each state until completion.
@@ -32,7 +35,7 @@ class StateMachine:
         Cancel the currently running state loop.
     """
 
-    def __init__(self, initial_state: State, drone: Drone):
+    def __init__(self, initial_state: State, drone: Drone, flight_settings: FlightSettings):
         """
         Initialize a new state machine object.
 
@@ -43,9 +46,12 @@ class StateMachine:
             `run()` method.
         drone : Drone
             The drone this state machine will control.
+        flight_settings : FlightSettings
+            The flight settings to use.
         """
         self.current_state: State = initial_state
         self.drone: Drone = drone
+        self.flight_settings: FlightSettings = flight_settings
         self.run_task: Task[None] | None = None
 
     async def run(self, initial_state: State | None = None) -> None:
@@ -54,7 +60,8 @@ class StateMachine:
         Parameters
         ----------
         initial_state : State | None
-            If provided, sets the state machine's current state.
+            If provided, sets the state machine's current state. This must
+            share the same drone and flight settings as this state machine.
         """
         if self.run_task is not None:
             return

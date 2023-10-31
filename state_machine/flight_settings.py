@@ -1,11 +1,12 @@
 """Class to contain setters, getters & parameters for current flight"""
+from typing import Final
 
-DEFAULT_WAYPOINTS: int = 5
-DEFAULT_RUN_TITLE: str = "SUAS Test Flight"
-DEFAULT_RUN_DESCRIPTION: str = "Test flight for SUAS 2023"
+DEFAULT_WAYPOINTS: Final[int] = 5
+DEFAULT_RUN_TITLE: Final[str] = "SUAS Test Flight"
+DEFAULT_RUN_DESCRIPTION: Final[str] = "Test flight for SUAS 2023"
 
 
-class StateSettings:
+class FlightSettings:
     """
     Class to contain basic information for a flight, as well as some flight parameters
 
@@ -17,7 +18,7 @@ class StateSettings:
         The name for the current flight operation
     __run_description: str
         A small description for the current flight
-    __num_waypoints: int
+    __waypoint_count: int
         The number of waypoints to fly for the current flight test
 
     Methods
@@ -26,9 +27,9 @@ class StateSettings:
         Returns the status of the takeoff type for the flight
     simple_takeoff(simple_takeoff: bool) -> None
         Sets the parameter for a simple or diagonal takeoff
-    num_waypoints() -> int
+    waypoint_count() -> int
         Returns the number of waypoints to fly for the current flight
-    num_waypoints(waypoints: int) -> None
+    waypoint_count(count: int) -> None
         Setter for configuring the number of waypoints to fly for the flight test
     run_title() -> str
         `Returns the flight title
@@ -64,7 +65,7 @@ class StateSettings:
         self.__simple_takeoff: bool = simple_takeoff
         self.__run_title: str = title
         self.__run_description: str = description
-        self.__num_waypoints: int = waypoints
+        self.__waypoint_count: int = waypoints
 
     # ----- Takeoff Settings ----- #
     @property
@@ -93,28 +94,28 @@ class StateSettings:
 
     # ----- Waypoint Settings ----- #
     @property
-    def num_waypoints(self) -> int:
+    def waypoint_count(self) -> int:
         """
         Gets the number of waypoints as a private member variable
 
         Returns
         -------
-        num_waypoints : int
+        waypoint_count : int
             Current number of waypoints to fly for the mission
         """
-        return self.__num_waypoints
+        return self.__waypoint_count
 
-    @num_waypoints.setter
-    def num_waypoints(self, waypoints: int) -> None:
+    @waypoint_count.setter
+    def waypoint_count(self, count: int) -> None:
         """
         Sets the number of waypoints to fly for the flight mission
 
         Parameters
         ----------
-        waypoints : int
+        count : int
             Total number of waypoints planning to fly for mission
         """
-        self.__num_waypoints = waypoints
+        self.__waypoint_count = count
 
     # ----- Flight Initialization Settings ----- #
     @property

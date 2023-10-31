@@ -30,7 +30,7 @@ async def run(self: Land) -> State:
         # Instruct the drone to land
         await self.drone.system.action.land()
 
-        return Start(self.drone)
+        return Start(self.drone, self.flight_settings)
     except asyncio.CancelledError as ex:
         logging.error("Land state canceled")
         raise ex
