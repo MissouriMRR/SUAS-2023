@@ -15,7 +15,7 @@ async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     _sim : bool
         Whether to run the state machine in simulation mode.
     """
-    FlightManager().start_manager()
+    FlightManager().start_manager(_sim)
 
 
 if __name__ == "__main__":
