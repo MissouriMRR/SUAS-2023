@@ -46,7 +46,9 @@ class FlightManager:
         flight_settings_obj: FlightSettings = FlightSettings()
 
         logging.info("Starting processes")
-        state_machine: Process = Process(target=self.start_state_machine, args=(drone_obj, flight_settings_obj))
+        state_machine: Process = Process(
+            target=self.start_state_machine, args=(drone_obj, flight_settings_obj)
+        )
         kill_switch_process: Process = Process(
             target=self.start_kill_switch, args=(state_machine, drone_obj)
         )
