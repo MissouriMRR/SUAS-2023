@@ -11,8 +11,6 @@ async def run(self: ODLC) -> State:
     """
     Implements the run method for the ODLC state.
 
-    This method initiates the ODLC process of the drone and transitions to the Airdrop state.
-
     Returns
     -------
     Airdrop : State
@@ -22,7 +20,6 @@ async def run(self: ODLC) -> State:
     -----
     This method is responsible for initiating the ODLC scanning process of the drone
     and transitioning it to the Airdrop state.
-
     """
     try:
         logging.info("ODLC")
