@@ -232,9 +232,12 @@ def on_line(line_start: list[float], test_point: list[float], line_end: list[flo
     https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
     """
 
-    is_on_line: bool = ((test_point[0] <= max(line_start[0], line_end[0])) and 
-                        (test_point[0] >= min(line_start[0], line_end[0]))) and (
-                        (test_point[1] <= max(line_start[1], line_end[1])) and 
-                        (test_point[1] >= min(line_start[1], line_end[1])))
+    is_on_line: bool = (
+        (test_point[0] <= max(line_start[0], line_end[0]))
+        and (test_point[0] >= min(line_start[0], line_end[0]))
+    ) and (
+        (test_point[1] <= max(line_start[1], line_end[1]))
+        and (test_point[1] >= min(line_start[1], line_end[1]))
+    )
 
     return is_on_line
