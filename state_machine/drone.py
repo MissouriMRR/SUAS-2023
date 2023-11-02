@@ -16,7 +16,7 @@ class Drone:
     address : str
         The address used to connect to the drone when the `connect_drone()`
         method is called.
-    odlc_scan : boolean
+    odlc_scan : bool
         A boolean to tell if the odlc zone needs to be scanned, used the
         first run and if odlc needs to be scanned any other time
 

@@ -11,8 +11,6 @@ async def run(self: Airdrop) -> State:
     """
     Implements the run method for the Airdrop state.
 
-    This method initiates the Airdrop process of the drone and transitions to the Waypoint state.
-
     Returns
     -------
     Waypoint : State
@@ -22,7 +20,6 @@ async def run(self: Airdrop) -> State:
     -----
     This method is responsible for initiating the Airdrop process of the drone and transitioning
     it back to the Waypoint state.
-
     """
     try:
         logging.info("Airdrop")
