@@ -103,7 +103,7 @@ def inside_bounds(boundary_list: list[list[float]], location_point: list[float])
 
     # pointPolygonTest returns 1.0 if point is within bounds, and -1.0
     # if the point is not within bounds
-    is_in_bounds = (ppt_return > 0)
+    is_in_bounds = ppt_return > 0
 
     return is_in_bounds
 
