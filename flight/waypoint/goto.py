@@ -29,22 +29,19 @@ async def move_to(
     longitude: float
         a float containing the requested longitude to move to
     altitude: float
-        a float contatining the requested altitude to go to (in feet)
+        a float contatining the requested altitude to go to in meters
     fast_param: float
         a float that determines if the drone will take less time checking its precise location
         before moving on to another waypoint. If its 1, it will move at normal speed,
         if its less than 1(0.83), it will be faster.
     """
 
-    # converts feet into meters
-    altitude_in_meters = altitude * 0.3048
-
     # get current altitude
     async for terrain_info in drone.telemetry.home():
         absolute_altitude: float = terrain_info.absolute_altitude_m
         break
 
-    await drone.action.goto_location(latitude, longitude, altitude_in_meters + absolute_altitude, 0)
+    await drone.action.goto_location(latitude, longitude, altitude + absolute_altitude, 0)
     location_reached: bool = False
     # First determine if we need to move fast through waypoints or need to slow down at each one
     # Then loops until the waypoint is reached
@@ -62,13 +59,10 @@ async def move_to(
                 and (
                     round(drone_long, int(6 * fast_param)) == round(longitude, int(6 * fast_param))
                 )
-                and (round(drone_alt, 1) == round(altitude_in_meters, 1))
+                and (round(drone_alt, 1) == round(altitude, 1))
             ):
                 location_reached = True
                 logging.info("arrived")
-                # sleeps for 15 seconds to give substantial time for the airdrop,
-                # can be changed later.
-                await asyncio.sleep(15)
                 break
 
         # tell machine to sleep to prevent constant polling, preventing battery drain

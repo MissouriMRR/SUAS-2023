@@ -1,14 +1,14 @@
-"""Declares the Waypoint state class."""
+"""Declares the ODLC state class."""
 from typing import Awaitable, Callable, ClassVar
 
 from state_machine.states.state import State
 
 
-class Waypoint(State):
+class ODLC(State):
     """
-    The Waypoint state of the state machine.
+    The ODLC state of the state machine.
 
-    This state represents the phase in which the drone is navigating to a specific waypoint.
+    This state represents the phase in which the drone is scanning the search area.
 
     Attributes
     ----------
@@ -23,7 +23,7 @@ class Waypoint(State):
         to transition to.
     """
 
-    run_callable: ClassVar[Callable[["Waypoint"], Awaitable[State]]]
+    run_callable: ClassVar[Callable[["ODLC"], Awaitable[State]]]
 
     def run(self) -> Awaitable[State]:
         return self.run_callable()
