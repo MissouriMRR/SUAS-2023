@@ -103,8 +103,7 @@ def inside_bounds(boundary_list: list[list[float]], location_point: list[float])
 
     # pointPolygonTest returns 1.0 if point is within bounds, and -1.0
     # if the point is not within bounds
-    if ppt_return > 0:
-        is_in_bounds = True
+    is_in_bounds = (ppt_return > 0)
 
     return is_in_bounds
 
@@ -134,13 +133,13 @@ def lines_intersect(line1: list[list[float]], line2: list[list[float]]) -> bool:
     https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
     """
 
-    intersects: bool = False
-
     # Find the 4 orientations required for the general and special cases
     o1: int = find_orientation(line1[0], line1[1], line2[0])
     o2: int = find_orientation(line1[0], line1[1], line2[1])
     o3: int = find_orientation(line2[0], line2[1], line1[0])
     o4: int = find_orientation(line2[0], line2[1], line1[1])
+
+    intersects: bool = False
 
     if (o1 != o2) and (o3 != o4):  # General Case
         intersects = True
