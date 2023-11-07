@@ -155,7 +155,6 @@ def shortest_path_between(src: Point, dst: Point, boundary: Iterable[Node]) -> I
         yield dst
         return
 
-    # Node flags will be used to mark if a node has been visited
     # We use the A* search algorithm
 
     goal_node: Node = Node(dst)
