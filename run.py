@@ -8,7 +8,7 @@ from state_machine.flight_manager import FlightManager
 if __name__ == "__main__":
     # Run multiprocessing function
     try:
-        simflag = False
+        simflag: bool = False
         logging.basicConfig(level=logging.INFO)
         logging.info("Starting processes")
         flight_manager: FlightManager = FlightManager()

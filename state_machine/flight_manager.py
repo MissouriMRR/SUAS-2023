@@ -6,10 +6,10 @@ from multiprocessing import Process
 import time
 from mavsdk.telemetry import FlightMode, LandedState
 
+from state_machine.drone import Drone
 from state_machine.flight_settings import FlightSettings
-from .drone import Drone
-from .state_machine import StateMachine
-from .states import Start
+from state_machine.state_machine import StateMachine
+from state_machine.states import Start
 
 
 class FlightManager:
@@ -20,16 +20,18 @@ class FlightManager:
     -------
     __init__(self) -> None
         Initialize a flight manager object.
-    start_manager()
-        Starts the state machine and kill switch in separate processes.
-    start_state_machine(drone: Drone)
-        Creates and runs a state machine in the process.
-    start_kill_switch(process: Process, drone: Drone)
-        Creates and runs a kill switch in the process.
-    kill_switch(state_machine_process: Process, drone: Drone)
-        Continuously checks for whether or not the kill switch has been activated.
-        Kills the state machine if the kill switch has been activated.
-    graceful_exit(drone: Drone)
+    start_manager() -> None
+        Test running the state machine in a separate process.
+        Sets the drone address to the simulation or physical address.
+    start_state_machine(drone: Drone) -> None
+        Create and start a state machine in the event loop. This method should
+        be called in its own process.
+    start_kill_switch(state_machine_process: Process, drone: Drone) -> None
+        Create and start a kill switch in the event loop.
+    kill_switch(state_machine_process: Process, drone: Drone) -> Awaitable[None]
+        Enable the kill switch and wait until it activates. The drone should be
+        in manual mode after this method returns.
+    graceful_exit(drone: Drone) -> Awaitable[None]
         Lands the drone and exits the program.
     """
 
@@ -37,7 +39,8 @@ class FlightManager:
         """Initialize a flight manager object."""
 
     def start_manager(self, simflag: bool) -> None:
-        """Test running the state machine in a separate process."""
+        """Test running the state machine in a separate process.
+        Sets the drone address to the simulation or physical address."""
         drone_obj: Drone = Drone()
         if simflag is True:
             Drone.address = "udp://:14540"
