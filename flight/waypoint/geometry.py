@@ -51,7 +51,7 @@ def inverse_lerp(x: float, y: float, value: float) -> float:
     return (value - x) / (y - x)
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class Point:
     """
     A point in 2D space.
@@ -71,6 +71,9 @@ class Point:
 
     x: float
     y: float
+
+    def __hash__(self) -> int:
+        return hash((self.x, self.y))
 
     def __sub__(self, rhs: "Point") -> "Point":
         return Point(self.x - rhs.x, self.y - rhs.y)
@@ -121,7 +124,7 @@ class Point:
         return winding_number != 0
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=True)
 class LineSegment:
     """
     A line segment in 2D space.
@@ -143,6 +146,9 @@ class LineSegment:
 
     p_1: Point
     p_2: Point
+
+    def __hash__(self) -> int:
+        return hash((self.p_1, self.p_2))
 
     def length(self) -> float:
         """
