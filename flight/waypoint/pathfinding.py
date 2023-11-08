@@ -124,8 +124,8 @@ def shortest_path_between(src: Point, dst: Point, boundary: Iterable[Node]) -> I
         The point to move to.
     boundary: Iterable[Node]
         Graph nodes with all the boundary points and possible paths between
-        those points. The points must be in the correct order to correctly
-        calculate the boundary line segments.
+        those points. The points must be in order, but it does not matter
+        whether they are in clockwise or counterclockwise order.
 
     Yields
     -------
@@ -140,12 +140,9 @@ def shortest_path_between(src: Point, dst: Point, boundary: Iterable[Node]) -> I
         never occur.
     """
     boundary_nodes: list[Node] = list(boundary)
-    boundary_line_segments: list[LineSegment] = []
-    for i in range(1, len(boundary_nodes)):
-        boundary_line_segments.append(
-            LineSegment(boundary_nodes[i - 1].value, boundary_nodes[i].value)
-        )
-    boundary_line_segments.append(LineSegment(boundary_nodes[-1].value, boundary_nodes[0].value))
+    boundary_line_segments: list[LineSegment] = list(
+        LineSegment.from_points((node.value for node in boundary_nodes), True)
+    )
 
     straight_path: LineSegment = LineSegment(src, dst)
     if not any(
@@ -196,3 +193,63 @@ def shortest_path_between(src: Point, dst: Point, boundary: Iterable[Node]) -> I
         yield from _visitors(goal_node)
     else:
         raise RuntimeError("no path was found to the destination")
+
+
+def create_pathfinding_graph(boundary: Iterable[Point], safety_margin: float) -> list[Node]:
+    """
+    Create a graph suitable to be used as the boundary graph when pathfinding
+
+    Parameters
+    ----------
+    boundary : Iterable[Point]
+        The vertices of the boundary. They must be in order, but it does not
+        matter whether they are in clockwise or counterclockwise order.
+    safety_margin : float
+        How far to move the boundary vertices inward. The units are the same
+        as the units for `boundary`.
+
+    Returns
+    -------
+    list[Node]
+        A list of graph nodes constituting the pathfinding graph.
+    """
+    points: list[Point] = list(boundary)
+    points_moved_inward: list[Point] = []
+    for point, line_segment_1, line_segment_2 in zip(
+        points,
+        LineSegment.from_points([points[-1]] + points[:-1], True),
+        LineSegment.from_points(points, True),
+    ):
+        # How far to move the point inward according to the safety margin
+        inward_diff: Point = (line_segment_1.p_1 - line_segment_1.p_2) + (
+            line_segment_2.p_2 - line_segment_2.p_1
+        )
+        inward_diff /= inward_diff.distance_from_origin()
+
+        if not (point + 1e-5 * inward_diff).is_inside_shape(points):
+            inward_diff *= -1.0
+
+        inward_diff *= safety_margin
+        points_moved_inward.append(point + inward_diff)
+
+    boundary_line_segments: list[LineSegment] = list(
+        LineSegment.from_points(points_moved_inward, True)
+    )
+
+    # Rather inefficient
+    # Thankfully, there shouldn't be too many boundary vertices
+    nodes: list[Node] = [Node(point) for point in points_moved_inward]
+    for node_1 in nodes:
+        for node_2 in nodes:
+            if node_1 == node_2:
+                continue
+
+            straight_path: LineSegment = LineSegment(node_1.value, node_2.value)
+
+            if not any(
+                straight_path.intersects(boundary_line_segment)
+                for boundary_line_segment in boundary_line_segments
+            ):
+                node_1.connect(node_2, straight_path.length())
+
+    return nodes

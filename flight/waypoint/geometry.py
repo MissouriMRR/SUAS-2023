@@ -77,6 +77,9 @@ class Point:
     def __hash__(self) -> int:
         return hash((self.x, self.y))
 
+    def __add__(self, rhs: "Point") -> "Point":
+        return Point(self.x + rhs.x, self.y + rhs.y)
+
     def __sub__(self, rhs: "Point") -> "Point":
         return Point(self.x - rhs.x, self.y - rhs.y)
 
@@ -85,6 +88,9 @@ class Point:
 
     def __rmul__(self, lhs: float) -> "Point":
         return Point(lhs * self.x, lhs * self.y)
+
+    def __truediv__(self, rhs: float) -> "Point":
+        return Point(self.x / rhs, self.y / rhs)
 
     def is_inside_shape(self, vertices: Iterable["Point"]) -> bool:
         """
