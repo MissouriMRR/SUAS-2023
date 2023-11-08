@@ -5,8 +5,8 @@ stays within the mission flight boundary.
 import heapq
 from typing import Iterable, NamedTuple, TypeAlias
 
-from geometry import LineSegment, Point
-from graph import GraphNode
+from flight.waypoint.geometry import LineSegment, Point
+from flight.waypoint.graph import GraphNode
 
 Node: TypeAlias = GraphNode[Point, float]
 
