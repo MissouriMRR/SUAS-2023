@@ -67,6 +67,8 @@ class Point:
     -------
     is_inside_shape(vertices: Iterable[Point]) -> bool
         Test whether a point is inside a shape defined by some vertices.
+    distance_from_origin() -> float
+        Calculate how far this point is from the origin.
     """
 
     x: float
@@ -122,6 +124,17 @@ class Point:
                 winding_number -= 1
 
         return winding_number != 0
+
+    def distance_from_origin(self) -> float:
+        """
+        Calculate how far this point is from the origin.
+
+        Returns
+        -------
+        float
+            The distance between the origin and this point.
+        """
+        return math.hypot(self.x, self.y)
 
 
 @dataclass(slots=True, eq=True)
