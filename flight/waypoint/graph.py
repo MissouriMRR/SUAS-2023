@@ -18,6 +18,13 @@ class GraphNode(Generic[ValueT, WeightT]):
     visitor: GraphNode[ValueT, WeightT] | None
         A value that can be used to indicate the node that visited this node
         when performing a search. Defaults to None.
+
+    Methods
+    -------
+    connect(node: GraphNode[ValueT, WeightT], weight: WeightT) -> None
+        Create an edge between this node and another node.
+    disconnect(self, node: GraphNode[ValueT, WeightT]) -> bool
+        Remove an edge between this node and another node.
     """
 
     def __init__(self, value: ValueT) -> None:
@@ -43,7 +50,7 @@ class GraphNode(Generic[ValueT, WeightT]):
 
     def connect(self, node: "GraphNode[ValueT, WeightT]", weight: WeightT) -> None:
         """
-        Create an edge between this node andGraphNode another node.
+        Create an edge between this node and another node.
 
         Parameters
         ----------
