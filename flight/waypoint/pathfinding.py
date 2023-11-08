@@ -148,10 +148,10 @@ def shortest_path_between(src: Point, dst: Point, boundary: Iterable[Node]) -> I
     boundary_line_segments.append(LineSegment(boundary_nodes[-1].value, boundary_nodes[0].value))
 
     straight_path: LineSegment = LineSegment(src, dst)
-    for boundary_line_segment in boundary_line_segments:
-        if straight_path.intersects(boundary_line_segment):
-            break
-    else:
+    if not any(
+        straight_path.intersects(boundary_line_segment)
+        for boundary_line_segment in boundary_line_segments
+    ):
         yield dst
         return
 
@@ -164,18 +164,18 @@ def shortest_path_between(src: Point, dst: Point, boundary: Iterable[Node]) -> I
         boundary_node.visitor = None
 
         straight_path = LineSegment(boundary_node.value, dst)
-        for boundary_line_segment in boundary_line_segments:
-            if straight_path.intersects(boundary_line_segment):
-                break
-        else:
+        if not any(
+            straight_path.intersects(boundary_line_segment)
+            for boundary_line_segment in boundary_line_segments
+        ):
             weight: float = straight_path.length()
             boundary_node.connect(goal_node, weight)
 
         straight_path = LineSegment(src, boundary_node.value)
-        for boundary_line_segment in boundary_line_segments:
-            if straight_path.intersects(boundary_line_segment):
-                break
-        else:
+        if not any(
+            straight_path.intersects(boundary_line_segment)
+            for boundary_line_segment in boundary_line_segments
+        ):
             distance_so_far: float = straight_path.length()
             heapq.heappush(
                 search_queue,
