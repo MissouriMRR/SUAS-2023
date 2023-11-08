@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import math
+from typing import Iterable, Iterator
 
 
 def lerp(x: float, y: float, position: float) -> float:
@@ -91,8 +92,7 @@ class LineSegment:
     Methods
     -------
     length() -> float
-        Calculate the length of this line segment..
-
+        Calculate the length of this line segment.
     intersects(other: LineSegment) -> bool
         Checks whether this line segment intersects another line segment.
     """
@@ -147,3 +147,37 @@ class LineSegment:
         )
 
         return 0 <= t_2 <= 1
+
+    @classmethod
+    def from_points(
+        cls, points: Iterable[Point], connect_last_to_first: bool
+    ) -> Iterable["LineSegment"]:
+        """
+        Connect some points with line segments
+
+        Parameters
+        ----------
+        points : Iterable[Point]
+            The points to connect.
+        connect_last_to_first : bool
+            Whether to connect the last point to the first point.
+
+        Yields
+        -------
+        LineSegment
+            Line segments connecting the points in order. The first point is
+            connected to the second point, the second to the third, and so on.
+        """
+        points_iter: Iterator[Point] = iter(points)
+        try:
+            first_point: Point = next(points_iter)
+        except StopIteration:
+            return
+
+        prev_point: Point = first_point
+        for point in points_iter:
+            yield cls(prev_point, point)
+            prev_point = point
+
+        if connect_last_to_first:
+            yield cls(prev_point, first_point)
