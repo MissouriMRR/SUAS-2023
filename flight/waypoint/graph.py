@@ -17,7 +17,7 @@ class GraphNode(Generic[ValueT, WeightT]):
         Weights of outgoing edges to other nodes.
     visitor: GraphNode[ValueT, WeightT] | None
         A value that can be used to indicate the node that visited this node
-        when performing a search.. Defaults to None.
+        when performing a search. Defaults to None.
     """
 
     def __init__(self, value: ValueT) -> None:
