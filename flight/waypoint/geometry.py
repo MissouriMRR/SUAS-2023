@@ -66,7 +66,7 @@ class Point:
     Methods
     -------
     is_inside_shape(vertices: Iterable[Point]) -> bool
-        Tests whether a point is inside a shape defined by some vertices.
+        Test whether a point is inside a shape defined by some vertices.
     """
 
     x: float
@@ -83,7 +83,7 @@ class Point:
 
     def is_inside_shape(self, vertices: Iterable["Point"]) -> bool:
         """
-        Tests whether a point is inside a shape defined by some vertices.
+        Test whether a point is inside a shape defined by some vertices.
 
         Parameters
         ----------
