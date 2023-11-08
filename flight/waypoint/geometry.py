@@ -62,6 +62,11 @@ class Point:
         The x-coordinate.
     y : float
         The y-coordinate.
+
+    Methods
+    -------
+    is_inside_shape(vertices: Iterable[Point]) -> bool
+        Tests whether a point is inside a shape defined by some vertices.
     """
 
     x: float
@@ -75,6 +80,45 @@ class Point:
 
     def __rmul__(self, lhs: float) -> "Point":
         return Point(lhs * self.x, lhs * self.y)
+
+    def is_inside_shape(self, vertices: Iterable["Point"]) -> bool:
+        """
+        Tests whether a point is inside a shape defined by some vertices.
+
+        Parameters
+        ----------
+        vertices : Iterable[Point]
+            The vertices of the shape. They must be in order, but it does not
+            matter whether they are in clockwise or counterclockwise order.
+
+        Returns
+        -------
+        bool
+            Whether the point is inside the shape according the nonzero winding
+            rule.
+        """
+        # Please see https://en.wikipedia.org/wiki/Nonzero-rule
+        winding_number: int = 0
+        for line_segment in LineSegment.from_points(vertices, True):
+            y_1: float = line_segment.p_1.y
+            y_2: float = line_segment.p_2.y
+            if y_1 == y_2:
+                continue
+
+            if not min(y_1, y_2) <= self.y < max(y_1, y_2):
+                continue
+
+            x_1: float = line_segment.p_1.x
+            x_2: float = line_segment.p_2.x
+            if lerp(x_1, x_2, inverse_lerp(y_1, y_2, self.y)) > self.x:
+                continue
+
+            if y_1 < y_2:
+                winding_number += 1
+            else:
+                winding_number -= 1
+
+        return winding_number != 0
 
 
 @dataclass(slots=True)
