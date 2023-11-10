@@ -75,7 +75,7 @@ def draw_graph(nodes: list[GraphNode[Point, float]]) -> str:
     def svg_coord(x: float, y: float) -> tuple[float, float]:
         t_x: float = (x - xmin) / (xmax - xmin)
         t_y: float = (y - ymin) / (ymax - ymin)
-        return (1 - t_x) * svg_xmin + t_x * svg_xmax, (1 - t_y) * svg_ymin + t_y * svg_ymax
+        return (1 - t_x) * svg_xmin + t_x * svg_xmax, (1 - t_y) * svg_ymax + t_y * svg_ymin
 
     for node in nodes:
         point: Point = node.value
