@@ -38,8 +38,15 @@ class FlightManager:
         pass
 
     def start_manager(self, sim_flag: bool) -> None:
-        """Test running the state machine in a separate process.
-        Sets the drone address to the simulation or physical address."""
+        """
+        Test running the state machine in a separate process.
+        Sets the drone address to the simulation or physical address.
+
+        Parameters
+        ----------
+        sim_flag
+            A flag representing if the the drone is a simulation.
+        """
         drone_obj: Drone = Drone()
         if sim_flag is True:
             Drone.address = "udp://:14540"
