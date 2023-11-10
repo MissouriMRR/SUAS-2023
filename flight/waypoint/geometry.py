@@ -69,6 +69,8 @@ class Point:
         Test whether a point is inside a shape defined by some vertices.
     distance_from_origin() -> float
         Calculate how far this point is from the origin.
+    dot(rhs: Point) -> float
+        Get the dot product of this point and another point.
     """
 
     x: float
@@ -141,6 +143,22 @@ class Point:
             The distance between the origin and this point.
         """
         return math.hypot(self.x, self.y)
+
+    def dot(self, rhs: "Point") -> float:
+        """
+        Get the dot product of this point and another point.
+
+        Parameters
+        ----------
+        rhs : Point
+            The point on the right-hand side of the dot product.
+
+        Returns
+        -------
+        The dot product of this point and the other point, with both points
+        being treated as vectors in R^2.
+        """
+        return self.x * rhs.x + self.y * rhs.y
 
 
 @dataclass(slots=True, eq=True)

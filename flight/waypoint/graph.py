@@ -25,6 +25,8 @@ class GraphNode(Generic[ValueT, WeightT]):
         Create an edge between this node and another node.
     disconnect(self, node: GraphNode[ValueT, WeightT]) -> bool
         Remove an edge between this node and another node.
+    is_connected_to(self, node: GraphNode[ValueT, WeightT]) -> bool
+        Check whether this node has an outgoing edge to another node.
     """
 
     def __init__(self, value: ValueT) -> None:
@@ -83,3 +85,20 @@ class GraphNode(Generic[ValueT, WeightT]):
             return True
         except KeyError:
             return False
+
+    def is_connected_to(self, node: "GraphNode[ValueT, WeightT]") -> bool:
+        """
+        Check whether this node has an outgoing edge to another node.
+
+        Parameters
+        ----------
+        node : GraphNode[ValueT, WeightT]
+            The other node.
+
+        Returns
+        -------
+        bool
+            True if this node has an edge pointing to the other node, otherwise
+            False.
+        """
+        return node in self.edges

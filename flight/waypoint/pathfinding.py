@@ -220,14 +220,27 @@ def create_pathfinding_graph(boundary: Iterable[Point], safety_margin: float) ->
         LineSegment.from_points([points[-1]] + points[:-1], True),
         LineSegment.from_points(points, True),
     ):
-        # How far to move the point inward according to the safety margin
-        inward_diff: Point = (line_segment_1.p_1 - line_segment_1.p_2) + (
-            line_segment_2.p_2 - line_segment_2.p_1
-        )
+        # line_segment_1 and line_segment_2 are the line segments connecting
+        #   this point to the adjacent points
+
+        vec_1: Point = line_segment_1.p_1 - line_segment_1.p_2
+        vec_2: Point = line_segment_2.p_2 - line_segment_2.p_1
+        vec_1 /= vec_1.distance_from_origin()
+        vec_2 /= vec_2.distance_from_origin()
+
+        perp_vec_1: Point = Point(-vec_1.y, vec_1.x)
+
+        inward_diff: Point = vec_1 + vec_2
+        if inward_diff.distance_from_origin() < 1e-3:
+            inward_diff = perp_vec_1
         inward_diff /= inward_diff.distance_from_origin()
 
-        if not (point + 1e-5 * inward_diff).is_inside_shape(points):
+        if not (point + 1e-3 * inward_diff).is_inside_shape(points):
             inward_diff *= -1.0
+
+        # The length of inward_diff in the direction of perp_vec_1
+        length_divisor: float = abs(inward_diff.dot(perp_vec_1) / perp_vec_1.distance_from_origin())
+        inward_diff /= length_divisor
 
         inward_diff *= safety_margin
         points_moved_inward.append(point + inward_diff)
@@ -245,10 +258,19 @@ def create_pathfinding_graph(boundary: Iterable[Point], safety_margin: float) ->
                 continue
 
             straight_path: LineSegment = LineSegment(node_1.value, node_2.value)
+            midpoint: Point = (straight_path.p_1 + straight_path.p_2) / 2
 
-            if not any(
-                straight_path.intersects(boundary_line_segment)
-                for boundary_line_segment in boundary_line_segments
+            diff: Point = straight_path.p_2 - straight_path.p_1
+            shrunk_straight_path: LineSegment = LineSegment(
+                straight_path.p_1 + 1e-3 * diff, straight_path.p_2 - 1e-3 * diff
+            )
+
+            if straight_path in boundary_line_segments or (
+                midpoint.is_inside_shape(points_moved_inward)
+                and not any(
+                    shrunk_straight_path.intersects(boundary_line_segment)
+                    for boundary_line_segment in boundary_line_segments
+                )
             ):
                 node_1.connect(node_2, straight_path.length())
 

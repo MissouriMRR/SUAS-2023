@@ -47,16 +47,13 @@ def draw_graph(nodes: list[GraphNode[Point, float]]) -> str:
     str
         The SVG code representing the drawing of the graph.
     """
-    svg_xmin: int = 0
-    svg_xmax: int = 512
-    svg_ymin: int = 0
-    svg_ymax: int = 512
+    svg_size: int = 1000
 
     string_builder: list[str] = []
     string_builder.append(
         f'<svg xmlns="http://www.w3.org/2000/svg"'
-        f' width="{svg_xmax - svg_ymin}" height="{svg_ymax - svg_ymin}"'
-        f' viewBox="{svg_xmin} {svg_ymin} {svg_xmax} {svg_ymax}">'
+        f' width="{svg_size}" height="{svg_size}"'
+        f' viewBox="0 0 {svg_size} {svg_size}">'
     )
 
     xmin: float = min(node.value.x for node in nodes)
@@ -64,23 +61,38 @@ def draw_graph(nodes: list[GraphNode[Point, float]]) -> str:
     ymin: float = min(node.value.y for node in nodes)
     ymax: float = max(node.value.y for node in nodes)
 
-    width: float = xmax - xmin
-    height: float = ymax - ymin
+    size: float = max(xmax - xmin, ymax - ymin)
 
-    xmin -= 0.2 * width
-    xmax += 0.2 * width
-    ymin -= 0.2 * height
-    ymax += 0.2 * height
+    center_x: float = (xmin + xmax) / 2
+    center_y: float = (ymin + ymax) / 2
+    xmin = center_x - 0.6 * size
+    xmax = center_x + 0.6 * size
+    ymin = center_y - 0.6 * size
+    ymax = center_y + 0.6 * size
 
     def svg_coord(x: float, y: float) -> tuple[float, float]:
         t_x: float = (x - xmin) / (xmax - xmin)
         t_y: float = (y - ymin) / (ymax - ymin)
-        return (1 - t_x) * svg_xmin + t_x * svg_xmax, (1 - t_y) * svg_ymax + t_y * svg_ymin
+        return t_x * svg_size, (1 - t_y) * svg_size
+
+    for node_1 in nodes:
+        for node_2 in nodes:
+            if node_1 == node_2:
+                continue
+
+            if not node_1.is_connected_to(node_2):
+                continue
+
+            x_1, y_1 = svg_coord(node_1.value.x, node_1.value.y)
+            x_2, y_2 = svg_coord(node_2.value.x, node_2.value.y)
+
+            string_builder.append(
+                f'<path d="M {x_1},{y_1} L {x_2},{y_2}" stroke-width="1" stroke="black"/>'
+            )
 
     for node in nodes:
-        point: Point = node.value
-        x, y = svg_coord(point.x, point.y)
-        string_builder.append(f'<circle cx="{x}" cy="{y}" r="5" fill="black"/>')
+        x, y = svg_coord(node.value.x, node.value.y)
+        string_builder.append(f'<circle cx="{x}" cy="{y}" r="4" fill="black"/>')
 
     string_builder.append("</svg>")
 
@@ -100,6 +112,7 @@ def main() -> None:
         waypoint_data: WaypointData = json.load(file)
 
     boundary_coords: list[Coordinate] = waypoint_data["flyzones"]["boundaryPoints"]
+    boundary_coords.pop()  # The last point is a duplicate of the first in the json
     force_zone_number: int
     force_zone_letter: str
     _, _, force_zone_number, force_zone_letter = utm.from_latlon(
