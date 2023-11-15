@@ -107,15 +107,18 @@ def draw_random_paths(
         time_microseconds = (end_ns - begin_ns) / 1000
         print(f"Time: {time_microseconds:.3f} microseconds")
 
+        hue: float = i / path_count_to_generate * 360
+        color: str = f"hsl({hue:.2f}deg 100% 50%)"
+
         yield f'<path d="M {src_x:.2f},{src_y:.2f}'
         for point in path:
             x, y = to_svg_coord(point.x, point.y)
             yield f" L {x:.2f},{y:.2f}"
 
-        yield '" stroke-width="2" stroke="magenta" fill="none"/>'
+        yield f'" stroke-width="2" stroke="{color}" fill="none"/>'
 
-        yield f'<circle cx="{src_x:.2f}" cy="{src_y:.2f}" r="4" fill="magenta"/>'
-        yield f'<circle cx="{dst_x:.2f}" cy="{dst_y:.2f}" r="4" fill="magenta"/>'
+        yield f'<circle cx="{src_x:.2f}" cy="{src_y:.2f}" r="4" fill="{color}"/>'
+        yield f'<circle cx="{dst_x:.2f}" cy="{dst_y:.2f}" r="4" fill="{color}"/>'
 
         i += 1
 
