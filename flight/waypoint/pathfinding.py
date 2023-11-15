@@ -34,13 +34,15 @@ class _SearchNode(NamedTuple):
     node: Node
 
 
-def _visitors(goal_node: Node) -> Iterable[Point]:
+def _visitors(start_node: Node, goal_node: Node) -> Iterable[Point]:
     """
     Yields the positions of the visitors in a path to a goal node, with the
     goal node being last.
 
     Parameters
     ----------
+    start_node : Node
+        The start node in a search.
     goal_node : Node
         The goal node in a search.
 
@@ -48,11 +50,20 @@ def _visitors(goal_node: Node) -> Iterable[Point]:
     -------
     Point
         The positions of the visitors in a path to the goal node, from the
-        start to (and  including) the goal node.
+        start to (and including) the goal node.
+
+    Raises
+    ------
+    RuntimeError
+        If the path to the goal node is not valid. In normal usage, this should
+        never occur.
     """
     points: list[Point] = []
     visitor: Node | None = goal_node
-    while visitor is not None:
+    while visitor is not start_node:
+        if visitor is None:
+            raise RuntimeError("no path was found to the destination")
+
         points.append(visitor.value)
         visitor = visitor.visitor
 
@@ -88,10 +99,11 @@ def _search(search_queue: list[_SearchNode], goal_node: Node) -> bool:
         if node.visitor is not None:
             continue
 
+        node.visitor = visitor
+
         if node == goal_node:
             return True
 
-        node.visitor = visitor
         visitor = node
         for node, weight in node.edges.items():
             if node.visitor is not None:
@@ -156,21 +168,35 @@ def shortest_path_between(src: Point, dst: Point, boundary: Iterable[Node]) -> I
 
     goal_node: Node = Node(dst)
     search_queue: list[_SearchNode] = []
+    dummy_node: Node = Node(Point(0.0, 0.0))  # Used to indicate the start
+
+    direction: Point
+    shrunk_straight_path: LineSegment
 
     for boundary_node in boundary_nodes:
         boundary_node.visitor = None
 
         straight_path = LineSegment(boundary_node.value, dst)
+        direction = straight_path.p_2 - straight_path.p_1
+        direction /= direction.distance_from_origin()
+        shrunk_straight_path = LineSegment(
+            straight_path.p_1 + 1e-3 * direction, straight_path.p_2 - 1e-3 * direction
+        )
         if not any(
-            straight_path.intersects(boundary_line_segment)
+            shrunk_straight_path.intersects(boundary_line_segment)
             for boundary_line_segment in boundary_line_segments
         ):
             weight: float = straight_path.length()
             boundary_node.connect(goal_node, weight)
 
         straight_path = LineSegment(src, boundary_node.value)
+        direction = straight_path.p_2 - straight_path.p_1
+        direction /= direction.distance_from_origin()
+        shrunk_straight_path = LineSegment(
+            straight_path.p_1 + 1e-3 * direction, straight_path.p_2 - 1e-3 * direction
+        )
         if not any(
-            straight_path.intersects(boundary_line_segment)
+            shrunk_straight_path.intersects(boundary_line_segment)
             for boundary_line_segment in boundary_line_segments
         ):
             distance_so_far: float = straight_path.length()
@@ -179,7 +205,7 @@ def shortest_path_between(src: Point, dst: Point, boundary: Iterable[Node]) -> I
                 _SearchNode(
                     distance_so_far + LineSegment(boundary_node.value, dst).length(),
                     distance_so_far,
-                    None,
+                    dummy_node,
                     boundary_node,
                 ),
             )
@@ -190,7 +216,7 @@ def shortest_path_between(src: Point, dst: Point, boundary: Iterable[Node]) -> I
         boundary_node.disconnect(goal_node)
 
     if success:
-        yield from _visitors(goal_node)
+        yield from _visitors(dummy_node, goal_node)
     else:
         raise RuntimeError("no path was found to the destination")
 
@@ -260,9 +286,10 @@ def create_pathfinding_graph(boundary: Iterable[Point], safety_margin: float) ->
             straight_path: LineSegment = LineSegment(node_1.value, node_2.value)
             midpoint: Point = (straight_path.p_1 + straight_path.p_2) / 2
 
-            diff: Point = straight_path.p_2 - straight_path.p_1
+            direction: Point = straight_path.p_2 - straight_path.p_1
+            direction /= direction.distance_from_origin()
             shrunk_straight_path: LineSegment = LineSegment(
-                straight_path.p_1 + 1e-3 * diff, straight_path.p_2 - 1e-3 * diff
+                straight_path.p_1 + 1e-3 * direction, straight_path.p_2 - 1e-3 * direction
             )
 
             if straight_path in boundary_line_segments or (
