@@ -36,6 +36,7 @@ class FlightManager:
 
     def __init__(self) -> None:
         """Initialize a flight manager object."""
+        self.drone_obj: Drone = Drone()
 
     def start_manager(self) -> None:
         """Test running the state machine in a separate process."""
