@@ -2,9 +2,13 @@
 import asyncio
 import logging
 
+from flight.extract_gps import extract_gps, GPSData
+from flight.extract_gps import Waypoint as Waylist
+
 from flight.waypoint.goto import move_to
 
-from state_machine.states.land import Land
+from state_machine.states.airdrop import Airdrop
+from state_machine.states.odlc import ODLC
 from state_machine.states.state import State
 from state_machine.states.waypoint import Waypoint
 
@@ -14,13 +18,16 @@ async def run(self: Waypoint) -> State:
     Run method implementation for the Waypoint state.
 
     This method instructs the drone to navigate to a specified waypoint and
-    transitions to the Land state upon arrival.
+    transitions to the Airdrop or ODLC State.
 
     Returns
     -------
-    Land : State
+    Airdrop : State
         The next state after successfully reaching the specified waypoint and
-        initiating the landing process.
+        initiating the Airdrop process.
+    ODLC : State
+        The next state after successfully reaching the specified waypoint and
+        initiating the ODLC process.
 
     Notes
     -----
@@ -28,14 +35,24 @@ async def run(self: Waypoint) -> State:
     Upon reaching the waypoint, it transitions the drone to the Land state to initiate landing.
 
     """
+
+    gps_path: str = "flight/data/waypoint_data.json"
+
     try:
         logging.info("Waypoint state running")
         print("Moving to waypoint")
 
-        # Use the move_to function to navigate to the waypoint
-        await move_to(self.drone.system, 38, -92, 10, 0)
+        gps_dict: GPSData = extract_gps(gps_path)
+        waypoints: list[Waylist] = gps_dict["waypoints"]
 
-        return Land(self.drone)
+        for waypoint in waypoints:
+            # use 5/6 as a fast parameter to get 25m with plenty of leeway while being fast
+            await move_to(self.drone.system, waypoint[0], waypoint[1], waypoint[2], 5 / 6)
+
+        if self.drone.odlc_scan:
+            return ODLC(self.drone, self.flight_settings)
+        return Airdrop(self.drone, self.flight_settings)
+
     except asyncio.CancelledError as ex:
         logging.error("Waypoint state canceled")
         raise ex

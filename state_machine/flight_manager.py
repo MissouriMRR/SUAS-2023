@@ -7,6 +7,7 @@ import time
 from mavsdk.telemetry import FlightMode, LandedState
 
 from state_machine.drone import Drone
+from state_machine.flight_settings import FlightSettings
 from state_machine.state_machine import StateMachine
 from state_machine.states import Start
 
@@ -21,6 +22,7 @@ class FlightManager:
         Initialize a flight manager object.
     start_manager() -> None
         Test running the state machine in a separate process.
+        Sets the drone address to the simulation or physical address.
     start_state_machine(drone: Drone) -> None
         Create and start a state machine in the event loop. This method should
         be called in its own process.
@@ -36,12 +38,27 @@ class FlightManager:
     def __init__(self) -> None:
         """Initialize a flight manager object."""
 
-    def start_manager(self) -> None:
-        """Test running the state machine in a separate process."""
+    def start_manager(self, sim_flag: bool) -> None:
+        """
+        Test running the state machine in a separate process.
+        Sets the drone address to the simulation or physical address.
+
+        Parameters
+        ----------
+        sim_flag
+            A flag representing if the the drone is a simulation.
+        """
         drone_obj: Drone = Drone()
+        if sim_flag is True:
+            Drone.address = "udp://:14540"
+        else:
+            Drone.address = "serial:///dev/ttyUSB0:921600"
+        flight_settings_obj: FlightSettings = FlightSettings()
 
         logging.info("Starting processes")
-        state_machine: Process = Process(target=self.start_state_machine, args=(drone_obj,))
+        state_machine: Process = Process(
+            target=self.start_state_machine, args=(drone_obj, flight_settings_obj)
+        )
         kill_switch_process: Process = Process(
             target=self.start_kill_switch, args=(state_machine, drone_obj)
         )
@@ -64,7 +81,7 @@ class FlightManager:
             state_machine.terminate()
             asyncio.run(self.graceful_exit(drone_obj))
 
-    def start_state_machine(self, drone: Drone) -> None:
+    def start_state_machine(self, drone: Drone, flight_settings: FlightSettings) -> None:
         """
         Create and start a state machine in the event loop. This method should
         be called in its own process.
@@ -73,9 +90,11 @@ class FlightManager:
         ----------The callable object which gets executed when the `run` method is called.
         drone : Drone
             The drone the state machine will control.
+        flight_settings : FlightSettings
+            The flight settings to use.
         """
         logging.info("-- Starting state machine")
-        asyncio.run(StateMachine(Start(drone), drone).run())
+        asyncio.run(StateMachine(Start(drone, flight_settings), drone, flight_settings).run())
 
     def start_kill_switch(self, state_machine_process: Process, drone: Drone) -> None:
         """
