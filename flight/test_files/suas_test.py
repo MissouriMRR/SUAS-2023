@@ -19,8 +19,7 @@ async def move_to(
 ) -> None:
     """
     This function takes in a latitude, longitude and altitude and autonomously
-    moves the drone to that waypoint. This function will also auto convert the altitude
-    from feet to meters.
+    moves the drone to that waypoint.
 
     Parameters
     ----------
@@ -43,9 +42,7 @@ async def move_to(
         absolute_altitude: float = terrain_info.absolute_altitude_m
         break
 
-    await drone.action.goto_location(
-        latitude, longitude, altitude + absolute_altitude, 0
-    )
+    await drone.action.goto_location(latitude, longitude, altitude + absolute_altitude, 0)
     location_reached: bool = False
     # First determine if we need to move fast through waypoints or need to slow down at each one
     # Then loops until the waypoint is reached
@@ -60,13 +57,9 @@ async def move_to(
 
             #  accurately checks if location is reached and stops for 15 secs and then moves on.
             if (
-                (
-                    round(drone_lat, int(6 * fast_param))
-                    == round(latitude, int(6 * fast_param))
-                )
+                (round(drone_lat, int(6 * fast_param)) == round(latitude, int(6 * fast_param)))
                 and (
-                    round(drone_long, int(6 * fast_param))
-                    == round(longitude, int(6 * fast_param))
+                    round(drone_long, int(6 * fast_param)) == round(longitude, int(6 * fast_param))
                 )
                 and (round(drone_alt, 1) == round(altitude, 1))
             ):
@@ -91,7 +84,7 @@ async def run() -> None:
 
     # initilize drone configurations
     await drone.action.set_takeoff_altitude(12)
-    await drone.action.set_maximum_speed(25)
+    await drone.action.set_maximum_speed(30)
 
     # connect to the drone
     logging.info("Waiting for drone to connect...")
