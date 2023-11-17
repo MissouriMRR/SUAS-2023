@@ -213,6 +213,15 @@ class LineSegment:
         bool
             True if the two line segments intersect, otherwise False.
         """
+        # Fast AABB test
+        if (
+            max(self.p_1.x, self.p_2.x) < min(other.p_1.x, other.p_2.x)
+            or max(other.p_1.x, other.p_2.x) < min(self.p_1.x, self.p_2.x)
+            or max(self.p_1.y, self.p_2.y) < min(other.p_1.y, other.p_2.y)
+            or max(other.p_1.y, other.p_2.y) < min(self.p_1.y, self.p_2.y)
+        ):
+            return False
+
         diff: Point = self.p_2 - self.p_1
         val1: float = diff.x * (other.p_1.y - self.p_1.y) - diff.y * (other.p_1.x - self.p_1.x)
         val2: float = diff.x * (other.p_2.y - self.p_1.y) - diff.y * (other.p_2.x - self.p_1.x)
