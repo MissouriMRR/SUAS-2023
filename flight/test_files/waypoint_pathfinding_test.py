@@ -8,7 +8,7 @@ from typing import Callable, Iterable, TypedDict
 
 import utm
 
-from flight.waypoint.geometry import lerp, Point
+from flight.waypoint.geometry import lerp, LineSegment, Point
 from flight.waypoint.graph import GraphNode
 from flight.waypoint import pathfinding
 
@@ -85,11 +85,10 @@ def draw_random_paths(
     str
         Strings to append to the SVG string.
     """
-    i: int = 0
-    path_count_to_generate: int = 20
-    while i < path_count_to_generate:
-        src: Point = random_point_in_shape(vertices)
-        dst: Point = random_point_in_shape(vertices)
+    points: list[Point] = [random_point_in_shape(vertices) for _ in range(10)]
+    for line_segment in LineSegment.from_points(points, False):
+        src: Point = line_segment.p_1
+        dst: Point = line_segment.p_2
         src_x, src_y = to_svg_coord(src.x, src.y)
         dst_x, dst_y = to_svg_coord(dst.x, dst.y)
 
@@ -97,18 +96,10 @@ def draw_random_paths(
         path: list[Point] = list(pathfinding.shortest_path_between(src, dst, nodes))
         end_ns: int = time.perf_counter_ns()
 
-        if i < path_count_to_generate // 2:
-            if len(path) != 1:
-                continue
-        else:
-            if len(path) <= 1:
-                continue
-
         time_microseconds = (end_ns - begin_ns) / 1000
         print(f"Time: {time_microseconds:.3f} microseconds")
 
-        hue: float = i / path_count_to_generate * 360
-        color: str = f"hsl({hue:.2f}deg 100% 50%)"
+        color: str = "hsl(300deg 100% 50%)"
 
         yield f'<path d="M {src_x:.2f},{src_y:.2f}'
         for point in path:
@@ -119,8 +110,6 @@ def draw_random_paths(
 
         yield f'<circle cx="{src_x:.2f}" cy="{src_y:.2f}" r="4" fill="{color}"/>'
         yield f'<circle cx="{dst_x:.2f}" cy="{dst_y:.2f}" r="4" fill="{color}"/>'
-
-        i += 1
 
 
 def draw_graph(nodes: list[GraphNode[Point, float]]) -> str:
