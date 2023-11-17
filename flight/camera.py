@@ -1,53 +1,105 @@
 """A class that contains all the needed camera functionality for the drone."""
-import json
-import socket
-import logging
 import asyncio
-from xml.etree import ElementTree as ET
+import json
+import logging
+import os
+from datetime import datetime
+
+import gphoto2
+
+from state_machine.drone import Drone
 
 
 class Camera:
+    """
+    Initialize a new Camera object to control the Sony RX100-VII camera on the drone
+
+    Attributes
+    ----------
+    camera : gphoto2.Camera
+        The gphoto2 camera object.
+    session_id : int
+        The session id for the current session.
+        This will start at 0 the first time pictures are taken on a given day.
+        Will then increment by 1 for each session on a given day.
+    image_id : int
+        The image id for the current image.
+        Starts at 0 and increments by 1 for each image taken.
+
+    Methods
+    -------
+    capture_photo(path: str = f"{os.getcwd()}/images/")
+        Capture a photo and save it to the specified path.
+        The default path is the images folder in the current working directory.
+        The file name will be the file format attribute.
+        Returns the file name and the file path.
+    odlc_move_to(
+        drone: Drone,
+        latitude: float,
+        longitude: float,
+        altitude: float,
+        fast_param: float,
+        take_photos: float
+    )
+        Move the drone to the specified latitude, longitude, and altitude.
+        Takes photos along the way if take_photos is True.
+    """
+
     def __init__(self) -> None:
-        self.address: str = "239.255.255.250:1900"
-        self.ssdp_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.actionURL: str | None = None
+        self.camera: gphoto2.Camera = gphoto2.Camera()
+        self.camera.init()
 
-    async def connect_to_camera(self):
-        """Connect to the camera."""
-        ssdp_request: str = (
-            "M-SEARCH * HTTP/1.1"
-            "HOST: 239.255.255.250:1900"
-            'MAN: "ssdp:discover"'
-            "MX: 1"
-            "ST: urn:schemas-sony-com:service:ScalarWebAPI:1"
-            "USER-AGENT: SUAS-Drone/1.0"
-        )
-        self.ssdp_socket.sendto(ssdp_request.encode(), self.address)
+        self.session_id: int = 0
+        if os.path.exists(f"{os.getcwd()}/images/"):
+            for file in os.listdir(f"{os.getcwd()}/images/"):
+                if file.startswith(f"{datetime.now().strftime('%Y%m%d')}"):
+                    if int(file.split("_")[1]) >= self.session_id:
+                        self.session_id = int(file.split("_")[1]) + 1
+
+        self.image_id: int = 0
+
+        logging.info("Camera initialized")
+
+    async def capture_photo(self, path: str = f"{os.getcwd()}/images/") -> tuple[str, str]:
+        """Capture a photo and save it to the specified path.
+
+        Parameters
+        ----------
+        path : str, optional
+            The path to save the image to, by default f"{os.getcwd()}/images/"
+
+
+        Returns
+        -------
+        tuple[str, str]
+            The file name and the file path.
+        """
+        # If the images folder doesn't exist, we can't save images.
+        # So we have to make sure the images folder exists.
+        os.makedirs(path, mode=0o777, exist_ok=True)
+
+        file_path = self.camera.capture(gphoto2.GP_CAPTURE_IMAGE)
         while True:
-            data: bytes
-            addr: tuple[str, int]
-            data, addr = self.ssdp_socket.recvfrom(1024)
-            logging.info(f"Received response from {addr}:\n{data.decode()}")
-            if "urn:schemas-sony-com:service:ScalarWebAPI:1" in data.decode():
-                location: str = data.decode().split("LOCATION: ")[1].split("\r\n")[0]
-                logging.info(f"Found actionURL: {self.actionURL}")
-                break
+            event_type, _event_data = self.camera.wait_for_event(100)
+            if event_type == gphoto2.GP_EVENT_CAPTURE_COMPLETE:
+                photo_name: str = (
+                    f"{datetime.now().strftime('%Y%m%d')}_{self.session_id}_{self.image_id:04d}.jpg"
+                )
 
-        xml_tree = ET.parse(location)
-        root = xml_tree.getroot()
-
-        for item in root.findall(".//item"):
-            name = item.find("name").text
-            if name == "X_ScalarWebAPI_ActionList_URL":  # ActionList_URL item name
-                value = item.find("value").text
-                logging.info(f"Key: {name}, Value: {value}")
-                break
-
-        # Close the socket
-        self.ssdp_socket.close()
+                cam_file = gphoto2.check_result(
+                    gphoto2.gp_camera_file_get(
+                        self.camera, file_path.folder, file_path.name, gphoto2.GP_FILE_TYPE_NORMAL
+                    )
+                )
+                target_name: str = f"{path}{photo_name}"
+                cam_file.save(target_name)
+                self.image_id += 1
+                logging.info("Image is being saved to %s", target_name)
+                return target_name, photo_name
 
     async def odlc_move_to(
-        drone: System,
+        self,
+        drone: Drone,
         latitude: float,
         longitude: float,
         altitude: float,
@@ -82,17 +134,19 @@ class Camera:
         info: dict[str, dict[str, int | list[int | float] | float]] = {}
 
         # get current altitude
-        async for terrain_info in drone.telemetry.home():
+        async for terrain_info in drone.system.telemetry.home():
             absolute_altitude: float = terrain_info.absolute_altitude_m
             break
 
-        await drone.action.goto_location(latitude, longitude, altitude + absolute_altitude, 0)
+        await drone.system.action.goto_location(
+            latitude, longitude, altitude + absolute_altitude, 0
+        )
         location_reached: bool = False
         # First determine if we need to move fast through waypoints or need to slow down at each one
         # Then loops until the waypoint is reached
         while not location_reached:
             logging.info("Going to waypoint")
-            async for position in drone.telemetry.position():
+            async for position in drone.system.telemetry.position():
                 # continuously checks current latitude, longitude and altitude of the drone
                 drone_lat: float = position.latitude_deg
                 drone_long: float = position.longitude_deg
@@ -112,15 +166,17 @@ class Camera:
                     break
 
             if take_photos:
-                name_tuple: tuple = capture_photo()
+                _full_path: str
+                file_path: str
+                _full_path, file_path = await self.capture_photo()
 
                 point: dict[str, dict[str, int | list[int | float] | float]] = {
-                    name_tuple[0]: {
+                    file_path: {
                         "focal_length": 14,
                         "rotation_deg": [
-                            drone.offboard.Attitude.roll_deg,
-                            drone.offboard.Attitude.pitch_deg,
-                            drone.offboard.Attitude.yaw_deg,
+                            drone.system.offboard.Attitude.roll_deg,
+                            drone.system.offboard.Attitude.pitch_deg,
+                            drone.system.offboard.Attitude.yaw_deg,
                         ],
                         "drone_coordinates": [drone_lat, drone_long],
                         "altitude_f": drone_alt,

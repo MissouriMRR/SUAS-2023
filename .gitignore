@@ -139,6 +139,7 @@ dmypy.json
 *.csv
 
 # Images
+images/*
 vision_images/
 vision_videos/
 *.raw
