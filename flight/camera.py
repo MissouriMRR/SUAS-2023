@@ -9,9 +9,7 @@ from xml.etree import ElementTree as ET
 class Camera:
     def __init__(self) -> None:
         self.address: str = "239.255.255.250:1900"
-        self.ssdp_socket: socket.socket = socket.socket(
-            socket.AF_INET, socket.SOCK_DGRAM
-        )
+        self.ssdp_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.actionURL: str | None = None
 
     async def connect_to_camera(self):
@@ -88,9 +86,7 @@ class Camera:
             absolute_altitude: float = terrain_info.absolute_altitude_m
             break
 
-        await drone.action.goto_location(
-            latitude, longitude, altitude + absolute_altitude, 0
-        )
+        await drone.action.goto_location(latitude, longitude, altitude + absolute_altitude, 0)
         location_reached: bool = False
         # First determine if we need to move fast through waypoints or need to slow down at each one
         # Then loops until the waypoint is reached
@@ -104,10 +100,7 @@ class Camera:
 
                 #  accurately checks if location is reached and stops for 15 secs and then moves on.
                 if (
-                    (
-                        round(drone_lat, int(6 * fast_param))
-                        == round(latitude, int(6 * fast_param))
-                    )
+                    (round(drone_lat, int(6 * fast_param)) == round(latitude, int(6 * fast_param)))
                     and (
                         round(drone_long, int(6 * fast_param))
                         == round(longitude, int(6 * fast_param))
