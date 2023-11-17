@@ -86,7 +86,7 @@ def draw_random_paths(
         Strings to append to the SVG string.
     """
     i: int = 0
-    path_count_to_generate: int = 10
+    path_count_to_generate: int = 20
     while i < path_count_to_generate:
         src: Point = random_point_in_shape(vertices)
         dst: Point = random_point_in_shape(vertices)
