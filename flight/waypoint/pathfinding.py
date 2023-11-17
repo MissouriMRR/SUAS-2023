@@ -22,7 +22,7 @@ class _SearchNode(NamedTuple):
         priority.
     distance_so_far : float
         The distance traveled to get to this node.
-    visiting_node: Node
+    visitor : Node
         The node that is visiting.
     node : Node
         The node to visit.
@@ -34,9 +34,29 @@ class _SearchNode(NamedTuple):
     node: Node
 
 
+def _shrink_line_segment(line_segment: LineSegment) -> LineSegment:
+    """
+    Shrink a line segment slightly. To be used to prevent two line segments
+    sharing an endpoint from being considered as intersecting.
+
+    Parameters
+    ----------
+    line_segment : LineSegment
+        The line segment to shrink.
+
+    Returns
+    -------
+    LineSegment
+        A new line segment with the endpoints moved inward very slightly.
+    """
+    direction: Point = line_segment.p_2 - line_segment.p_1
+    direction /= direction.distance_from_origin()
+    return LineSegment(line_segment.p_1 + 1e-3 * direction, line_segment.p_2 - 1e-3 * direction)
+
+
 def _visitors(start_node: Node, goal_node: Node) -> Iterable[Point]:
     """
-    Yields the positions of the visitors in a path to a goal node, with the
+    Yield the positions of the visitors in a path to a goal node, with the
     goal node being last.
 
     Parameters
@@ -72,9 +92,14 @@ def _visitors(start_node: Node, goal_node: Node) -> Iterable[Point]:
         yield point
 
 
-def _search(search_queue: list[_SearchNode], goal_node: Node) -> bool:
+def _search(
+    search_queue: list[_SearchNode],
+    start_node: Node,
+    goal_node: Node,
+    boundary_line_segments: Iterable[LineSegment],
+) -> bool:
     """
-    Searches for the goal node in the graph. Mutates the search queue passed
+    Search for the goal node in the graph. Mutates the search queue passed
     in and the visitor attribute of the graph nodes.
 
     Parameters
@@ -82,8 +107,12 @@ def _search(search_queue: list[_SearchNode], goal_node: Node) -> bool:
     search_queue : list[_SearchNode]
         A min priority queue used to search for the goal node. Must already
         contain the starting nodes in the graph in the correct order.
+    start_node:
+        The start node.
     goal_node : Node
         The goal node.
+    boundary_line_segments : Iterable[LineSegment]
+        The line segments forming the flight area boundary.
 
     Returns
     -------
@@ -96,8 +125,20 @@ def _search(search_queue: list[_SearchNode], goal_node: Node) -> bool:
         curr_distance_so_far: float = search_node.distance_so_far
         visitor: Node | None = search_node.visitor
         node: Node = search_node.node
+
         if node.visitor is not None:
             continue
+
+        # visitor is not None needed to satisfy mypy
+        if visitor == start_node or node == goal_node and visitor is not None:
+            shrunk_straight_path: LineSegment = _shrink_line_segment(
+                LineSegment(visitor.value, node.value)
+            )
+            if any(
+                shrunk_straight_path.intersects(boundary_line_segment)
+                for boundary_line_segment in boundary_line_segments
+            ):
+                continue
 
         node.visitor = visitor
 
@@ -125,8 +166,8 @@ def _search(search_queue: list[_SearchNode], goal_node: Node) -> bool:
 
 def shortest_path_between(src: Point, dst: Point, boundary: Iterable[Node]) -> Iterable[Point]:
     """
-    Finds the shortest path between two points given a graph with all possible
-    paths between boundary points
+    Find the shortest path between two points given a graph with all possible
+    paths between boundary points.
 
     Parameters
     ----------
@@ -152,7 +193,7 @@ def shortest_path_between(src: Point, dst: Point, boundary: Iterable[Node]) -> I
         never occur.
     """
     boundary_nodes: list[Node] = list(boundary)
-    boundary_line_segments: list[LineSegment] = list(
+    boundary_line_segments: Iterable[LineSegment] = list(
         LineSegment.from_points((node.value for node in boundary_nodes), True)
     )
 
@@ -166,64 +207,43 @@ def shortest_path_between(src: Point, dst: Point, boundary: Iterable[Node]) -> I
 
     # We use the A* search algorithm
 
+    start_node: Node = Node(src)
     goal_node: Node = Node(dst)
     search_queue: list[_SearchNode] = []
-    dummy_node: Node = Node(Point(0.0, 0.0))  # Used to indicate the start
-
-    direction: Point
-    shrunk_straight_path: LineSegment
 
     for boundary_node in boundary_nodes:
         boundary_node.visitor = None
 
         straight_path = LineSegment(boundary_node.value, dst)
-        direction = straight_path.p_2 - straight_path.p_1
-        direction /= direction.distance_from_origin()
-        shrunk_straight_path = LineSegment(
-            straight_path.p_1 + 1e-3 * direction, straight_path.p_2 - 1e-3 * direction
-        )
-        if not any(
-            shrunk_straight_path.intersects(boundary_line_segment)
-            for boundary_line_segment in boundary_line_segments
-        ):
-            weight: float = straight_path.length()
-            boundary_node.connect(goal_node, weight)
+        distance_to_goal: float = straight_path.length()
+        boundary_node.connect(goal_node, distance_to_goal)
 
         straight_path = LineSegment(src, boundary_node.value)
-        direction = straight_path.p_2 - straight_path.p_1
-        direction /= direction.distance_from_origin()
-        shrunk_straight_path = LineSegment(
-            straight_path.p_1 + 1e-3 * direction, straight_path.p_2 - 1e-3 * direction
+        distance_from_start: float = straight_path.length()
+        heapq.heappush(
+            search_queue,
+            _SearchNode(
+                distance_from_start + distance_to_goal,
+                distance_from_start,
+                start_node,
+                boundary_node,
+            ),
         )
-        if not any(
-            shrunk_straight_path.intersects(boundary_line_segment)
-            for boundary_line_segment in boundary_line_segments
-        ):
-            distance_so_far: float = straight_path.length()
-            heapq.heappush(
-                search_queue,
-                _SearchNode(
-                    distance_so_far + LineSegment(boundary_node.value, dst).length(),
-                    distance_so_far,
-                    dummy_node,
-                    boundary_node,
-                ),
-            )
 
-    success: bool = _search(search_queue, goal_node)
+    success: bool = _search(search_queue, start_node, goal_node, boundary_line_segments)
 
     for boundary_node in boundary_nodes:
         boundary_node.disconnect(goal_node)
 
     if success:
-        yield from _visitors(dummy_node, goal_node)
+        yield from _visitors(start_node, goal_node)
     else:
         raise RuntimeError("no path was found to the destination")
 
 
 def create_pathfinding_graph(boundary: Iterable[Point], safety_margin: float) -> list[Node]:
     """
-    Create a graph suitable to be used as the boundary graph when pathfinding
+    Create a graph suitable to be used as the boundary graph when pathfinding.
 
     Parameters
     ----------
