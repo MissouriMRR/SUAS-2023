@@ -98,7 +98,6 @@ class Camera:
                 return target_name, photo_name
 
     async def odlc_move_to(
-        self,
         drone: Drone,
         latitude: float,
         longitude: float,
