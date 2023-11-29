@@ -1,16 +1,29 @@
 """Implement the behavior of the Waypoint state."""
 import asyncio
 import logging
+from typing import Final
+
+import mavsdk.telemetry
+import utm
 
 from flight.extract_gps import extract_gps, GPSData
-from flight.extract_gps import Waypoint as Waylist
+from flight.extract_gps import (
+    WaypointUtm as WaylistUtm,
+    BoundaryPointUtm as BoundarylistUtm,
+)
 
+from flight.waypoint.geometry import Point
 from flight.waypoint.goto import move_to
+from flight.waypoint.graph import GraphNode
+from flight.waypoint import pathfinding
 
 from state_machine.states.airdrop import Airdrop
 from state_machine.states.odlc import ODLC
 from state_machine.states.state import State
 from state_machine.states.waypoint import Waypoint
+
+GPS_PATH: Final[str] = "flight/data/waypoint_data.json"
+BOUNDARY_SHRINKAGE: Final[float] = 5.0  # in meters
 
 
 async def run(self: Waypoint) -> State:
@@ -36,18 +49,65 @@ async def run(self: Waypoint) -> State:
 
     """
 
-    gps_path: str = "flight/data/waypoint_data.json"
-
     try:
         logging.info("Waypoint state running")
         print("Moving to waypoint")
 
-        gps_dict: GPSData = extract_gps(gps_path)
-        waypoints: list[Waylist] = gps_dict["waypoints"]
+        gps_dict: GPSData = extract_gps(GPS_PATH)
+        waypoints_utm: list[WaylistUtm] = gps_dict["waypoints_utm"]
 
-        for waypoint in waypoints:
+        boundary_points: list[BoundarylistUtm] = gps_dict["boundary_points_utm"]
+        boundary_points.pop()  # The last point is a duplicate of the first
+
+        boundary_vertices: list[Point] = []
+        for point in boundary_points:
+            boundary_vertices.append(Point(point.easting, point.northing))
+
+        search_graph: list[GraphNode[Point, float]] = pathfinding.create_pathfinding_graph(
+            boundary_vertices, BOUNDARY_SHRINKAGE
+        )
+
+        for waypoint in waypoints_utm:
+            drone_position: mavsdk.telemetry.Position = await anext(self.drone.system.position())
+            drone_northing, drone_easting, _, _ = utm.from_latlon(
+                drone_position.latitude_deg,
+                drone_position.longitude_deg,
+                boundary_points[0].zone_number,
+                boundary_points[0].zone_letter,
+            )
+
+            goto_points: list[Point] = list(
+                pathfinding.shortest_path_between(
+                    Point(drone_northing, drone_easting),
+                    Point(waypoint.northing, waypoint.easting),
+                    search_graph,
+                )
+            )
+
+            goto_points.pop()  # The last point is just the waypoint
+
+            lat_deg: float
+            lon_deg: float
+
+            curr_altitude: float = drone_position.relative_altitude_m
+            goal_altitude: float = waypoint.altitude
+
+            for goto_point in goto_points:
+                lat_deg, lon_deg = utm.to_latlon(
+                    goto_point.x,
+                    goto_point.y,
+                    boundary_points[0].zone_number,
+                    boundary_points[0].zone_letter,
+                )
+                # Gradually move toward goal altitude
+                curr_altitude = 0.5 * curr_altitude + 0.5 * goal_altitude
+                await move_to(self.drone.system, lat_deg, lon_deg, curr_altitude, 1.0)
+
+            lat_deg, lon_deg = utm.to_latlon(
+                waypoint.easting, waypoint.northing, waypoint.zone_number, waypoint.zone_letter
+            )
             # use 5/6 as a fast parameter to get 25m with plenty of leeway while being fast
-            await move_to(self.drone.system, waypoint[0], waypoint[1], waypoint[2], 5 / 6)
+            await move_to(self.drone.system, lat_deg, lon_deg, goal_altitude, 5 / 6)
 
         if self.drone.odlc_scan:
             return ODLC(self.drone, self.flight_settings)
