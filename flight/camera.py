@@ -88,7 +88,10 @@ class Camera:
 
                 cam_file = gphoto2.check_result(
                     gphoto2.gp_camera_file_get(
-                        self.camera, file_path.folder, file_path.name, gphoto2.GP_FILE_TYPE_NORMAL
+                        self.camera,
+                        file_path.folder,
+                        file_path.name,
+                        gphoto2.GP_FILE_TYPE_NORMAL,
                     )
                 )
                 target_name: str = f"{path}{photo_name}"
@@ -98,12 +101,13 @@ class Camera:
                 return target_name, photo_name
 
     async def odlc_move_to(
+        self,
         drone: Drone,
         latitude: float,
         longitude: float,
         altitude: float,
         fast_param: float,
-        take_photos: float,
+        take_photos: bool,
     ) -> None:
         """
         This function takes in a latitude, longitude and altitude and autonomously
@@ -125,11 +129,12 @@ class Camera:
             a float that determines if the drone will take less time checking its precise location
             before moving on to another waypoint. If its 1, it will move at normal speed,
             if its less than 1(0.83), it will be faster.
-        take_photos:float
+        take_photos: bool
             will take photos with the camera until the position has been reached
         """
+        if take_photos:
+            await drone.system.action.set_maximum_speed(5)
 
-        take_photos = True
         info: dict[str, dict[str, int | list[int | float] | float]] = {}
 
         # get current altitude
@@ -187,6 +192,8 @@ class Camera:
                 with open("camera.json", "w", encoding="ascii") as camera:
                     json.dump(info, camera)
 
+            if take_photos:
+                await drone.system.action.set_maximum_speed(20)
             # tell machine to sleep to prevent constant polling, preventing battery drain
             await asyncio.sleep(1)
         return
