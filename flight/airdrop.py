@@ -1,31 +1,12 @@
-async def get_distance(self, x_1: float, y_1: float, x_2: float, y_2: float) -> float:
-        """
-        Gets the distance between two points
-
-        Parameters
-        ----------
-        x_1 : float
-            The x coordinate of the first point
-        y_1 : float
-            The y coordinate of the first point
-        x_2 : float
-            The x coordinate of the second point
-        y_2 : float
-            The y coordinate of the second point
-
-        Returns
-        -------
-        float
-            The distance between the two points
-        """
-        return sqrt((x_2 - x_1) ** 2 + (y_2 - y_1) ** 2)
-
 """
 File containing a class to control air drop functions
 """
+"""
+File containing the Maestro class to be able to control the Maestro board
+"""
 
-from flight.maestro.maestro import Maestro
-
+import time
+import serial
 
 class AirdropControl:
     """
@@ -79,14 +60,6 @@ class AirdropControl:
             The number of the bottle to be closed
         """
         self.board.set_target(bottle, 4000)
-
-"""
-File containing the Maestro class to be able to control the Maestro board
-"""
-
-import time
-import serial
-
 
 class Maestro:
     """
