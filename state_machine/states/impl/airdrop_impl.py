@@ -1,6 +1,7 @@
 """Implements the behavior of the Airdrop state."""
 import asyncio
 import logging
+import json
 
 from state_machine.states.airdrop import Airdrop
 from state_machine.states.waypoint import Waypoint
@@ -26,9 +27,13 @@ async def run(self: Airdrop) -> State:
     """
     try:
         logging.info("Airdrop")
-
+        
         # setup airdrop
         airdrop = AirdropControl()
+
+        
+        with open("flight/data/output.json", endoing="ascii") as output:
+            bottle_locations = json.load(output)
 
         # For the amount of bottles there are...
         bottle_num: int = drone.num + 1
