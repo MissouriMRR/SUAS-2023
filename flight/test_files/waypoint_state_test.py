@@ -120,8 +120,7 @@ async def waypoint_check(drone: System, _sim: bool = True) -> None:
                 if (
                     (round(drone_lat, int(6 * (5 / 6))) == round(waypoint[0], int(6 * (5 / 6))))
                     and (
-                        round(drone_long, int(6 * (5 / 6)))
-                        == round(waypoint[1], int(6 * (5 / 6)))
+                        round(drone_long, int(6 * (5 / 6))) == round(waypoint[1], int(6 * (5 / 6)))
                     )
                     and (round(drone_alt, 1) == round(waypoint[2], 1))
                 ):
