@@ -157,7 +157,7 @@ async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
         Specifies whether to run the state machine in simulation mode.
     """
     flight_manager = FlightManager()
-    flight_manager.start_manager()
+    flight_manager.start_manager(_sim)
 
     _thread = threading.Thread(target=run_waypoint_thread, args=(flight_manager.drone_obj.system))
     _thread.start()
