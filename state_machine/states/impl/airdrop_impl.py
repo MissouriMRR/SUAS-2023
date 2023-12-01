@@ -31,11 +31,11 @@ async def run(self: Airdrop) -> State:
         airdrop = AirdropControl()
 
         # For the amount of bottles there are...
-        num: int = 0
-        bottle_num: int = num+1
-        servo_num: int
+        bottle_num: int = drone.num + 1
         logging.info("Bottle drop #", bottle_num, "started")
         # Set initial value for lowest distance so we can compare
+
+        bottle_loc: dict[str, float] = bottle_locations[str(bottle_num)]
 
         # Get the drones current position
         async for position in drone.telemetry.position():
@@ -44,13 +44,20 @@ async def run(self: Airdrop) -> State:
 
         # Move to the nearest bottle
         await move_to(drone, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
-        await airdrop.drop_bottle(servo_num)
+        await airdrop.drop_bottle(drone.servo_num)
         await asyncio.sleep(
             15
         )  # This will need to be changed based on how long it takes to drop the bottle
         # Remove the bottle location from the dictionary
+
         bottle_locations.pop(bottle_num)
         logging.info("-- Airdrop done!")
+
+        drone.num = drone.num + 1
+        if(drone.servo_num == 2):
+            servo_num = 0
+        else:
+            servo_num = servo_num + 1
 
         return Waypoint(self.drone, self.flight_settings)
     except asyncio.CancelledError as ex:
