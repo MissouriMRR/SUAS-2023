@@ -19,6 +19,7 @@ async def run(self: Waypoint) -> State:
 
     This method instructs the drone to navigate to a specified waypoint and
     transitions to the Airdrop or ODLC State.
+    transitions to the Airdrop or ODLC State.
 
     Returns
     -------
@@ -26,7 +27,12 @@ async def run(self: Waypoint) -> State:
         The next state after successfully reaching the specified waypoint and
         initiating the Airdrop process.
     ODLC : State
+    Airdrop : State
         The next state after successfully reaching the specified waypoint and
+        initiating the Airdrop process.
+    ODLC : State
+        The next state after successfully reaching the specified waypoint and
+        initiating the ODLC process.
         initiating the ODLC process.
 
     Notes
@@ -47,9 +53,7 @@ async def run(self: Waypoint) -> State:
 
         for waypoint in waypoints:
             # use 5/6 as a fast parameter to get 25m with plenty of leeway while being fast
-            await move_to(
-                self.drone.system, waypoint[0], waypoint[1], waypoint[2], 5 / 6
-            )
+            await move_to(self.drone.system, waypoint[0], waypoint[1], waypoint[2], 5 / 6)
 
         if self.drone.odlc_scan:
             return ODLC(self.drone, self.flight_settings)

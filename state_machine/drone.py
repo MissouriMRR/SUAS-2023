@@ -19,6 +19,9 @@ class Drone:
     odlc_scan : bool
         A boolean to tell if the odlc zone needs to be scanned, used the
         first run and if odlc needs to be scanned any other time
+    odlc_scan : bool
+        A boolean to tell if the odlc zone needs to be scanned, used the
+        first run and if odlc needs to be scanned any other time
 
     Methods
     -------
