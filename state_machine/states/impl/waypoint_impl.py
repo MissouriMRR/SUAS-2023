@@ -19,7 +19,6 @@ async def run(self: Waypoint) -> State:
 
     This method instructs the drone to navigate to a specified waypoint and
     transitions to the Airdrop or ODLC State.
-    transitions to the Airdrop or ODLC State.
 
     Returns
     -------
@@ -27,12 +26,7 @@ async def run(self: Waypoint) -> State:
         The next state after successfully reaching the specified waypoint and
         initiating the Airdrop process.
     ODLC : State
-    Airdrop : State
         The next state after successfully reaching the specified waypoint and
-        initiating the Airdrop process.
-    ODLC : State
-        The next state after successfully reaching the specified waypoint and
-        initiating the ODLC process.
         initiating the ODLC process.
 
     Notes
