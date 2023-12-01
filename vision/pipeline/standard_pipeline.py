@@ -202,10 +202,11 @@ def get_bottle_index(shape: BoundingBox, bottle_info: list[BottleData]) -> int:
     #   discovered ODLC shape has in common with it
     all_matches: NDArray[Shape[5], UInt8] = np.zeros((5), dtype=UInt8)
 
-    index: int
+    index: str
     info: BottleData
-    for index, info in enumerate(bottle_info):
+    for index, info in bottle_info.items():
         matches: int = 0
+        index = str(index)
         if shape.get_attribute("text") == info["letter"]:
             matches += 1
 
@@ -215,7 +216,7 @@ def get_bottle_index(shape: BoundingBox, bottle_info: list[BottleData]) -> int:
         if shape.get_attribute("shape_color") == info["shape_color"]:
             matches += 1
 
-        if shape.get_attribute("letter_color") == info["letter_color"]:
+        if shape.get_attribute("text_color") == info["letter_color"]:
             matches += 1
 
         all_matches[int(index)] = matches

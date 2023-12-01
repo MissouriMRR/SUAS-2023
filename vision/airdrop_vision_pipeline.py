@@ -77,7 +77,7 @@ def airdrop_pipeline(camera_data_path: str, state_path: str, output_path: str) -
 
                 # Find potential judges in the image
                 current_humanoids: list[BoundingBox] = emg_obj.find_humanoids(
-                    image, emg_model, camera_parameters, image_path
+                    emg_model, image, camera_parameters, image_path
                 )
 
                 if not first_detection:
