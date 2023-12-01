@@ -22,6 +22,7 @@ class FlightManager:
         Initialize a flight manager object.
     start_manager() -> None
         Test running the state machine in a separate process.
+        Sets the drone address to the simulation or physical address.
     start_state_machine(drone: Drone) -> None
         Create and start a state machine in the event loop. This method should
         be called in its own process.
@@ -38,9 +39,21 @@ class FlightManager:
         """Initialize a flight manager object."""
         self.drone_obj: Drone = Drone()
 
-    def start_manager(self) -> None:
-        """Test running the state machine in a separate process."""
+    def start_manager(self, sim_flag: bool) -> None:
+        """
+        Test running the state machine in a separate process.
+        Sets the drone address to the simulation or physical address.
+
+        Parameters
+        ----------
+        sim_flag
+            A flag representing if the the drone is a simulation.
+        """
         drone_obj: Drone = Drone()
+        if sim_flag is True:
+            Drone.address = "udp://:14540"
+        else:
+            Drone.address = "serial:///dev/ttyUSB0:921600"
         flight_settings_obj: FlightSettings = FlightSettings()
 
         logging.info("Starting processes")
