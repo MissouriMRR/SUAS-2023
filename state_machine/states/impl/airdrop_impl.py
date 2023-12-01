@@ -8,7 +8,9 @@ from state_machine.states.waypoint import Waypoint
 from state_machine.states.state import State
 
 from flight.airdrop import AirdropControl
-from flight.goto import move_to
+from flight.waypoint.goto import move_to
+
+from mavsdk import telemetry
 
 
 async def run(self: Airdrop) -> State:
@@ -31,32 +33,32 @@ async def run(self: Airdrop) -> State:
         # setup airdrop
         airdrop = AirdropControl()
 
-        with open("flight/data/output.json", endoing="ascii") as output:
+        with open("flight/data/output.json", encoding="utf8") as output:
             bottle_locations = json.load(output)
 
         # For the amount of bottles there are...
-        bottle_num: int = drone.num + 1
+        bottle_num: int = self.drone.num + 1
         logging.info("Bottle drop #", bottle_num, "started")
         # Set initial value for lowest distance so we can compare
 
         bottle_loc: dict[str, float] = bottle_locations[str(bottle_num)]
 
         # Get the drones current position
-        async for position in drone.telemetry.position():
+        async for position in self.drone.system.telemetry.position():
             current_location: telemetry.Position = position
             break
 
         # Move to the nearest bottle
-        await move_to(drone, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
-        await airdrop.drop_bottle(drone.servo_num)
+        await move_to(self.drone.system, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
+        await airdrop.drop_bottle(self.drone.servo_num)
         await asyncio.sleep(
             15
         )  # This will need to be changed based on how long it takes to drop the bottle
 
         logging.info("-- Airdrop done!")
 
-        drone.num = drone.num + 1
-        if drone.servo_num == 2:
+        self.drone.num = self.drone.num + 1
+        if self.drone.servo_num == 2:
             servo_num = 0
         else:
             servo_num = servo_num + 1
