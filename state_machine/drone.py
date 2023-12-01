@@ -38,8 +38,8 @@ class Drone:
             The address of the drone to connect to when the `connect_drone()`
             method is called.
         """
-        self.system = mavsdk.System()
-        self.address = address
+        self.system: mavsdk.System = mavsdk.System()
+        self.address: str = address
         self.odlc_scan: bool = True
 
     async def connect_drone(self) -> None:

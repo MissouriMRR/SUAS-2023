@@ -1,5 +1,8 @@
 """Implements the behavior of the ODLC state."""
 import asyncio
+from ctypes import c_bool
+from multiprocessing import Process, Value
+from multiprocessing.sharedctypes import SynchronizedBase
 import logging
 import json
 
@@ -9,8 +12,85 @@ from state_machine.states.airdrop import Airdrop
 from state_machine.states.odlc import ODLC
 from state_machine.states.state import State
 
+from vision.flyover_vision_pipeline import flyover_pipeline
+
 
 async def run(self: ODLC) -> State:
+    """
+    Implements the run method for the ODLC state.
+
+    This method initiates the ODLC scanning process of the drone, takes pictures and transfers
+    picture data to the vision code, and then transitions to the Airdrop state.
+
+    Parameters
+    ----------
+    self : ODLC
+        The current instance of the ODLC state.
+
+    Returns
+    -------
+    Airdrop : State
+        The next state after the drone has successfully scanned the ODLC area.
+
+    Raises
+    ------
+    asyncio.CancelledError
+        If the execution of the ODLC state is canceled.
+
+    Notes
+    -----
+    The type hinting for the capture_status variable is broken, see
+    https://github.com/python/typeshed/issues/8799
+    """
+    try:
+        # Syncronized type hint is broken, see https://github.com/python/typeshed/issues/8799
+        capture_status: SynchronizedBase[c_bool] = Value(c_bool, False)  # type: ignore
+
+        flight_process = Process(
+            target=flight_odlc_logic,
+            args=(
+                self,
+                capture_status,
+            ),
+        )
+        vision_process = Process(target=vision_odlc_logic, args=(capture_status,))
+
+        flight_process.start()
+        vision_process.start()
+        try:
+            flight_process.join()
+            logging.info("Flight process joined")
+            vision_process.join()
+            logging.info("Vision process joined")
+
+            logging.info("Done!")
+        except KeyboardInterrupt:
+            logging.critical(
+                "Keyboard interrupt detected. Killing state machine and landing drone."
+            )
+        return Airdrop(self.drone, self.flight_settings)
+    except asyncio.CancelledError as ex:
+        logging.error("ODLC state canceled")
+        raise ex
+    finally:
+        pass
+
+
+def flight_odlc_logic(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> None:
+    """
+    Starts the asyncronous flight logic for the ODLC state.
+
+    Parameters
+    ----------
+    self : ODLC
+        The current instance of the ODLC state.
+    capture_status : SynchronizedBase[c_bool]
+        If pictures are done being taken or not.
+    """
+    asyncio.run(find_odlcs(self, capture_status))
+
+
+async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> None:
     """
     Implements the run method for the ODLC state.
 
@@ -26,6 +106,9 @@ async def run(self: ODLC) -> State:
     """
     try:
         logging.info("ODLC")
+
+        # Initialize the camera
+        camera: Camera = Camera()
 
         # These waypoint values are all that are needed to traverse the whole odlc drop location
         # because it is a small rectangle
@@ -79,10 +162,11 @@ async def run(self: ODLC) -> State:
                     take_photos = True
 
                 elif point == 2:
+                    capture_status.value = c_bool(True)  # type: ignore
                     logging.info("Moving to the north west corner")
 
-                await Camera.odlc_move_to(
-                    drone,
+                await camera.odlc_move_to(
+                    self.drone,
                     waypoint["lats"][point],
                     waypoint["longs"][point],
                     waypoint["Altitude"][0],
@@ -94,7 +178,30 @@ async def run(self: ODLC) -> State:
                 airdrop_dict = json.load(output)
                 airdrops = len(airdrop_dict)
 
-        return Airdrop(self.drone, self.flight_settings)
+        self.drone.odlc_scan = False
+    except asyncio.CancelledError as ex:
+        logging.error("ODLC state canceled")
+        raise ex
+    finally:
+        pass
+
+
+def vision_odlc_logic(capture_status: "SynchronizedBase[c_bool]") -> None:
+    """
+    Implements the run method for the ODLC state.
+
+    Returns
+    -------
+    Airdrop : State
+        The next state after the drone has successfully scanned the ODLC area.
+
+    Notes
+    -----
+    This method is responsible for initiating the ODLC scanning process of the drone
+    and transitioning it to the Airdrop state.
+    """
+    try:
+        flyover_pipeline("flight/data/camera.json", capture_status, "flight/data/output.json")
     except asyncio.CancelledError as ex:
         logging.error("ODLC state canceled")
         raise ex
