@@ -196,7 +196,7 @@ def extract_gps(path: str) -> GPSData:
 
         waypoints.append(Waypoint(latitude, longitude, altitude))
         utm_coords: tuple[float, float, int, str] = utm.from_latlon(
-            latitude, longitude, forced_zone_letter, forced_zone_number
+            latitude, longitude, forced_zone_number, forced_zone_letter
         )
         full_waypoint_utm: WaypointUtm = WaypointUtm(*utm_coords, altitude)
         waypoints_utm.append(full_waypoint_utm)
@@ -208,7 +208,7 @@ def extract_gps(path: str) -> GPSData:
 
         boundary_points.append(BoundaryPoint(latitude, longitude))
         full_boundary_point_utm: BoundaryPointUtm = BoundaryPointUtm(
-            *utm.from_latlon(latitude, longitude, forced_zone_letter, forced_zone_number)
+            *utm.from_latlon(latitude, longitude, forced_zone_number, forced_zone_letter)
         )
         boundary_points_utm.append(full_boundary_point_utm)
 

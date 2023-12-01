@@ -68,7 +68,9 @@ async def run(self: Waypoint) -> State:
         )
 
         for waypoint in waypoints_utm:
-            drone_position: mavsdk.telemetry.Position = await anext(self.drone.system.position())
+            drone_position: mavsdk.telemetry.Position = await anext(
+                self.drone.system.telemetry.position()
+            )
             drone_northing, drone_easting, _, _ = utm.from_latlon(
                 drone_position.latitude_deg,
                 drone_position.longitude_deg,
