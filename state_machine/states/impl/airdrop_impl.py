@@ -27,11 +27,10 @@ async def run(self: Airdrop) -> State:
     """
     try:
         logging.info("Airdrop")
-        
+
         # setup airdrop
         airdrop = AirdropControl()
 
-        
         with open("flight/data/output.json", endoing="ascii") as output:
             bottle_locations = json.load(output)
 
@@ -57,7 +56,7 @@ async def run(self: Airdrop) -> State:
         logging.info("-- Airdrop done!")
 
         drone.num = drone.num + 1
-        if(drone.servo_num == 2):
+        if drone.servo_num == 2:
             servo_num = 0
         else:
             servo_num = servo_num + 1

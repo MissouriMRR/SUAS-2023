@@ -8,6 +8,7 @@ File containing the Maestro class to be able to control the Maestro board
 import time
 import serial
 
+
 class AirdropControl:
     """
     Class to control the air drop functions
@@ -60,6 +61,7 @@ class AirdropControl:
             The number of the bottle to be closed
         """
         self.board.set_target(bottle, 4000)
+
 
 class Maestro:
     """
