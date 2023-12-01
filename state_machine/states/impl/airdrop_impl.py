@@ -48,9 +48,7 @@ async def run(self: Airdrop) -> State:
         await asyncio.sleep(
             15
         )  # This will need to be changed based on how long it takes to drop the bottle
-        # Remove the bottle location from the dictionary
 
-        bottle_locations.pop(bottle_num)
         logging.info("-- Airdrop done!")
 
         drone.num = drone.num + 1
