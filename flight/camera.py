@@ -61,7 +61,8 @@ class Camera:
         logging.info("Camera initialized")
 
     async def capture_photo(self, path: str = f"{os.getcwd()}/images/") -> tuple[str, str]:
-        """Capture a photo and save it to the specified path.
+        """
+        Capture a photo and save it to the specified path.
 
         Parameters
         ----------

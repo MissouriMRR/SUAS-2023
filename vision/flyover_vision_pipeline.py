@@ -30,7 +30,7 @@ def flyover_pipeline(
     ----------
     camera_data_path: str
         The path to the json file containing the CameraParameters entries
-    capture_status: Value
+    capture_status: SynchronizedBase[c_bool]
         A text file containing True if all images have been taken and False otherwise
     output_path: str
         The json file name and path to save the data in
