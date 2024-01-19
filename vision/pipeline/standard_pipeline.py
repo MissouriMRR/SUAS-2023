@@ -146,14 +146,14 @@ def set_shape_attributes(
 
 
 def sort_odlcs(
-    bottle_info: list[BottleData], saved_odlcs: list[BoundingBox]
+    bottle_info: dict[str, BottleData], saved_odlcs: list[BoundingBox]
 ) -> list[list[BoundingBox]]:
     """
     Sorts the standard objects in the given list by which bottle they match
 
     Parameters
     ----------
-    bottle_info: list[BottleData]
+    bottle_info: dict[str, BottleData]
         The data describing the object matching each bottle
     saved_odlcs: list[BoundingBox]
         The list of all sightings of standard objects
@@ -178,7 +178,7 @@ def sort_odlcs(
     return sorted_odlcs
 
 
-def get_bottle_index(shape: BoundingBox, bottle_info: list[BottleData]) -> int:
+def get_bottle_index(shape: BoundingBox, bottle_info: dict[str, BottleData]) -> int:
     """
     For the input ODLC BoundingBox, find the index of the bottle that it best matches.
     Returns -1 if no good match is found
@@ -206,7 +206,7 @@ def get_bottle_index(shape: BoundingBox, bottle_info: list[BottleData]) -> int:
     info: BottleData
     for index, info in bottle_info.items():
         matches: int = 0
-        index = str(index)
+
         if shape.get_attribute("text") == info["letter"]:
             matches += 1
 

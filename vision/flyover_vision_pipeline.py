@@ -33,7 +33,7 @@ def flyover_pipeline(camera_data_path: str, state_path: str, output_path: str) -
     """
 
     # Load the data for each bottle
-    bottle_info: list[BottleData] = load_bottle_info()
+    bottle_info: dict[str, BottleData] = load_bottle_info()
 
     # Load model
     emg_model: Callable[[consts.Image], str] = create_emergent_model()
