@@ -12,7 +12,7 @@ from flight.extract_gps import (
     BoundaryPointUtm as BoundarylistUtm,
 )
 
-from flight.waypoint.geometry import Point
+from flight.waypoint.geometry import LineSegment, Point
 from flight.waypoint.goto import move_to
 from flight.waypoint.graph import GraphNode
 from flight.waypoint import pathfinding
@@ -86,30 +86,39 @@ async def run(self: Waypoint) -> State:
                 )
             )
 
+            path_length: float = sum(
+                line_segment.length()
+                for line_segment in LineSegment.from_points(goto_points, False)
+            )
+
+            curr_altitude: float = drone_position.relative_altitude_m
+            altitude_slope: float = (waypoint.altitude - curr_altitude) / path_length
+
             goto_points.pop()  # The last point is just the waypoint
 
             lat_deg: float
             lon_deg: float
 
-            curr_altitude: float = drone_position.relative_altitude_m
-            goal_altitude: float = waypoint.altitude
-
-            for goto_point in goto_points:
+            for line_segment in LineSegment.from_points(goto_points, False):
                 lat_deg, lon_deg = utm.to_latlon(
-                    goto_point.x,
-                    goto_point.y,
+                    line_segment.p_2.x,
+                    line_segment.p_2.y,
                     boundary_points[0].zone_number,
                     boundary_points[0].zone_letter,
                 )
+
                 # Gradually move toward goal altitude
-                curr_altitude = 0.5 * curr_altitude + 0.5 * goal_altitude
+                curr_altitude += altitude_slope * line_segment.length()
+
                 await move_to(self.drone.system, lat_deg, lon_deg, curr_altitude, 1.0)
 
             lat_deg, lon_deg = utm.to_latlon(
                 waypoint.easting, waypoint.northing, waypoint.zone_number, waypoint.zone_letter
             )
-            # use 5/6 as a fast parameter to get 25m with plenty of leeway while being fast
-            await move_to(self.drone.system, lat_deg, lon_deg, goal_altitude, 5 / 6)
+            # use 0.9 for fast_param to get within 25 ft of waypoint with plenty of leeway
+            # while being fast (values above 5/6 and less than 1 check for lat and lon with
+            # 5 digit of precision, or about 1.11 m)
+            await move_to(self.drone.system, lat_deg, lon_deg, waypoint.altitude, 0.9)
 
         if self.drone.odlc_scan:
             return ODLC(self.drone, self.flight_settings)
