@@ -31,6 +31,7 @@ class FlightManager:
     """
 
     def __init__(self) -> None:
+        self.drone_obj: Drone = Drone()
         pass
 
     def start_manager(self) -> None:
