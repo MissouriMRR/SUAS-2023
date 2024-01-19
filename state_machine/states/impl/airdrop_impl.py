@@ -7,10 +7,8 @@ from state_machine.states.airdrop import Airdrop
 from state_machine.states.waypoint import Waypoint
 from state_machine.states.state import State
 
-from flight.airdrop import AirdropControl
+from flight.maestro.air_drop import AirdropControl
 from flight.waypoint.goto import move_to
-
-from mavsdk import telemetry
 
 
 async def run(self: Airdrop) -> State:
@@ -38,15 +36,10 @@ async def run(self: Airdrop) -> State:
 
         # For the amount of bottles there are...
         bottle_num: int = self.drone.num + 1
-        logging.info("Bottle drop #", bottle_num, "started")
+        logging.info("Bottle drop started")
         # Set initial value for lowest distance so we can compare
 
         bottle_loc: dict[str, float] = bottle_locations[str(bottle_num)]
-
-        # Get the drones current position
-        async for position in self.drone.system.telemetry.position():
-            current_location: telemetry.Position = position
-            break
 
         # Move to the nearest bottle
         await move_to(self.drone.system, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
