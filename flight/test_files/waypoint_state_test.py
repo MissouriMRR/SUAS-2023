@@ -16,16 +16,12 @@ in_bounds(boundary, latitude, longitude, altitude)
 waypoint_check(drone, _sim)
     Verifies if a drone reaches each waypoint in a predefined path.
 
-run_waypoint_thread(drone)
-    Runs the waypoint check in an asynchronous loop.
-
 run_test(_sim)
-    Initializes the state machine and starts the waypoint check thread.
+    Initializes the state machine and starts the waypoint check.
 
 """
 import asyncio
 import logging
-import threading
 from mavsdk import System
 from flight.extract_gps import BoundaryPoint, GPSData, extract_gps
 from flight.extract_gps import Waypoint as Waylist
@@ -94,7 +90,6 @@ async def waypoint_check(drone: System, _sim: bool = True) -> None:
         The drone system object from mavsdk.
     _sim : bool, optional
         Specifies whether the function is being run in a simulation mode (default is True).
-
     """
 
     gps_dict: GPSData = extract_gps(GPS_PATH)
@@ -118,10 +113,8 @@ async def waypoint_check(drone: System, _sim: bool = True) -> None:
                 #  accurately checks if location is reached and
                 #  stops for 15 secs and then moves on.
                 if (
-                    (round(drone_lat, int(6 * (5 / 6))) == round(waypoint[0], int(6 * (5 / 6))))
-                    and (
-                        round(drone_long, int(6 * (5 / 6))) == round(waypoint[1], int(6 * (5 / 6)))
-                    )
+                    (round(drone_lat, 5) == round(waypoint[0], 5))
+                    and (round(drone_long, 5) == round(waypoint[1], 5))
                     and (round(drone_alt, 1) == round(waypoint[2], 1))
                 ):
                     reached = True
@@ -130,25 +123,9 @@ async def waypoint_check(drone: System, _sim: bool = True) -> None:
         current_waypoint += 1
 
 
-def run_waypoint_thread(drone: System) -> None:
-    """
-    Initializes and runs an event loop to execute waypoint_check asynchronously.
-
-    Parameters
-    ----------
-    drone : System
-        The drone system object from mavsdk.
-    """
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    loop.run_until_complete(waypoint_check(drone))
-    loop.close()
-
-
 async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     """
-    Initializes and runs the flight manager and waypoint thread for testing
+    Initialize and run the flight manager and waypoint check for testing
     the state machine in either simulated or real-world mode.
 
     Parameters
@@ -156,11 +133,10 @@ async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     _sim : bool
         Specifies whether to run the state machine in simulation mode.
     """
-    flight_manager = FlightManager()
+    flight_manager: FlightManager = FlightManager()
     flight_manager.start_manager(_sim)
 
-    _thread = threading.Thread(target=run_waypoint_thread, args=(flight_manager.drone_obj.system))
-    _thread.start()
+    await waypoint_check(flight_manager.drone_obj.system)
 
 
 if __name__ == "__main__":
