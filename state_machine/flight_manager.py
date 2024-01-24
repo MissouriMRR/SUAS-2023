@@ -50,9 +50,9 @@ class FlightManager:
         """
         drone_obj: Drone = Drone()
         if sim_flag is True:
-            Drone.address = "udp://:14540"
+            drone_obj.address = "udp://:14540"
         else:
-            Drone.address = "serial:///dev/ttyUSB0:921600"
+            drone_obj.address = "serial:///dev/ttyUSB0:921600"
         flight_settings_obj: FlightSettings = FlightSettings()
 
         logging.info("Starting processes")

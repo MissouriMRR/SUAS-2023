@@ -40,6 +40,8 @@ class Drone:
         self.system: mavsdk.System = mavsdk.System()
         self.address: str = address
         self.odlc_scan: bool = True
+        self.servo_num: int = 0
+        self.num: int = 0
 
     async def connect_drone(self) -> None:
         """Connect to a drone."""
