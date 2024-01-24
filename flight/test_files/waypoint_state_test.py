@@ -159,7 +159,7 @@ async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     flight_manager = FlightManager()
     flight_manager.start_manager(_sim)
 
-    _thread = threading.Thread(target=run_waypoint_thread, args=(flight_manager.drone_obj.system))
+    _thread = threading.Thread(target=run_waypoint_thread, args=(flight_manager.drone.system))
     _thread.start()
 
 
