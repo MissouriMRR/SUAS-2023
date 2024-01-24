@@ -26,7 +26,9 @@ class BottleData(TypedDict):
     shape_color: str
 
 
-def load_bottle_info(file_path: str = "vision/competition_inputs/bottle.json") -> list[BottleData]:
+def load_bottle_info(
+    file_path: str = "vision/competition_inputs/bottle.json",
+) -> dict[str, BottleData]:
     """
     Opens and Imports bottle.json and turns it into a list of dictionaries,
     listing each bottle feature for 5 bottles with IDs '0' through '4'.
@@ -39,13 +41,13 @@ def load_bottle_info(file_path: str = "vision/competition_inputs/bottle.json") -
 
     Returns
     -------
-    bottle_list : list[BottleData]
+    bottle_list : dict[str, BottleData]
         Returns Dict of DictType BottleData containing values for 5 different bottles.
         Bottle ids are strings 0 through 4.
     """
     # Opens and imports JSON File 'Bottle.json' as a list
     with open(file_path, encoding="utf-8") as file:
-        bottle_list: list[BottleData] = json.load(file)
+        bottle_list: dict[str, BottleData] = json.load(file)
 
     return bottle_list
 

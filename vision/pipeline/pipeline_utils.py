@@ -47,7 +47,7 @@ def flyover_finished(state_path: str) -> bool:
     """
 
     with open(state_path, encoding="UTF-8") as file:
-        return str(file.read) == "True"
+        return str(file.read()) == "True"
 
 
 def set_generic_attributes(

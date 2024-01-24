@@ -104,14 +104,19 @@ def detect_emergent_object(image: Image, model: Callable[[Image], Any]) -> list[
 
     obj: DetectedEmgObj
     for obj in object_locations.values():
+        width: int = int(obj["xmax"] - obj["xmin"])
+        height: int = int(obj["ymax"] - obj["ymin"])
+        area: int = width * height
+
         verts: Vertices = tlwh_to_vertices(
             int(obj["xmin"]),
             int(obj["ymin"]),
-            int(obj["xmax"] - obj["xmin"]),
-            int(obj["ymax"] - obj["ymin"]),
+            width,
+            height,
         )
 
         box: BoundingBox = BoundingBox(verts, ObjectType.EMG_OBJECT)
+        box.set_attribute("bounding_box_area", area)
         box.set_attribute("confidence", obj["confidence"])
         box.set_attribute("name", obj["name"])
 
