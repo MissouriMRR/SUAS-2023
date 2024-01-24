@@ -51,7 +51,6 @@ async def run(self: Waypoint) -> State:
 
     try:
         logging.info("Waypoint state running")
-        print("Moving to waypoint")
 
         gps_dict: GPSData = extract_gps(GPS_PATH)
         waypoints_utm: list[WaylistUtm] = gps_dict["waypoints_utm"]
