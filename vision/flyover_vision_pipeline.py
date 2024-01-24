@@ -33,7 +33,7 @@ def flyover_pipeline(camera_data_path: str, state_path: str, output_path: str) -
     """
 
     # Load the data for each bottle
-    bottle_info: list[BottleData] = load_bottle_info()
+    bottle_info: dict[str, BottleData] = load_bottle_info()
 
     # Load model
     emg_model: Callable[[consts.Image], str] = create_emergent_model()
@@ -78,7 +78,7 @@ def flyover_pipeline(camera_data_path: str, state_path: str, output_path: str) -
 
                 # Append all discovered humanoids to the list of saved humanoids
                 saved_humanoids += emg_obj.find_humanoids(
-                    image, emg_model, camera_parameters, image_path
+                    emg_model, image, camera_parameters, image_path
                 )
 
     # Sort and output the locations of all ODLCs
