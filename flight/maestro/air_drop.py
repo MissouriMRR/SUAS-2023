@@ -35,7 +35,7 @@ class AirdropControl:
         """
         self.board = Maestro(connection_address, device_number)
 
-    def drop_bottle(self, bottle: int) -> None:
+    async def drop_bottle(self, bottle: int) -> None:
         """
         Drops the bottle from the drone
 

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Main runnable file for the codebase"""
+"""
+Main runnable file for the codebase
+
+If running for competition, make sure that the following is set:
+- Bottle data in vision/competition_inputs/bottle_data.json
+- Waypoints in flight/data/waypoint_data.json
+"""
 
 import logging
 import sys
