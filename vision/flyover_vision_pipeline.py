@@ -1,6 +1,8 @@
 """Runs the necessary Vision code during the flyover stage of competition"""
 
 from typing import Callable
+from ctypes import c_bool
+from multiprocessing.sharedctypes import SynchronizedBase
 
 import time
 import cv2
@@ -18,7 +20,9 @@ import vision.pipeline.emergent_pipeline as emg_obj
 import vision.pipeline.pipeline_utils as pipe_utils
 
 
-def flyover_pipeline(camera_data_path: str, state_path: str, output_path: str) -> None:
+def flyover_pipeline(
+    camera_data_path: str, capture_status: "SynchronizedBase[c_bool]", output_path: str
+) -> None:
     """
     Finds all standard objects in each image in the input folder
 
@@ -26,7 +30,7 @@ def flyover_pipeline(camera_data_path: str, state_path: str, output_path: str) -
     ----------
     camera_data_path: str
         The path to the json file containing the CameraParameters entries
-    state_path: str
+    capture_status: SynchronizedBase[c_bool]
         A text file containing True if all images have been taken and False otherwise
     output_path: str
         The json file name and path to save the data in
@@ -48,13 +52,13 @@ def flyover_pipeline(camera_data_path: str, state_path: str, output_path: str) -
     saved_humanoids: list[BoundingBox] = []
 
     # Wait for and process unfinished images until no more images are being taken
-    all_images_taken: bool = False
+    all_images_taken: c_bool = c_bool(False)
     while not all_images_taken:
         # Wait to check the file instead of spamming it
         time.sleep(1)
 
         # Check if all images have been taken
-        all_images_taken = pipe_utils.flyover_finished(state_path)
+        all_images_taken = capture_status.value  # type: ignore
 
         # Load in the json containing the camera data
         image_parameters: dict[str, consts.CameraParameters] = pipe_utils.read_parameter_json(
