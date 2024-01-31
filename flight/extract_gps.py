@@ -2,10 +2,12 @@
 Contains the extract_gps() function for extracting data out of
 the provided waypoint data JSON file for the SUAS competition.
 """
-from typing import Any, List, NamedTuple
-import json
 import argparse
+import json
+from typing import Any, List, NamedTuple
 from typing_extensions import TypedDict
+
+import utm
 
 
 # Initialize namedtuples to store latitude/longitude/altitude data for provided points
@@ -28,6 +30,31 @@ class Waypoint(NamedTuple):
     altitude: float
 
 
+class WaypointUtm(NamedTuple):
+    """
+    NamedTuple storing the data for a single waypoint using UTM coordinates.
+
+    Attributes
+    ----------
+    easting : float
+        The easting of the waypoint.
+    northing : float
+        The northing of the waypoint.
+    zone_number : int
+        The zone number of the waypoint.
+    zone_letter : str
+        The zone letter of the waypoint.
+    altitude : float
+        The altitude of the waypoint.
+    """
+
+    easting: float
+    northing: float
+    zone_number: int
+    zone_letter: str
+    altitude: float
+
+
 class BoundaryPoint(NamedTuple):
     """
     NamedTuple storing the data for a single boundary point.
@@ -44,12 +71,36 @@ class BoundaryPoint(NamedTuple):
     longitude: float
 
 
+class BoundaryPointUtm(NamedTuple):
+    """
+    NamedTuple storing the data for a single boundary point using UTM coordinates.
+
+    Attributes
+    ----------
+    easting : float
+        The easting of the boundary point.
+    northing : float
+        The northing of the boundary point.
+    zone_number : int
+        The zone number of the boundary point.
+    zone_letter : str
+        The zone letter of the boundary point.
+    """
+
+    easting: float
+    northing: float
+    zone_number: int
+    zone_letter: str
+
+
 # Initialize GPSData object for sending all data from the file in a single dict
 GPSData = TypedDict(
     "GPSData",
     {
         "waypoints": List[Waypoint],
+        "waypoints_utm": List[WaypointUtm],
         "boundary_points": List[BoundaryPoint],
+        "boundary_points_utm": List[BoundaryPointUtm],
         "altitude_limits": List[int],
     },
 )
@@ -67,7 +118,11 @@ def extract_gps(path: str) -> GPSData:
     Returns
     -------
     GPSData : TypedDict[
-        list[Waypoint[float, float, int]], list[BoundaryPoint[float, float]], list[int, int]
+            list[Waypoint[float, float, float]],
+            list[WaypointUtm[float, float, int, str, float]],
+            list[BoundaryPoint[float, float]],
+            list[BoundaryPointUtm[float, float, int, str]],
+            list[int, int],
         ]
         The data in the waypoint data file
         waypoints : list[Waypoint[float, float, float]]
@@ -78,12 +133,34 @@ def extract_gps(path: str) -> GPSData:
                     The longitude of the waypoint.
                 altitude : float
                     The altitude of the waypoint.
+        waypoints_utm : list[WaypointUtm[float, float, int, str, float]]
+            WaypointUtm : WaypointUtm[float, float, int, str, float]
+                easting : float
+                    The easting of the waypoint.
+                northing : float
+                    The northing of the waypoint.
+                zone_number : int
+                    The zone number of the waypoint.
+                zone_letter : str
+                    The zone letter of the waypoint.
+                altitude : float
+                    The altitude of the waypoint.
         boundary_points : list[BoundaryPoint[float, float]]
             BoundaryPoint : BoundaryPoint[float, float]
                 latitude : float
                     The latitude of the boundary point.
                 longitude : float
                     The longitude of the boundary point.
+        boundary_points_utm : list[BoundaryPointUtm[float, float, int, str]]
+            BoundaryPointUtm : BoundaryPointUtm[float, float, int, str]
+                easting : float
+                    The easting of the boundary point.
+                northing : float
+                    The northing of the boundary point.
+                zone_number : int
+                    The zone number of the boundary point.
+                zone_letter : str
+                    The zone letter of the boundary point.
         altitude_limits : list[int, int]
             altitude_min : int
                 The minimum altitude that the drone must fly at all times.
@@ -97,7 +174,17 @@ def extract_gps(path: str) -> GPSData:
 
     # Initialize lists to store waypoints & boundary points
     waypoints: list[Waypoint] = []
+    waypoints_utm: list[WaypointUtm] = []
     boundary_points: list[BoundaryPoint] = []
+    boundary_points_utm: list[BoundaryPointUtm] = []
+
+    # Get forced UTM zone number and zone letter
+    forced_zone_number: int
+    forced_zone_letter: str
+    _, _, forced_zone_number, forced_zone_letter = utm.from_latlon(
+        json_data["flyzones"]["boundaryPoints"][0]["latitude"],
+        json_data["flyzones"]["boundaryPoints"][0]["longitude"],
+    )
 
     # Store the lat/lon/altitude for each point into the Waypoints/BoundaryPoint namedtuple
     # Appends each point into a list to be able to packed into the output
@@ -107,26 +194,34 @@ def extract_gps(path: str) -> GPSData:
         longitude: float = waypoint["longitude"]
         altitude: float = waypoint["altitude"]
 
-        full_waypoint: Waypoint = Waypoint(latitude, longitude, altitude)
-        waypoints.append(full_waypoint)
+        waypoints.append(Waypoint(latitude, longitude, altitude))
+        utm_coords: tuple[float, float, int, str] = utm.from_latlon(
+            latitude, longitude, forced_zone_number, forced_zone_letter
+        )
+        full_waypoint_utm: WaypointUtm = WaypointUtm(*utm_coords, altitude)
+        waypoints_utm.append(full_waypoint_utm)
 
     boundary_point: dict[str, float]
     for boundary_point in json_data["flyzones"]["boundaryPoints"]:
         latitude = boundary_point["latitude"]
         longitude = boundary_point["longitude"]
 
-        full_boundary_point: BoundaryPoint = BoundaryPoint(latitude, longitude)
-        boundary_points.append(full_boundary_point)
-
-    # Grab the altitude limits from the JSON file to be able to be stored into a list
-    altitude_min: int = json_data["flyzones"]["altitudeMin"]
-    altitude_max: int = json_data["flyzones"]["altitudeMax"]
+        boundary_points.append(BoundaryPoint(latitude, longitude))
+        full_boundary_point_utm: BoundaryPointUtm = BoundaryPointUtm(
+            *utm.from_latlon(latitude, longitude, forced_zone_number, forced_zone_letter)
+        )
+        boundary_points_utm.append(full_boundary_point_utm)
 
     # Package all data into the GPSData TypedDict to be exported
     waypoint_data: GPSData = {
         "waypoints": waypoints,
+        "waypoints_utm": waypoints_utm,
         "boundary_points": boundary_points,
-        "altitude_limits": [altitude_min, altitude_max],
+        "boundary_points_utm": boundary_points_utm,
+        "altitude_limits": [
+            json_data["flyzones"]["altitudeMin"],
+            json_data["flyzones"]["altitudeMax"],
+        ],
     }
     return waypoint_data
 
