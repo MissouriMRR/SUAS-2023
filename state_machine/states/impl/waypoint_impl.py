@@ -119,9 +119,7 @@ async def run(self: Waypoint) -> State:
             # 5 digit of precision, or about 1.11 m)
             await move_to(self.drone.system, lat_deg, lon_deg, waypoint.altitude, 0.9)
 
-        if self.drone.odlc_scan:
-            return ODLC(self.drone, self.flight_settings)
-        return Airdrop(self.drone, self.flight_settings)
+        return (ODLC if self.drone.odlc_scan else Airdrop)(self.drone, self.flight_settings)
 
     except asyncio.CancelledError as ex:
         logging.error("Waypoint state canceled")
