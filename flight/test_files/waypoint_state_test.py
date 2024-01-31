@@ -18,8 +18,8 @@ waypoint_check(drone, _sim)
 
 run_test(_sim)
     Initializes the state machine and starts the waypoint check.
-
 """
+
 import asyncio
 import logging
 from mavsdk import System
