@@ -6,8 +6,6 @@ import asyncio
 import logging
 import sys
 
-from typing import List
-
 from mavsdk import System
 
 # sys.path.append("././SUAS-2023/flight")
@@ -90,7 +88,7 @@ async def run() -> None:
     """
     # Save GPS coordinates for two waypoints to fly between
     start_waypoint: tuple[float, float] = (37.94893290, -91.784668343)
-    end_waypoint: tuple[float, float] = (37.947899284, -91.782420970)
+    # end_waypoint: tuple[float, float] = (37.947899284, -91.782420970)
 
     lats: list[float] = [37.94893290, 37.947899284]
     longs: list[float] = [-91.784668343, -91.782420970]
@@ -141,14 +139,12 @@ async def run() -> None:
 
     # Begin 12 mile flight
     print("Starting the line")
-    iteration: int = 0
     for i in range(43):
         point: int
         for point in range(len(lats)):
             await move_to(drone, lats[point], longs[point], 75, 0.5)
             print("Reached waypoint")
         print("Iteration:", i)
-        # iteration += 1
 
     # return home
     logging.info("12 miles accomplished")
