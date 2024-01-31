@@ -136,7 +136,7 @@ async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     flight_manager: FlightManager = FlightManager()
     flight_manager.start_manager(_sim)
 
-    await waypoint_check(flight_manager.drone_obj.system)
+    await waypoint_check(flight_manager.drone.system)
 
 
 if __name__ == "__main__":

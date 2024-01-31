@@ -7,9 +7,9 @@ import time
 from mavsdk.telemetry import FlightMode, LandedState
 
 from state_machine.drone import Drone
-from state_machine.flight_settings import FlightSettings
 from state_machine.state_machine import StateMachine
 from state_machine.states import Start
+from state_machine.flight_settings import FlightSettings
 
 
 class FlightManager:
@@ -36,8 +36,7 @@ class FlightManager:
     """
 
     def __init__(self) -> None:
-        """Initialize a flight manager object."""
-        self.drone_obj: Drone = Drone()
+        self.drone: Drone = Drone()
 
     def start_manager(self, sim_flag: bool) -> None:
         """
@@ -46,23 +45,21 @@ class FlightManager:
 
         Parameters
         ----------
-        sim_flag
+        sim_flag: bool
             A flag representing if the the drone is a simulation.
         """
-        drone_obj: Drone = Drone()
         if sim_flag is True:
-            Drone.address = "udp://:14540"
+            self.drone.address = "udp://:14540"
         else:
-            Drone.address = "serial:///dev/ttyUSB0:921600"
+            self.drone.address = "serial:///dev/ttyUSB0:921600"
         flight_settings_obj: FlightSettings = FlightSettings()
 
         logging.info("Starting processes")
         state_machine: Process = Process(
-            target=self.start_state_machine, args=(drone_obj, flight_settings_obj)
+            target=self.start_state_machine,
+            args=(flight_settings_obj,),
         )
-        kill_switch_process: Process = Process(
-            target=self.start_kill_switch, args=(state_machine, drone_obj)
-        )
+        kill_switch_process: Process = Process(target=self.start_kill_switch, args=(state_machine,))
 
         state_machine.start()
         kill_switch_process.start()
@@ -80,81 +77,75 @@ class FlightManager:
             )
         finally:
             state_machine.terminate()
-            asyncio.run(self.graceful_exit(drone_obj))
+            asyncio.run(self.graceful_exit())
 
-    def start_state_machine(self, drone: Drone, flight_settings: FlightSettings) -> None:
+    def start_state_machine(self, flight_settings: FlightSettings) -> None:
         """
         Create and start a state machine in the event loop. This method should
         be called in its own process.
 
         Parameters
-        ----------The callable object which gets executed when the `run` method is called.
-        drone : Drone
-            The drone the state machine will control.
-        flight_settings : FlightSettings
+        ----------
+        flight_settings: FlightSettings
             The flight settings to use.
         """
         logging.info("-- Starting state machine")
-        asyncio.run(StateMachine(Start(drone, flight_settings), drone, flight_settings).run())
+        asyncio.run(
+            StateMachine(Start(self.drone, flight_settings), self.drone, flight_settings).run()
+        )
 
-    def start_kill_switch(self, state_machine_process: Process, drone: Drone) -> None:
+    def start_kill_switch(self, process: Process) -> None:
         """
-        Create and start a kill switch in the event loop.
+        Create and run a kill switch in the event loop.
 
         Parameters
         ----------
         state_machine_process : Process
             The process running the state machine to kill.
-        drone : Drone
-            The drone that is controlled by the state machine.
         """
         logging.info("-- Starting kill switch")
-        asyncio.run(self.kill_switch(state_machine_process, drone))
+        asyncio.run(self.kill_switch(process))
 
-    async def kill_switch(self, state_machine_process: Process, drone: Drone) -> None:
+    async def kill_switch(self, state_machine_process: Process) -> None:
         """
         Enable the kill switch and wait until it activates. The drone should be
+        Continuously check for whether or not the kill switch has been activated.
         in manual mode after this method returns.
 
         Parameters
         ----------
-        state_machine_process : Process
+        state_machine_process: Process
             The process running the state machine to kill. This process will
             be terminated.
-        drone : Drone
-            The drone that is controlled by the state machine.
         """
 
+        # connect to the drone
         logging.debug("Kill switch running")
         logging.info("Waiting for drone to connect...")
-        await drone.connect_drone()
-        async for state in drone.system.core.connection_state():
+        await self.drone.connect_drone()
+        async for state in self.drone.system.core.connection_state():
             if state.is_connected:
                 logging.info("Kill switch has been enabled.")
                 break
 
-        async for flight_mode in drone.system.telemetry.flight_mode():
+        async for flight_mode in self.drone.system.telemetry.flight_mode():
             while flight_mode != FlightMode.MANUAL:
                 time.sleep(1)
 
         logging.critical("Kill switch activated. Terminating state machine.")
         state_machine_process.terminate()
+        return
 
-    async def graceful_exit(self, drone: Drone) -> None:
+    async def graceful_exit(self) -> None:
         """
         Land the drone and exit the program.
-
-        Parameters
-        ----------
-        drone : Drone
-            The drone to land.
         """
-
-        await drone.connect_drone()
+        await self.drone.connect_drone()
         logging.critical("Beginning graceful exit. Landing drone...")
-        await drone.system.action.return_to_launch()
-        async for state in drone.system.telemetry.landed_state():
+        await self.drone.system.action.return_to_launch()
+        async for state in self.drone.system.telemetry.landed_state():
             if state == LandedState.ON_GROUND:
                 logging.info("Drone landed successfully.")
                 break
         logging.info("Drone landed. Exiting program...")
+        return
