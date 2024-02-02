@@ -47,7 +47,7 @@ def contains_airdrop_boundary(
     # If no corner of the airdrop boundary is within the image boundary
     # Will check if any lines of the airdrop boundary intersect with the
     # image boundary
-    if is_in_bounds == False:
+    if is_in_bounds is False:
         # For every point in airdrop_boundary
         for num_point in range(len(airdrop_boundary)):
             airdrop_point1: list[float] = airdrop_boundary[num_point]
@@ -55,9 +55,9 @@ def contains_airdrop_boundary(
             airdrop_line: list[list[float]] = [airdrop_point1, airdrop_point2]
 
             # For every point in image_corners
-            for num_point in range(len(image_corners)):
-                image_point1: list[float] = image_corners[num_point]
-                image_point2: list[float] = image_corners[(num_point + 1) % len(image_corners)]
+            for corner_point in range(len(image_corners)):
+                image_point1: list[float] = image_corners[corner_point]
+                image_point2: list[float] = image_corners[(corner_point + 1) % len(image_corners)]
                 image_line: list[list[float]] = [image_point1, image_point2]
 
                 # Checks if lines intersect
@@ -134,23 +134,23 @@ def lines_intersect(line1: list[list[float]], line2: list[list[float]]) -> bool:
     """
 
     # Find the 4 orientations required for the general and special cases
-    o1: int = find_orientation(line1[0], line1[1], line2[0])
-    o2: int = find_orientation(line1[0], line1[1], line2[1])
-    o3: int = find_orientation(line2[0], line2[1], line1[0])
-    o4: int = find_orientation(line2[0], line2[1], line1[1])
+    o_1: int = find_orientation(line1[0], line1[1], line2[0])
+    o_2: int = find_orientation(line1[0], line1[1], line2[1])
+    o_3: int = find_orientation(line2[0], line2[1], line1[0])
+    o_4: int = find_orientation(line2[0], line2[1], line1[1])
 
     intersects: bool = False
 
-    if (o1 != o2) and (o3 != o4):  # General Case
+    if (o_1 != o_2) and (o_3 != o_4):  # General Case
         intersects = True
     else:  # Special Cases
-        if (o1 == 0) and on_line(line1[0], line2[0], line1[1]):
+        if (o_1 == 0) and on_line(line1[0], line2[0], line1[1]):
             intersects = True
-        elif (o2 == 0) and on_line(line1[0], line2[1], line1[1]):
+        elif (o_2 == 0) and on_line(line1[0], line2[1], line1[1]):
             intersects = True
-        elif (o3 == 0) and on_line(line2[0], line1[0], line2[1]):
+        elif (o_3 == 0) and on_line(line2[0], line1[0], line2[1]):
             intersects = True
-        elif (o4 == 0) and on_line(line2[0], line1[1], line2[0]):
+        elif (o_4 == 0) and on_line(line2[0], line1[1], line2[0]):
             intersects = True
 
     return intersects

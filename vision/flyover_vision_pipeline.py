@@ -2,7 +2,7 @@
 
 from typing import Callable
 from ctypes import c_bool
-from multiprocessing.sharedctypes import SynchronizedBase
+from multiprocessing.sharedctypes import SynchronizedBase  # pylint: disable=unused-import
 
 import time
 import cv2
