@@ -132,6 +132,7 @@ async def run() -> None:
 
     # move to each waypoint in mission
     for i in range(6):
+        logging.info("Starting loop %s", i)
         for point in range(len(lats)):
             await move_to(drone, lats[point], longs[point], 100, 0.67)
 
