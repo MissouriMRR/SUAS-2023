@@ -77,17 +77,26 @@ async def run(self: Waypoint) -> State:
                 boundary_points[0].zone_letter,
             )
 
-            goto_points: list[Point] = list(
-                pathfinding.shortest_path_between(
-                    Point(drone_northing, drone_easting),
-                    Point(waypoint.northing, waypoint.easting),
-                    search_graph,
+            goto_points: list[Point]
+            try:
+                goto_points = list(
+                    pathfinding.shortest_path_between(
+                        Point(drone_easting, drone_northing),
+                        Point(waypoint.easting, waypoint.northing),
+                        search_graph,
+                    )
                 )
-            )
+            except RuntimeError:
+                # Unable to find path that doesn't intersect boundary
+                # This should never happen
+                goto_points = [Point(waypoint.easting, waypoint.northing)]
 
-            path_length: float = sum(
-                line_segment.length()
-                for line_segment in LineSegment.from_points(goto_points, False)
+            path_length: float = (
+                sum(
+                    line_segment.length()
+                    for line_segment in LineSegment.from_points(goto_points, False)
+                )
+                + (goto_points[0] - Point(drone_easting, drone_northing)).distance_from_origin()
             )
 
             curr_altitude: float = drone_position.relative_altitude_m
