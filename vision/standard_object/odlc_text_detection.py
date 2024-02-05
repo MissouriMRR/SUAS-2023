@@ -117,9 +117,9 @@ def text_detection(base_img: Image) -> BoundingBox:
                 text_width = found_text_info["width"][i]
                 text_height = found_text_info["height"][i]
 
-    text_bounds: tuple[
-        tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]
-    ] = tlwh_to_vertices(text_x, text_y, text_width, text_height)
+    text_bounds: tuple[tuple[int, int], tuple[int, int], tuple[int, int], tuple[int, int]] = (
+        tlwh_to_vertices(text_x, text_y, text_width, text_height)
+    )
 
     text_attributes: dict[str, str] = {"text": found_text}
     text_with_bounds: BoundingBox = BoundingBox(
