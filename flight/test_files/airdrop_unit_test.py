@@ -24,20 +24,25 @@ async def run() -> None:
 
     await prep(drone)
 
+    print("I know it got heresies")
+
     flight_settings: FlightSettings = FlightSettings()
 
     logging.info("Starting processes")
+    print("I got here")
     state_machine: Process = Process(
-        target=asyncio.run(
-            StateMachine(Airdrop(drone, flight_settings), drone, flight_settings).run()
-        )
+        target=airdrop_run,
+        args=(drone, flight_settings,)
     )
 
+    print("I also got here")
     state_machine.start()
 
     try:
+        print("maybe here")
         state_machine.join()
         logging.info("State machine joined")
+        print("perhapsies here")
 
         drop_loc = 1
 
@@ -48,6 +53,7 @@ async def run() -> None:
 
         while not location_reached:
             logging.info("Going to waypoint")
+            print(f"Going to waypoint {str(drop_loc)}")
             while drop_loc < 5:
                 bottle_loc: dict[str, float] = bottle_locations[str(drop_loc)]
                 async for position in drone.telemetry.position():
@@ -80,6 +86,10 @@ async def run() -> None:
     finally:
         state_machine.terminate()
 
+def airdrop_run(drone: System, flight_settings: FlightSettings) -> None:
+    asyncio.run(
+        StateMachine(Airdrop(drone, flight_settings), drone, flight_settings).run()
+    )
 
 async def prep(drone: System) -> None:
     """
@@ -117,10 +127,4 @@ async def prep(drone: System) -> None:
     await asyncio.sleep(10)
 
 
-if __name__ == "__main__":
-    try:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(run())
-    except KeyboardInterrupt:
-        print("Program ended")
-        sys.exit(0)
+

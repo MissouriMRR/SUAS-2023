@@ -27,9 +27,9 @@ async def run(self: Airdrop) -> State:
     """
     try:
         logging.info("Airdrop")
-
-        # setup airdrop
-        airdrop = AirdropControl()
+        if self.drone.address == "serial:///dev/ttyUSB0:921600":
+            # setup airdrop
+            airdrop = AirdropControl()
 
         with open("flight/data/output.json", encoding="utf8") as output:
             bottle_locations = json.load(output)
@@ -43,7 +43,10 @@ async def run(self: Airdrop) -> State:
 
         # Move to the nearest bottle
         await move_to(self.drone.system, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
-        await airdrop.drop_bottle(self.drone.servo_num)
+        
+        if self.address == "serial:///dev/ttyUSB0:921600":
+            await airdrop.drop_bottle(self.drone.servo_num)
+        
         await asyncio.sleep(
             15
         )  # This will need to be changed based on how long it takes to drop the bottle
