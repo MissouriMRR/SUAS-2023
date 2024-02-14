@@ -12,17 +12,19 @@ from mavsdk import System
 from state_machine.flight_settings import FlightSettings
 from state_machine.state_machine import StateMachine
 from state_machine.states import Airdrop
+from state_machine.drone import Drone
 
 
 async def run() -> None:
     """
     Runs the Airdrop unit test
     """
-    # create a drone object
-    drone: System = System()
-    await drone.connect(system_address="udp://:14540")
 
-    await prep(drone)
+    drone: Drone = Drone()
+    # create a drone object
+    await drone.connect_drone()
+
+    await prep(drone.system)
 
     print("I know it got heresies")
 
@@ -30,17 +32,13 @@ async def run() -> None:
 
     logging.info("Starting processes")
     print("I got here")
-    state_machine: Process = Process(
-        target=airdrop_run,
-        args=(drone, flight_settings,)
-    )
+
+    await airdrop_run(drone, flight_settings)
 
     print("I also got here")
-    state_machine.start()
 
     try:
         print("maybe here")
-        state_machine.join()
         logging.info("State machine joined")
         print("perhapsies here")
 
@@ -56,7 +54,7 @@ async def run() -> None:
             print(f"Going to waypoint {str(drop_loc)}")
             while drop_loc < 5:
                 bottle_loc: dict[str, float] = bottle_locations[str(drop_loc)]
-                async for position in drone.telemetry.position():
+                async for position in drone.system.telemetry.position():
                     # continuously checks current latitude, longitude and altitude of the drone
                     drone_lat: float = position.latitude_deg
                     drone_long: float = position.longitude_deg
@@ -84,12 +82,10 @@ async def run() -> None:
     except KeyboardInterrupt:
         logging.critical("Keyboard interrupt detected. Killing state machine and landing drone.")
     finally:
-        state_machine.terminate()
+        print("Done")
 
-def airdrop_run(drone: System, flight_settings: FlightSettings) -> None:
-    asyncio.run(
-        StateMachine(Airdrop(drone, flight_settings), drone, flight_settings).run()
-    )
+async def airdrop_run(drone: Drone, flight_settings: FlightSettings) -> None:
+    await StateMachine(Airdrop(drone, flight_settings), drone, flight_settings).run()
 
 async def prep(drone: System) -> None:
     """

@@ -6,6 +6,7 @@ import json
 from state_machine.states.airdrop import Airdrop
 from state_machine.states.waypoint import Waypoint
 from state_machine.states.state import State
+from state_machine.states.land import Land
 
 from flight.maestro.air_drop import AirdropControl
 from flight.waypoint.goto import move_to
@@ -44,7 +45,7 @@ async def run(self: Airdrop) -> State:
         # Move to the nearest bottle
         await move_to(self.drone.system, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
         
-        if self.address == "serial:///dev/ttyUSB0:921600":
+        if self.drone.address == "serial:///dev/ttyUSB0:921600":
             await airdrop.drop_bottle(self.drone.servo_num)
         
         await asyncio.sleep(
@@ -55,11 +56,17 @@ async def run(self: Airdrop) -> State:
 
         self.drone.num = self.drone.num + 1
         if self.drone.servo_num == 2:
-            servo_num = 0
+            self.drone.servo_num = 0
         else:
-            servo_num = servo_num + 1
+            self.drone.servo_num = self.drone.servo_num + 1
 
-        return Waypoint(self.drone, self.flight_settings)
+
+        print(self.drone.num)
+        if self.drone.num == 5:
+            print("i do")
+            return Land(self.drone, self.flight_settings)
+        else:
+            return Waypoint(self.drone, self.flight_settings)
     except asyncio.CancelledError as ex:
         logging.error("Airdrop state canceled")
         raise ex
