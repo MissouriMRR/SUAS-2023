@@ -1,4 +1,5 @@
 """Implements the behavior of the Takeoff state."""
+
 import asyncio
 import logging
 

@@ -1,6 +1,7 @@
 """
 Takes the contour of an ODLC shape and determine which shape it is
 """
+
 import numpy as np
 import nptyping as npt
 import cv2

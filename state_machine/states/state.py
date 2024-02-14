@@ -1,4 +1,5 @@
 """Defines the State abstract base class, which all states should inherit from."""
+
 from abc import ABC, abstractmethod
 import logging
 from typing import Awaitable
