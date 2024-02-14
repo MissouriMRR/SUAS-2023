@@ -1,4 +1,5 @@
 """File to hold important constant values and configure drone upon startup"""
+
 from mavsdk import System
 
 MAX_ALT: int = 500  # Feet

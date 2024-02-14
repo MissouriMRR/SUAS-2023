@@ -1,4 +1,5 @@
 """Defines a graph node class"""
+
 from typing import Generic, TypeVar
 
 ValueT = TypeVar("ValueT")

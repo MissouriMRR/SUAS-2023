@@ -1,4 +1,5 @@
 """Implements the behavior of the Airdrop state."""
+
 import asyncio
 import logging
 import json
