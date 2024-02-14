@@ -246,7 +246,7 @@ def create_odlc_dict(sorted_odlcs: list[list[BoundingBox]]) -> consts.ODLCDict:
         The dictionary of ODLCs matching the output format
     """
 
-    odlc_dict: consts.ODLCDict = {}
+    odlc_dict: consts.ODLCDict = dict()
 
     i: int
     bottle: list[BoundingBox]
@@ -257,10 +257,11 @@ def create_odlc_dict(sorted_odlcs: list[list[BoundingBox]]) -> consts.ODLCDict:
         for shape in bottle:
             coords_list.append((shape.get_attribute("latitude"), shape.get_attribute("longitude")))
 
-        coords_array: NDArray[Shape["*, 2"], Float32] = np.array(coords_list)
+        if len(bottle) > 0:
+            coords_array: NDArray[Shape["*, 2"], Float32] = np.array(coords_list)
 
-        average_coord: NDArray[Shape["2"], Float32] = np.average(coords_array, axis=0)
+            average_coord: NDArray[Shape["2"], Float32] = np.average(coords_array, axis=0)
 
-        odlc_dict[str(i)] = {"latitude": average_coord[0], "longitude": average_coord[1]}
+            odlc_dict[str(i)] = {"latitude": average_coord[0], "longitude": average_coord[1]}
 
     return odlc_dict

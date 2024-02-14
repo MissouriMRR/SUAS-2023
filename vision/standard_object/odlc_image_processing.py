@@ -29,7 +29,7 @@ def preprocess_std_odlc(image: Image, thresh_min: int = 50, thresh_max: int = 10
         the single channel image after preprocessing for use in contour detection/processing
     """
 
-    grayscaled: ScImage = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert to graycsale
+    grayscaled: ScImage = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # Convert to grayscale
 
     blurred: ScImage = cv2.GaussianBlur(grayscaled, ksize=(3, 3), sigmaX=1.5)  # Blur the image
 
