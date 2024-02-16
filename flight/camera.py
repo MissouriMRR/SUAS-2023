@@ -1,4 +1,5 @@
 """A class that contains all the needed camera functionality for the drone."""
+
 import asyncio
 import json
 import logging
