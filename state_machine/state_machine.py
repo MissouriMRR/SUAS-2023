@@ -3,6 +3,7 @@
 import asyncio
 from asyncio import Task
 import logging
+from multiprocessing.connection import Connection
 
 from state_machine.drone import Drone
 from state_machine.flight_settings import FlightSettings
@@ -35,7 +36,9 @@ class StateMachine:
         Cancel the currently running state loop.
     """
 
-    def __init__(self, initial_state: State, drone: Drone, flight_settings: FlightSettings):
+    def __init__(
+        self, initial_state: State, drone: Drone, flight_settings: FlightSettings, pipe: Connection
+    ):
         """
         Initialize a new state machine object.
 
@@ -53,6 +56,7 @@ class StateMachine:
         self.drone: Drone = drone
         self.flight_settings: FlightSettings = flight_settings
         self.run_task: Task[None] | None = None
+        self.pipe: Connection = pipe
 
     async def run(self, initial_state: State | None = None) -> None:
         """Run the flight code specific to each state until completion.
@@ -81,6 +85,7 @@ class StateMachine:
         """Runs the flight code specific to each state until completion."""
         while self.current_state:
             self.current_state = await self.current_state.run()
+            self.pipe.send(self.current_state)
 
     def cancel(self) -> None:
         """Cancel the currently running state loop.."""
