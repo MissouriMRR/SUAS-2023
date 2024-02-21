@@ -19,7 +19,5 @@
             {"latitude": 38.31729702009844, "longitude": -76.55617670782419}
         ]
     },
-    "waypoints": [
-        {"latitude": 38.31729702009844, "longitude": -76.55617670782419}
-    ]
+    "waypoints": []
 }
