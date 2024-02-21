@@ -61,8 +61,7 @@ async def run(self: Airdrop) -> State:
 
         if self.drone.bottle_num == 6:
             return Land(self.drone, self.flight_settings)
-        else:
-            return Waypoint(self.drone, self.flight_settings)
+        return Waypoint(self.drone, self.flight_settings)
 
     except asyncio.CancelledError as ex:
         logging.error("Airdrop state canceled")
