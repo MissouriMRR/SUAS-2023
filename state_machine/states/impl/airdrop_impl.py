@@ -35,16 +35,15 @@ async def run(self: Airdrop) -> State:
         with open("flight/data/output.json", encoding="utf8") as output:
             bottle_locations = json.load(output)
 
-        # For the amount of bottles there are...
-        bottle_num: int = self.drone.num + 1
-        logging.info("Bottle drop started")
+        logging.info("Moving to bottle drop")
         # Set initial value for lowest distance so we can compare
 
-        bottle_loc: dict[str, float] = bottle_locations[str(bottle_num)]
+        bottle_loc: dict[str, float] = bottle_locations[str(self.drone.bottle_num)]
 
         # Move to the nearest bottle
         await move_to(self.drone.system, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
         
+        logging.info("Starting bottle drop")
         if self.drone.address == "serial:///dev/ttyUSB0:921600":
             await airdrop.drop_bottle(self.drone.servo_num)
         
@@ -54,19 +53,17 @@ async def run(self: Airdrop) -> State:
 
         logging.info("-- Airdrop done!")
 
-        self.drone.num = self.drone.num + 1
+        self.drone.bottle_num = self.drone.bottle_num + 1
         if self.drone.servo_num == 2:
             self.drone.servo_num = 0
         else:
             self.drone.servo_num = self.drone.servo_num + 1
 
-
-        print(self.drone.num)
-        if self.drone.num == 5:
-            print("i do")
+        if self.drone.bottle_num == 6:
             return Land(self.drone, self.flight_settings)
         else:
             return Waypoint(self.drone, self.flight_settings)
+
     except asyncio.CancelledError as ex:
         logging.error("Airdrop state canceled")
         raise ex

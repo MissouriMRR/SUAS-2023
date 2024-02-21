@@ -3,10 +3,7 @@ File for the airdrop unit test
 """
 
 import asyncio
-import json
 import logging
-import sys
-from multiprocessing import Process
 from mavsdk import System
 
 from state_machine.flight_settings import FlightSettings
@@ -20,63 +17,22 @@ async def run() -> None:
     Runs the Airdrop unit test
     """
 
+    logging.info("Creating the drone")
     drone: Drone = Drone()
     # create a drone object
     await drone.connect_drone()
 
     await prep(drone.system)
 
-    print("I know it got heresies")
-
     flight_settings: FlightSettings = FlightSettings()
 
-    logging.info("Starting processes")
-    print("I got here")
+    logging.info("starting airdrop")
 
     await airdrop_run(drone, flight_settings)
 
-    print("I also got here")
-
     try:
-        print("maybe here")
-        logging.info("State machine joined")
-        print("perhapsies here")
-
-        drop_loc = 1
-
-        with open("flight/data/output.json", encoding="utf8") as output:
-            bottle_locations = json.load(output)
-
-        location_reached: bool = False
-
-        while not location_reached:
-            logging.info("Going to waypoint")
-            print(f"Going to waypoint {str(drop_loc)}")
-            while drop_loc < 5:
-                bottle_loc: dict[str, float] = bottle_locations[str(drop_loc)]
-                async for position in drone.system.telemetry.position():
-                    # continuously checks current latitude, longitude and altitude of the drone
-                    drone_lat: float = position.latitude_deg
-                    drone_long: float = position.longitude_deg
-                    drone_alt: float = position.relative_altitude_m
-                    latitude: float = bottle_loc["latitude"]
-                    longitude: float = bottle_loc["longitude"]
-                    altitude: float = 75
-
-                    #  accurately checks if location is reached and stops for 15 secs
-                    # and then moves on.
-                    if (
-                        (round(drone_lat, int(5)) == round(latitude, int(5)))
-                        and (round(drone_long, int(5)) == round(longitude, int(5)))
-                        and (round(drone_alt, 1) == round(altitude, 1))
-                    ):
-                        location_reached = True
-                        logging.info("arrived")
-                        break
-                drop_loc = drop_loc + 1
-
-            # tell machine to sleep to prevent constant polling, preventing battery drain
-            await asyncio.sleep(1)
+        # tell machine to sleep to prevent constant polling, preventing battery drain
+        await asyncio.sleep(1)
 
         logging.info("Done!")
     except KeyboardInterrupt:
@@ -85,16 +41,31 @@ async def run() -> None:
         print("Done")
 
 async def airdrop_run(drone: Drone, flight_settings: FlightSettings) -> None:
+    """
+    Starts airdrop state of statemachine
+
+    Parameters
+    ----------
+    drone: Drone
+        drone class that includes drone object
+
+    flight_settings: FlightSettings
+        settings for flight to be passed into the statemachine
+    """
+    drone.odlc_scan = False
     await StateMachine(Airdrop(drone, flight_settings), drone, flight_settings).run()
 
 async def prep(drone: System) -> None:
     """
     A little prep for the unit test
+
     Parameters
     ----------
     drone:System
         the drone object
     """
+
+    logging.info("prepping the drone")
 
     # initilize drone configurations
     await drone.action.set_takeoff_altitude(12)
