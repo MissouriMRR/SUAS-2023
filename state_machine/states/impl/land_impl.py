@@ -6,7 +6,7 @@ from state_machine.states.land import Land
 from state_machine.states.state import State
 
 
-async def run(self: Land) -> State:
+async def run(self: Land) -> None:
     """
     Implements the run method for the Land state.
 
