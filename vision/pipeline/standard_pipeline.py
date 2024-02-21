@@ -223,7 +223,7 @@ def get_bottle_index(shape: BoundingBox, bottle_info: dict[str, BottleData]) -> 
 
     # This if statement ensures that bad matches are ignored, and standards can be lowered.
     #   Still takes the best match, but if none are good enough they will be ignored.
-    if all_matches.max() >= 1:
+    if all_matches.max() > 2:
         # Gets the index of the first bottle with the most matches.
         # First [0] takes the first dimension, second [0] takes the first element
         return np.where(all_matches == all_matches.max())[0][0]
@@ -260,7 +260,6 @@ def create_odlc_dict(sorted_odlcs: list[list[BoundingBox]]) -> consts.ODLCDict:
         coords_array: NDArray[Shape["*, 2"], Float32] = np.array(coords_list)
 
         average_coord: NDArray[Shape["2"], Float32] = np.average(coords_array, axis=0)
-        print(average_coord)
 
         odlc_dict[str(i)] = {"latitude": average_coord[0], "longitude": average_coord[1]}
 
