@@ -40,6 +40,7 @@ async def run() -> None:
     finally:
         print("Done")
 
+
 async def airdrop_run(drone: Drone, flight_settings: FlightSettings) -> None:
     """
     Starts airdrop state of statemachine
@@ -54,6 +55,7 @@ async def airdrop_run(drone: Drone, flight_settings: FlightSettings) -> None:
     """
     drone.odlc_scan = False
     await StateMachine(Airdrop(drone, flight_settings), drone, flight_settings).run()
+
 
 async def prep(drone: System) -> None:
     """
@@ -92,6 +94,3 @@ async def prep(drone: System) -> None:
 
     # wait for drone to take off
     await asyncio.sleep(10)
-
-
-
