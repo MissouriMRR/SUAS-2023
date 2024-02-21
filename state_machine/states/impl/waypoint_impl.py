@@ -1,4 +1,5 @@
 """Implement the behavior of the Waypoint state."""
+
 import asyncio
 import logging
 from typing import Final

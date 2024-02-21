@@ -1,4 +1,5 @@
 """Class to contain setters, getters & parameters for current flight"""
+
 from typing import Final
 
 DEFAULT_WAYPOINTS: Final[int] = 5

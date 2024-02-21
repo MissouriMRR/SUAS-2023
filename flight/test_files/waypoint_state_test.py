@@ -23,6 +23,7 @@ run_test(_sim)
     Initializes the state machine and starts the waypoint check thread.
 
 """
+
 import asyncio
 import logging
 import threading
