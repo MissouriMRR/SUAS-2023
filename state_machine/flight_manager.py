@@ -59,7 +59,7 @@ class FlightManager:
         # Initialize a pipe for communication between the processes
         state_parent_pipe: Connection  # We shall send this to the state machine
         state_child_pipe: Connection  # We shall send this to the kill switch to receive states
-        state_parent_pipe, state_child_pipe = Pipe(False)
+        state_child_pipe, state_parent_pipe = Pipe(False)
 
         logging.info("Starting processes")
         state_machine: Process = Process(
@@ -147,7 +147,7 @@ class FlightManager:
                 break
 
         async for flight_mode in self.drone.system.telemetry.flight_mode():
-            while flight_mode != FlightMode.POSCTL:
+            while flight_mode != FlightMode.HOLD:
                 time.sleep(1)
 
         logging.critical("Kill switch activated. Terminating state machine.")
