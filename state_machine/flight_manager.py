@@ -52,7 +52,7 @@ class FlightManager:
             self.drone.address = "udp://:14540"
         else:
             self.drone.address = "serial:///dev/ttyUSB0:921600"
-        flight_settings_obj: FlightSettings = FlightSettings()
+        flight_settings_obj: FlightSettings = FlightSettings(sim_flag=sim_flag)
 
         logging.info("Starting processes")
         state_machine: Process = Process(
