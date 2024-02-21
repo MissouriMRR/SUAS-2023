@@ -21,7 +21,7 @@ class Land(State):
         to transition to.
     """
 
-    run_callable: ClassVar[Callable[["Land"], Awaitable[State]]]
+    run_callable: ClassVar[Callable[["Land"], Awaitable[None]]]
 
-    def run(self) -> Awaitable[State]:
+    def run(self) -> Awaitable[None]:
         return self.run_callable()

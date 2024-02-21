@@ -94,3 +94,8 @@ async def prep(drone: System) -> None:
 
     # wait for drone to take off
     await asyncio.sleep(10)
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(run())

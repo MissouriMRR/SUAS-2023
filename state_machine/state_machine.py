@@ -49,7 +49,7 @@ class StateMachine:
         flight_settings : FlightSettings
             The flight settings to use.
         """
-        self.current_state: State = initial_state
+        self.current_state: State | None = initial_state
         self.drone: Drone = drone
         self.flight_settings: FlightSettings = flight_settings
         self.run_task: Task[None] | None = None
