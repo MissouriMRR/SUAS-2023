@@ -228,7 +228,8 @@ def generate_random_waypoints(
         latitude, longitude = utm.to_latlon(
             random_point.x, random_point.y, utm_zone_number, utm_zone_letter
         )
-        altitude: float = 75.0 + (400.0 - 75.0) * random.random()
+        # 75 to 400 ft
+        altitude: float = 22.86 + (121.92 - 22.86) * random.random()
 
         waypoints.append(
             {
