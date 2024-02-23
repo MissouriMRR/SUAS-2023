@@ -1,5 +1,5 @@
 """
-Testing vision.pipeline.emergent_pipeline.py
+Testing /vision/emergent_object/emergent_object.py
 """
 
 import unittest
