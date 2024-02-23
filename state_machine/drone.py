@@ -41,7 +41,7 @@ class Drone:
         self.address: str = address
         self.odlc_scan: bool = True
         self.servo_num: int = 0
-        self.num: int = 0
+        self.bottle_num: int = 1
 
     async def connect_drone(self) -> None:
         """Connect to a drone."""
