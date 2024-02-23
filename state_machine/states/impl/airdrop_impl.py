@@ -54,10 +54,13 @@ async def run(self: Airdrop) -> State:
         logging.info("-- Airdrop done!")
 
         self.drone.bottle_num = self.drone.bottle_num + 1
+        # dropping bottles in the right order
         if self.drone.servo_num == 2:
+            self.drone.servo_num = 1
+        elif self.drone.servo_num == 1:
             self.drone.servo_num = 0
-        else:
-            self.drone.servo_num = self.drone.servo_num + 1
+        elif self.drone.servo_num == 0:
+            self.drone.servo_num = 2
 
         if self.drone.bottle_num == 6:
             return Land(self.drone, self.flight_settings)
