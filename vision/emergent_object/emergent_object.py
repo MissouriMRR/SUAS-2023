@@ -7,7 +7,6 @@ are totally acurrate. Tried to make good approximations for types where
 possible, or eliminate variables that couldn't be figured out.
 """
 
-
 from typing import Any, Callable, TypedDict
 
 import cv2

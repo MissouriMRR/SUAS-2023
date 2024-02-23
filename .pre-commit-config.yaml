@@ -4,7 +4,7 @@ ci:
 
 repos:
 -   repo: https://github.com/psf/black
-    rev: 23.9.1
+    rev: 24.1.1
     hooks:
     -   id: black
         additional_dependencies: ['click<8.1']
@@ -13,7 +13,7 @@ repos:
           ["--line-length=100"]
 
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0  # Use the ref you want to point at
+    rev: v4.5.0  # Use the ref you want to point at
     hooks:
     -   id: check-json
     -   id: check-xml
@@ -29,14 +29,14 @@ repos:
         description: Forces line endings to the UNIX LF character
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.5.1'
+    rev: 'v1.8.0'
     hooks:
     -   id: mypy
         args: ["--config-file=.mypy.ini"]
         additional_dependencies: ['numpy>=1.21.2']
 
 -   repo: https://github.com/PyCQA/pylint
-    rev: 'v3.0.0'
+    rev: 'v3.0.3'
     hooks:
     -   id: pylint
         name: pylint

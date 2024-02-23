@@ -19,7 +19,6 @@ class Drone:
     odlc_scan : bool
         A boolean to tell if the odlc zone needs to be scanned, used the
         first run and if odlc needs to be scanned any other time
-
     Methods
     -------
     __init__(address: str) -> None
@@ -38,8 +37,8 @@ class Drone:
             The address of the drone to connect to when the `connect_drone()`
             method is called.
         """
-        self.system = mavsdk.System()
-        self.address = address
+        self.system: mavsdk.System = mavsdk.System()
+        self.address: str = address
         self.odlc_scan: bool = True
         self.servo_num: int = 0
         self.bottle_num: int = 1

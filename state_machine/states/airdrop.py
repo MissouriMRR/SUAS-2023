@@ -1,4 +1,5 @@
 """Declares the Airdrop state class."""
+
 from typing import Awaitable, Callable, ClassVar
 
 from state_machine.states.state import State
