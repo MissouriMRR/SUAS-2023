@@ -1,6 +1,7 @@
 """
 File for test way point path for SUAS 3 miles in length
 """
+
 import asyncio
 import logging
 import sys

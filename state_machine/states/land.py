@@ -1,4 +1,5 @@
 """Declares the Land state class."""
+
 from typing import Awaitable, Callable, ClassVar
 
 from state_machine.states.state import State
@@ -21,7 +22,7 @@ class Land(State):
         to transition to.
     """
 
-    run_callable: ClassVar[Callable[["Land"], Awaitable[State]]]
+    run_callable: ClassVar[Callable[["Land"], Awaitable[None]]]
 
-    def run(self) -> Awaitable[State]:
+    def run(self) -> Awaitable[None]:
         return self.run_callable()

@@ -1,4 +1,5 @@
 """Contains things related to loading competition bottle data."""
+
 import json
 
 from typing import TypedDict

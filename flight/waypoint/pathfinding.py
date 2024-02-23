@@ -2,6 +2,7 @@
 Defines a function to find the shortest path between two waypoints that
 stays within the mission flight boundary.
 """
+
 import heapq
 from typing import Iterable, NamedTuple, TypeAlias
 
