@@ -133,6 +133,9 @@ async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     _sim : bool
         Specifies whether to run the state machine in simulation mode.
     """
+    # Output logging info to stdout
+    logging.basicConfig(filename="/dev/stdout", level=logging.INFO)
+
     flight_manager: FlightManager = FlightManager()
     flight_manager.start_manager(_sim)
 
