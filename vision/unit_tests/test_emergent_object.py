@@ -31,10 +31,10 @@ class TestCreateEmergentModel(unittest.TestCase):
 class TestDetectEmergentObject(unittest.TestCase):
     def test_detect(self) -> None:
         """
-        Tests that the output matches the expected output
+        Checks that the output is as expected for the test image
         """
         
-        test_img_path = "smaller.jpg"
+        test_img_path = "vision/unit_tests/test_images/emergent_object/emergent_test_img.jpg"
         img = cv2.imread(test_img_path)
         
         self.assertTrue(os.path.isfile(test_img_path), "image file is missing")
@@ -45,19 +45,17 @@ class TestDetectEmergentObject(unittest.TestCase):
         
         self.assertEquals(len(detected_humanoids), 1, "incorrect number of detections")
         
-        
-        for detection in detected_humanoids:
-            self.assertIsInstance(detection.obj_type)
-            self.assertIsInstance(detection.vertices)
-            self.assertIsInstance(detection.obj_type)
-            self.assertIsInstance(detection.attributes)
+        for detection in detected_humanoids:            
+            self.assertTrue("bounding_box_area" in detection.attributes.keys(), "bounding_box_area not set")
+            self.assertTrue("confidence" in detection.attributes.keys(), "confidence not set")
+            self.assertTrue("name" in detection.attributes.keys(), "name not set")
         
         
         detection = detected_humanoids[0]
         
         # Test detection position compared to expected location
-        self.assertGreater(detection.get_x_avg(), 338)
-        self.assertLess(detection.get_x_avg(), 397)
+        self.assertGreater(detection.get_x_avg(), 338, "x coordinate is outside expected range")
+        self.assertLess(detection.get_x_avg(), 397, "x coordinate is outside expected range")
         
-        self.assertGreater(detection.get_y_avg(), 195)
-        self.assertLess(detection.get_y_avg(), 241)
+        self.assertGreater(detection.get_y_avg(), 195, "y coordinate is outside expected range")
+        self.assertLess(detection.get_y_avg(), 241, "y coordinate is outside expected range")
