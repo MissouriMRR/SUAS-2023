@@ -3,6 +3,8 @@
 import asyncio
 import logging
 
+import mavsdk.telemetry
+
 from state_machine.states.state import State
 from state_machine.states.takeoff import Takeoff
 from state_machine.states.waypoint import Waypoint
@@ -34,6 +36,13 @@ async def run(self: Takeoff) -> State:
         logging.info("Takeoff state running")
 
         await self.drone.system.action.takeoff()
+
+        # Wait until the drone has stopped taking off
+        flight_mode: mavsdk.telemetry.FlightMode
+        async for flight_mode in self.drone.system.telemetry.flight_mode():
+            if flight_mode == mavsdk.telemetry.FlightMode.HOLD:
+                break
+            await asyncio.sleep(0.1)
 
         return Waypoint(self.drone, self.flight_settings)
     except asyncio.CancelledError as ex:
