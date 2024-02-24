@@ -1,35 +1,43 @@
+"""
+code to test if odlc state functions correctly
+"""
+
 import asyncio
-import logging
 from multiprocessing import Process
-import time
 import json
-from mavsdk.telemetry import FlightMode, LandedState
 
 from state_machine.drone import Drone
 from state_machine.state_machine import StateMachine
-from state_machine.states import Start,ODLC
+from state_machine.states import ODLC
 from state_machine.flight_settings import FlightSettings
 
-drone = Drone()
-flight_settings = FlightSettings
 
-async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
+async def run_test(_sim: bool) -> None:
+    """
+    add
+    """
+
+    drone = Drone()
+    flight_settings = FlightSettings()
     await drone.connect_drone()
     await StateMachine(ODLC(drone, flight_settings), drone, flight_settings).run()
-    #check locations and objects after?
-    
-    state_machine: Process = Process(
-    target=state_machine,
-    args=(ODLC(drone, flight_settings), drone, flight_settings),
-        )
-    
-    f = open('flight/data/output.json')
-    data = json.load(f)
-    for i in data['emp_details']:
-        print(i)
-    f.close()
 
-    #flight manager line 57 starts process at same time
+    state_machine: Process = Process(
+        target=StateMachine,
+        args=(ODLC(drone, flight_settings), drone, flight_settings),
+    )
+    state_machine.start()
+
+    # compare test and main data
+    with open("flight/data/output.json") as file:
+        output_data = json.load(file)
+    with open("test.json") as file:
+        test_data = json.load(file)
+    if output_data == test_data:
+        print("Output.json matches test.json")
+    else:
+        print("Output.json does not match test.json")
+
 
 if __name__ == "__main__":
     asyncio.run(run_test(True))
