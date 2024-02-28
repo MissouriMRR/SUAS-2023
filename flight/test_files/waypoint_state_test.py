@@ -138,7 +138,7 @@ async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     # Output logging info to stdout
     logging.basicConfig(filename="/dev/stdout", level=logging.INFO)
 
-    path_data_path: str = "flight/data/golf_data" if _sim else "flight/data/waypoint_data.json"
+    path_data_path: str = "flight/data/golf_data.json" if _sim else "flight/data/waypoint_data.json"
 
     flight_manager: FlightManager = FlightManager()
     flight_manager.start_manager(_sim, path_data_path)
