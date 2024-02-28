@@ -38,21 +38,27 @@ class FlightManager:
     def __init__(self) -> None:
         self.drone: Drone = Drone()
 
-    def start_manager(self, sim_flag: bool) -> None:
+    def start_manager(
+        self, sim_flag: bool, path_data_path: str = "flight/data/waypoint_data.json"
+    ) -> None:
         """
         Test running the state machine in a separate process.
         Sets the drone address to the simulation or physical address.
 
         Parameters
         ----------
-        sim_flag: bool
-            A flag representing if the the drone is a simulation.
+        sim_flag : bool
+            A flag representing if the drone is a simulation.
+        path_data_path : str, default "flight/data/waypoint_data.json"
+            The path to the JSON file containing the boundary and waypoint data.
         """
         if sim_flag is True:
             self.drone.address = "udp://:14540"
         else:
             self.drone.address = "serial:///dev/ttyUSB0:921600"
-        flight_settings_obj: FlightSettings = FlightSettings(sim_flag=sim_flag)
+        flight_settings_obj: FlightSettings = FlightSettings(
+            sim_flag=sim_flag, path_data_path=path_data_path
+        )
 
         logging.info("Starting processes")
         state_machine: Process = Process(

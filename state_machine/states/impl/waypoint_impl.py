@@ -23,7 +23,6 @@ from state_machine.states.odlc import ODLC
 from state_machine.states.state import State
 from state_machine.states.waypoint import Waypoint
 
-GPS_PATH: Final[str] = "flight/data/waypoint_data.json"
 BOUNDARY_SHRINKAGE: Final[float] = 5.0  # in meters
 
 
@@ -53,7 +52,7 @@ async def run(self: Waypoint) -> State:
     try:
         logging.info("Waypoint state running")
 
-        gps_dict: GPSData = extract_gps(GPS_PATH)
+        gps_dict: GPSData = extract_gps(self.flight_settings.path_data_path)
         waypoints_utm: list[WaylistUtm] = gps_dict["waypoints_utm"]
 
         boundary_points: list[BoundarylistUtm] = gps_dict["boundary_points_utm"]
