@@ -22,6 +22,8 @@ run_test(_sim)
 
 import asyncio
 import logging
+import sys
+
 from mavsdk import System
 from flight.extract_gps import BoundaryPoint, GPSData, extract_gps
 from flight.extract_gps import Waypoint as Waylist
@@ -136,11 +138,16 @@ async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     # Output logging info to stdout
     logging.basicConfig(filename="/dev/stdout", level=logging.INFO)
 
+    path_data_path: str = "flight/data/golf_data" if _sim else "flight/data/waypoint_data.json"
+
     flight_manager: FlightManager = FlightManager()
-    flight_manager.start_manager(_sim)
+    flight_manager.start_manager(_sim, path_data_path)
 
     await waypoint_check(flight_manager.drone.system)
 
 
 if __name__ == "__main__":
-    asyncio.run(run_test(True))
+    print("Pass argument --sim to enable the simulation flag.")
+    print("When the simulation flag is not set, golf data is used for the boundary and waypoints.")
+    print()
+    asyncio.run(run_test("--sim" in sys.argv))
