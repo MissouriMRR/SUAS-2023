@@ -110,7 +110,7 @@ async def run(self: Waypoint) -> State:
                 waypoint.easting, waypoint.northing, waypoint.zone_number, waypoint.zone_letter
             )
 
-            logging.info("Moving to waypoint %d (lat=%d, lon=%d)", waypoint_num, lat_deg, lon_deg)
+            logging.info("Moving to waypoint %d (lat=%f, lon=%f)", waypoint_num, lat_deg, lon_deg)
 
             for line_segment in LineSegment.from_points(goto_points, False):
                 lat_deg, lon_deg = utm.to_latlon(
