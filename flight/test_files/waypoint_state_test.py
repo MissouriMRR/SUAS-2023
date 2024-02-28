@@ -100,6 +100,8 @@ async def waypoint_check(drone: System, _sim: bool, path_data_path: str) -> None
     gps_dict: GPSData = extract_gps(path_data_path)
     waypoints: list[Waylist] = gps_dict["waypoints"]
     boundary: list[BoundaryPoint] = gps_dict["boundary_points"]
+
+    previously_out_of_bounds: bool = False
     for waypoint_num, waypoint in enumerate(waypoints):
         async for position in drone.telemetry.position():
             # continuously checks current latitude, longitude and altitude of the drone
@@ -109,7 +111,13 @@ async def waypoint_check(drone: System, _sim: bool, path_data_path: str) -> None
 
             # checks if drone's location is within boundary
             if not in_bounds(boundary, drone_lat, drone_long, drone_alt):
-                logging.info("(Waypoint State Test) Out of bounds!")
+                if not previously_out_of_bounds:
+                    logging.info("(Waypoint State Test) Out of bounds!")
+                    previously_out_of_bounds = True
+            else:
+                if previously_out_of_bounds:
+                    logging.info("(Waypoint State Test) Re-entered bounds.")
+                    previously_out_of_bounds = False
 
             # accurately checks if location is reached
             if (
@@ -118,8 +126,6 @@ async def waypoint_check(drone: System, _sim: bool, path_data_path: str) -> None
                 and (round(drone_alt, 1) == round(waypoint[2], 1))
             ):
                 break
-
-            await asyncio.sleep(1.0)
 
         logging.info("(Waypoint State Test) Waypoint %d reached.", waypoint_num)
 
