@@ -67,7 +67,7 @@ async def run(self: Waypoint) -> State:
             boundary_vertices, BOUNDARY_SHRINKAGE
         )
 
-        for waypoint in waypoints_utm:
+        for waypoint_num, waypoint in enumerate(waypoints_utm):
             drone_position: mavsdk.telemetry.Position = await anext(
                 self.drone.system.telemetry.position()
             )
@@ -107,6 +107,11 @@ async def run(self: Waypoint) -> State:
 
             lat_deg: float
             lon_deg: float
+            lat_deg, lon_deg = utm.to_latlon(
+                waypoint.easting, waypoint.northing, waypoint.zone_number, waypoint.zone_letter
+            )
+
+            logging.info("Moving to waypoint %d (lat=%d, lon=%d)", waypoint_num, lat_deg, lon_deg)
 
             for line_segment in LineSegment.from_points(goto_points, False):
                 lat_deg, lon_deg = utm.to_latlon(
@@ -121,13 +126,12 @@ async def run(self: Waypoint) -> State:
 
                 await move_to(self.drone.system, lat_deg, lon_deg, curr_altitude, 1.0)
 
-            lat_deg, lon_deg = utm.to_latlon(
-                waypoint.easting, waypoint.northing, waypoint.zone_number, waypoint.zone_letter
-            )
             # use 0.9 for fast_param to get within 25 ft of waypoint with plenty of leeway
             # while being fast (values above 5/6 and less than 1 check for lat and lon with
             # 5 digit of precision, or about 1.11 m)
             await move_to(self.drone.system, lat_deg, lon_deg, waypoint.altitude, 0.9)
+
+            logging.info("Reached waypoint %d", waypoint_num)
 
         return (ODLC if self.drone.odlc_scan else Airdrop)(self.drone, self.flight_settings)
 
