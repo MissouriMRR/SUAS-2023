@@ -100,32 +100,28 @@ async def waypoint_check(drone: System, _sim: bool, path_data_path: str) -> None
     gps_dict: GPSData = extract_gps(path_data_path)
     waypoints: list[Waylist] = gps_dict["waypoints"]
     boundary: list[BoundaryPoint] = gps_dict["boundary_points"]
-    current_waypoint: int = 1
-    for waypoint in waypoints:
-        reached: bool = False
-        while not reached:
-            async for position in drone.telemetry.position():
-                # continuously checks current latitude, longitude and altitude of the drone
-                drone_lat: float = position.latitude_deg
-                drone_long: float = position.longitude_deg
-                drone_alt: float = position.relative_altitude_m
+    for waypoint_num, waypoint in enumerate(waypoints):
+        async for position in drone.telemetry.position():
+            # continuously checks current latitude, longitude and altitude of the drone
+            drone_lat: float = position.latitude_deg
+            drone_long: float = position.longitude_deg
+            drone_alt: float = position.relative_altitude_m
 
-                # checks if drone's location is within boundary
-                if not in_bounds(boundary, drone_lat, drone_long, drone_alt):
-                    logging.info("Out of bounds!")
-                    break
+            # checks if drone's location is within boundary
+            if not in_bounds(boundary, drone_lat, drone_long, drone_alt):
+                logging.info("(Waypoint State Test) Out of bounds!")
 
-                #  accurately checks if location is reached and
-                #  stops for 15 secs and then moves on.
-                if (
-                    (round(drone_lat, 5) == round(waypoint[0], 5))
-                    and (round(drone_long, 5) == round(waypoint[1], 5))
-                    and (round(drone_alt, 1) == round(waypoint[2], 1))
-                ):
-                    reached = True
-                    break
-        logging.info("Waypoint %d reached.", current_waypoint)
-        current_waypoint += 1
+            # accurately checks if location is reached
+            if (
+                (round(drone_lat, 5) == round(waypoint[0], 5))
+                and (round(drone_long, 5) == round(waypoint[1], 5))
+                and (round(drone_alt, 1) == round(waypoint[2], 1))
+            ):
+                break
+
+            await asyncio.sleep(1.0)
+
+        logging.info("(Waypoint State Test) Waypoint %d reached.", waypoint_num)
 
 
 async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
