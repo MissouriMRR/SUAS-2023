@@ -23,6 +23,7 @@ run_test(_sim)
 import asyncio
 import logging
 import sys
+from typing import Final
 
 from mavsdk import System
 from flight.extract_gps import BoundaryPoint, GPSData, extract_gps
@@ -31,8 +32,8 @@ from flight.extract_gps import Waypoint as Waylist
 from state_machine.flight_manager import FlightManager
 
 
-SIM_ADDR: str = "udp://:14540"  # Address to connect to the simulator
-CONTROLLER_ADDR: str = "serial:///dev/ttyUSB0"  # Address to connect to a pixhawk board
+SIM_ADDR: Final[str] = "udp://:14540"  # Address to connect to the simulator
+CONTROLLER_ADDR: Final[str] = "serial:///dev/ttyUSB0"  # Address to connect to a pixhawk board
 
 
 async def in_bounds(
