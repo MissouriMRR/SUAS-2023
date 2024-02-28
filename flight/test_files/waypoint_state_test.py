@@ -36,7 +36,7 @@ SIM_ADDR: Final[str] = "udp://:14540"  # Address to connect to the simulator
 CONTROLLER_ADDR: Final[str] = "serial:///dev/ttyUSB0"  # Address to connect to a pixhawk board
 
 
-async def in_bounds(
+def in_bounds(
     boundary: list[BoundaryPoint], latitude: float, longitude: float, altitude: float
 ) -> bool:
     """
@@ -111,7 +111,7 @@ async def waypoint_check(drone: System, _sim: bool, path_data_path: str) -> None
                 drone_alt: float = position.relative_altitude_m
 
                 # checks if drone's location is within boundary
-                if not await in_bounds(boundary, drone_lat, drone_long, drone_alt):
+                if not in_bounds(boundary, drone_lat, drone_long, drone_alt):
                     logging.info("Out of bounds!")
                     break
 
