@@ -59,7 +59,7 @@ async def run(self: Airdrop) -> State:
         # Move to the bottle with priority
         await move_to(self.drone.system, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
 
-        logging.info("Starting bottle drop")
+        logging.info("Starting bottle drop " + str(bottle))
         if self.drone.address == "serial:///dev/ttyUSB0:921600":
             await airdrop.drop_bottle(servo_num)
 

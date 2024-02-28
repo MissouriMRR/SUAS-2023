@@ -1,7 +1,7 @@
 {
     "C1":{
         "Servo": 0,
-        "Loaded": true,
+        "Loaded": false,
         "Bottle": 1
     },
     "C2":{
