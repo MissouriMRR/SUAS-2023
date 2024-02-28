@@ -1,0 +1,14 @@
+{
+    "state": "INITIALIZED",
+    "drone": {
+        "address": "192.168.1.1",
+        "odlc_scan": true,
+        "num": 0
+    },
+    "flight_settings": {
+        "simple_takeoff": true,
+        "title": "",
+        "description": "",
+        "waypoint_count": 0
+    }
+}
