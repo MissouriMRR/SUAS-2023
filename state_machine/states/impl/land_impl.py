@@ -2,6 +2,8 @@
 import asyncio
 import logging
 
+from json_functions import update_state
+
 from state_machine.states.land import Land
 from state_machine.states.start import Start
 from state_machine.states.state import State
@@ -25,6 +27,7 @@ async def run(self: Land) -> State:
 
     """
     try:
+        update_state("data.json", "Land")
         logging.info("Landing")
 
         # Instruct the drone to land

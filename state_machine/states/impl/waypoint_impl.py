@@ -6,6 +6,8 @@ from typing import Final
 import mavsdk.telemetry
 import utm
 
+from json_functions import update_state
+
 from flight.extract_gps import extract_gps, GPSData
 from flight.extract_gps import (
     WaypointUtm as WaylistUtm,
@@ -50,6 +52,7 @@ async def run(self: Waypoint) -> State:
     """
 
     try:
+        update_state("data.json", "Waypoint")
         logging.info("Waypoint state running")
         print("Moving to waypoint")
 

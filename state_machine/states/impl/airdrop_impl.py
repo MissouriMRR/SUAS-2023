@@ -3,6 +3,8 @@ import asyncio
 import logging
 import json
 
+from json_functions import update_state
+
 from state_machine.states.airdrop import Airdrop
 from state_machine.states.waypoint import Waypoint
 from state_machine.states.state import State
@@ -26,6 +28,7 @@ async def run(self: Airdrop) -> State:
     it back to the Waypoint state.
     """
     try:
+        update_state("data.json", "Airdrop")
         logging.info("Airdrop")
 
         # setup airdrop
