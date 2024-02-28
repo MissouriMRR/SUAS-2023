@@ -52,14 +52,15 @@ async def in_bounds(
     longitude : float
         The longitude of the point to check.
     altitude : float
-        The altitude of the point to check.
+        The altitude of the point to check, in meters.
 
     Returns
     -------
     bool
         True if the point is inside the boundary, False otherwise.
     """
-    if altitude < 75 or altitude > 750:
+    # 75 to 400 ft
+    if not 22.86 <= altitude <= 121.92:
         return False
     num: int = len(boundary)
     j: int = num - 1
