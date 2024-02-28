@@ -33,7 +33,6 @@ from state_machine.flight_manager import FlightManager
 
 SIM_ADDR: str = "udp://:14540"  # Address to connect to the simulator
 CONTROLLER_ADDR: str = "serial:///dev/ttyUSB0"  # Address to connect to a pixhawk board
-GPS_PATH: str = "flight/data/waypoint_data.json"
 
 
 async def in_bounds(
@@ -82,7 +81,7 @@ async def in_bounds(
     return inside
 
 
-async def waypoint_check(drone: System, _sim: bool = True) -> None:
+async def waypoint_check(drone: System, _sim: bool, path_data_path: str) -> None:
     """
     Checks if the drone reaches each waypoint in a list and remains
     within the specified boundary during its flight.
@@ -91,11 +90,13 @@ async def waypoint_check(drone: System, _sim: bool = True) -> None:
     ----------
     drone : System
         The drone system object from mavsdk.
-    _sim : bool, optional
-        Specifies whether the function is being run in a simulation mode (default is True).
+    _sim : bool
+        Specifies whether the function is being run in a simulation mode.
+    path_data_path : str
+        The path to the JSON file containing the boundary and waypoint data.
     """
 
-    gps_dict: GPSData = extract_gps(GPS_PATH)
+    gps_dict: GPSData = extract_gps(path_data_path)
     waypoints: list[Waylist] = gps_dict["waypoints"]
     boundary: list[BoundaryPoint] = gps_dict["boundary_points"]
     current_waypoint: int = 1
@@ -139,12 +140,12 @@ async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     # Output logging info to stdout
     logging.basicConfig(filename="/dev/stdout", level=logging.INFO)
 
-    path_data_path: str = "flight/data/golf_data.json" if _sim else "flight/data/waypoint_data.json"
+    path_data_path: str = "flight/data/waypoint_data.json" if _sim else "flight/data/golf_data.json"
 
     flight_manager: FlightManager = FlightManager()
     flight_manager.start_manager(_sim, path_data_path)
 
-    await waypoint_check(flight_manager.drone.system)
+    await waypoint_check(flight_manager.drone.system, _sim, path_data_path)
 
 
 if __name__ == "__main__":
