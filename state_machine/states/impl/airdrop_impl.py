@@ -42,26 +42,35 @@ async def run(self: Airdrop) -> State:
 
         bottle: int
         servo_num: int
+        cylinder_num: str
 
         # setting a priority for bottles
         if (cylinders["C1"])["Loaded"]:
             bottle = (cylinders["C1"])["Bottle"]
             servo_num = (cylinders["C1"])["Bottle"]
+            cylinder_num = "C1"
         elif (cylinders["C3"])["Loaded"]:
             bottle = (cylinders["C3"])["Bottle"]
             servo_num = (cylinders["C3"])["Bottle"]
+            cylinder_num = "C3"
         elif (cylinders["C2"])["Loaded"]:
             bottle = (cylinders["C2"])["Bottle"]
             servo_num = (cylinders["C2"])["Bottle"]
+            cylinder_num = "C2"
 
         bottle_loc: dict[str, float] = bottle_locations[str(bottle)]
 
         # Move to the bottle with priority
         await move_to(self.drone.system, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
 
-        logging.info("Starting bottle drop " + str(bottle))
+        logging.info("Starting bottle drop")
         if self.drone.address == "serial:///dev/ttyUSB0:921600":
             await airdrop.drop_bottle(servo_num)
+
+        (cylinders[cylinder_num])["Loaded"] = False
+
+        with open("flight/data/bottles.json", encoding="utf8") as output:
+            json.dump(cylinders, output)
 
         await asyncio.sleep(
             15
