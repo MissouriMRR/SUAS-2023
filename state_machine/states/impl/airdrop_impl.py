@@ -77,7 +77,6 @@ async def run(self: Airdrop) -> State:
             return Waypoint(self.drone, self.flight_settings)
         return Land(self.drone, self.flight_settings)
 
-
     except asyncio.CancelledError as ex:
         logging.error("Airdrop state canceled")
         raise ex
