@@ -4,6 +4,7 @@ import logging
 import json
 
 from state_machine.states.airdrop import Airdrop
+from state_machine.states.land import Land
 from state_machine.states.waypoint import Waypoint
 from state_machine.states.state import State
 
@@ -34,6 +35,9 @@ async def run(self: Airdrop) -> State:
         with open("flight/data/output.json", encoding="utf8") as output:
             bottle_locations = json.load(output)
 
+        with open("flight/data/bottles.json", encoding="utf8") as output:
+            cylinders = json.load(output)
+
         # For the amount of bottles there are...
         bottle_num: int = self.drone.num + 1
         logging.info("Bottle drop started")
@@ -56,7 +60,16 @@ async def run(self: Airdrop) -> State:
         else:
             servo_num = servo_num + 1
 
-        return Waypoint(self.drone, self.flight_settings)
+        continuerun: bool = False
+
+        for cylinder in cylinders:
+            if cylinder["Loaded"]:
+                continuerun = True
+
+        if continuerun:
+            return Waypoint(self.drone, self.flight_settings)
+        return Land(self.drone, self.flight_settings)
+
     except asyncio.CancelledError as ex:
         logging.error("Airdrop state canceled")
         raise ex
