@@ -8,7 +8,6 @@ from state_machine.states.airdrop import Airdrop
 from state_machine.states.land import Land
 from state_machine.states.waypoint import Waypoint
 from state_machine.states.state import State
-from state_machine.states.land import Land
 
 from flight.maestro.air_drop import AirdropControl
 from flight.waypoint.goto import move_to
@@ -41,7 +40,6 @@ async def run(self: Airdrop) -> State:
             cylinders = json.load(output)
 
         # For the amount of bottles there are...
-        bottle_num: int = self.drone.num + 1
         logging.info("Bottle drop started")
 
         # Set initial value for lowest distance so we can compare
