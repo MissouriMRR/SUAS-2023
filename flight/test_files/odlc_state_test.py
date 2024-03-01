@@ -12,17 +12,15 @@ async def run_test(_sim: bool) -> None:
     """
     add
     """
-
     drone = Drone()
     flight_settings = FlightSettings()
     await drone.connect_drone()
-    await StateMachine(ODLC(drone, flight_settings), drone, flight_settings).run()
-
-    state_machine: Process = Process(
-        target=StateMachine,
-        args=(ODLC(drone, flight_settings), drone, flight_settings),
+    state_machine = StateMachine(ODLC(drone, flight_settings), drone, flight_settings)
+    state_machine_process: Process = Process(
+        state_machine.run,
+        args=(),
     )
-    state_machine.start()
+    state_machine_process.start()
 
     # compare test and main data
     try:
