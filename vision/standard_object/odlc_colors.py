@@ -2,7 +2,6 @@
 Functions relating to finding the colors of the text and shape on the standard ODLC objects.
 """
 
-
 import cv2
 import numpy as np
 
