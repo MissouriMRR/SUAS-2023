@@ -1,4 +1,5 @@
 """Class to contain setters, getters & parameters for current flight"""
+
 from typing import Final
 
 DEFAULT_WAYPOINTS: Final[int] = 5
@@ -20,6 +21,8 @@ class FlightSettings:
         A small description for the current flight
     __waypoint_count: int
         The number of waypoints to fly for the current flight test
+    __sim_flag: bool
+        A flag representing if the connected drone is a simulation
 
     Methods
     -------
@@ -39,6 +42,10 @@ class FlightSettings:
         Returns the small description for the current flight
     run_description(new_description: str) -> None
         Sets a new description for the new flight
+    sim_flag() -> bool
+        Returns the flag for the simulation
+    sim_flag(sim_flag: bool) -> None
+        Sets the flag for the simulation
     """
 
     def __init__(
@@ -47,6 +54,7 @@ class FlightSettings:
         title: str = DEFAULT_RUN_TITLE,
         description: str = DEFAULT_RUN_DESCRIPTION,
         waypoints: int = DEFAULT_WAYPOINTS,
+        sim_flag: bool = False,
     ) -> None:
         """
         Default Constructor for flight settings
@@ -66,6 +74,7 @@ class FlightSettings:
         self.__run_title: str = title
         self.__run_description: str = description
         self.__waypoint_count: int = waypoints
+        self.__sim_flag: bool = sim_flag
 
     # ----- Takeoff Settings ----- #
     @property
@@ -165,3 +174,27 @@ class FlightSettings:
             New description for the current flight
         """
         self.__run_description = new_description
+
+    @property
+    def sim_flag(self) -> bool:
+        """
+        Returns the flag for the simulation
+
+        Returns
+        -------
+        sim_flag : bool
+            Flag for the simulation
+        """
+        return self.__sim_flag
+
+    @sim_flag.setter
+    def sim_flag(self, sim_flag: bool) -> None:
+        """
+        Sets the flag for the simulation
+
+        Parameters
+        ----------
+        sim_flag : bool
+            Flag for the simulation
+        """
+        self.__sim_flag = sim_flag

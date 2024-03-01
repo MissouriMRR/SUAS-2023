@@ -1,4 +1,5 @@
 """Runs the state machine and kill switch in separate processes in order to test them."""
+
 import asyncio
 from state_machine.flight_manager import FlightManager
 
