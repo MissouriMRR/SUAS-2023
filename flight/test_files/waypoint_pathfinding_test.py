@@ -199,6 +199,8 @@ def generate_random_waypoints(
     vertices: Iterable[Point],
     utm_zone_number: int,
     utm_zone_letter: str,
+    min_altitude: float,
+    max_altitude: float,
 ) -> str:
     """
     Generate random waypoints inside a shape that can be used for the
@@ -212,12 +214,16 @@ def generate_random_waypoints(
         The UTM zone number of the boundary vertices.
     utm_zone_letter : str
         The UTM zone letter of the boundary vertices.
+    min_altitude : float
+        The minimum allowed altitude, in meters.
+    max_altitude : float
+        The maximum allowed altitude, in meters.
 
     Returns
     -------
     str
-        JSON data to be pasted into ../data/waypoint_data.json before
-        running the waypoint state unit test.
+        JSON data to be pasted into ../data/waypoint_data.json or
+        ../data/golf_data.json before running the waypoint state unit test.
     """
     waypoints: list[CoordinateWithAltitude] = []
     for _ in range(100):
@@ -228,8 +234,7 @@ def generate_random_waypoints(
         latitude, longitude = utm.to_latlon(
             random_point.x, random_point.y, utm_zone_number, utm_zone_letter
         )
-        # 75 to 400 ft
-        altitude: float = 22.86 + (121.92 - 22.86) * random.random()
+        altitude: float = min_altitude + (max_altitude - min_altitude) * random.random()
 
         waypoints.append(
             {
@@ -269,9 +274,17 @@ def main() -> None:
         )
         boundary_vertices.append(Point(easting, northing))
 
+    # 3.28084 ft per m
+    min_altitude: float = waypoint_data["flyzones"]["altitudeMin"] / 3.28084
+    max_altitude: float = waypoint_data["flyzones"]["altitudeMax"] / 3.28084
+
     # Generate random waypoints to use for the waypoint state unit test
     # Prints json data to be pasted in ../data/waypoint_data.json
-    print(generate_random_waypoints(boundary_vertices, force_zone_number, force_zone_letter))
+    print(
+        generate_random_waypoints(
+            boundary_vertices, force_zone_number, force_zone_letter, min_altitude, max_altitude
+        )
+    )
 
     graph: list[GraphNode[Point, float]] = pathfinding.create_pathfinding_graph(
         boundary_vertices, 0.0

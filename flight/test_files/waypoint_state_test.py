@@ -38,14 +38,19 @@ from state_machine.flight_manager import FlightManager
 SIM_ADDR: Final[str] = "udp://:14540"  # Address to connect to the simulator
 CONTROLLER_ADDR: Final[str] = "serial:///dev/ttyUSB0"  # Address to connect to a pixhawk board
 
-# 3.281 feet per meter
+# 3.28084 feet per meter
 CLOSE_THRESHOLD: Final[float] = (
-    15 / 3.281
+    15 / 3.28084
 )  # How close the drone should get to each waypoint, in meters
 
 
 def in_bounds(
-    boundary: list[BoundaryPoint], latitude: float, longitude: float, altitude: float
+    boundary: list[BoundaryPoint],
+    latitude: float,
+    longitude: float,
+    altitude: float,
+    min_altitude: float,
+    max_altitude: float,
 ) -> bool:
     """
     Determines if a point specified by latitude, longitude, and altitude
@@ -61,14 +66,17 @@ def in_bounds(
         The longitude of the point to check.
     altitude : float
         The altitude of the point to check, in meters.
+    min_altitude : float
+        The minimum allowed altitude, in meters.
+    max_altitude : float
+        The maximum allowed altitude, in meters.
 
     Returns
     -------
     bool
         True if the point is inside the boundary, False otherwise.
     """
-    # 75 to 400 ft
-    if not 22.86 <= altitude <= 121.92:
+    if not min_altitude <= altitude <= max_altitude:
         return False
     num: int = len(boundary)
     j: int = num - 1
@@ -159,6 +167,9 @@ async def waypoint_check(drone: System, _sim: bool, path_data_path: str) -> None
     gps_dict: GPSData = extract_gps(path_data_path)
     waypoints: list[Waylist] = gps_dict["waypoints"]
     boundary: list[BoundaryPoint] = gps_dict["boundary_points"]
+    # 3.28084 ft per m
+    min_altitude: float = gps_dict["altitude_limits"][0] / 3.28084
+    max_altitude: float = gps_dict["altitude_limits"][1] / 3.28084
 
     previously_out_of_bounds: bool = False
     previous_log_time: float = time.perf_counter()  # time.perf_counter() is monotonic
@@ -170,7 +181,7 @@ async def waypoint_check(drone: System, _sim: bool, path_data_path: str) -> None
             drone_alt: float = position.relative_altitude_m
 
             # checks if drone's location is within boundary
-            if not in_bounds(boundary, drone_lat, drone_lon, drone_alt):
+            if not in_bounds(boundary, drone_lat, drone_lon, drone_alt, min_altitude, max_altitude):
                 if not previously_out_of_bounds:
                     logging.info("(Waypoint State Test) Out of bounds!")
                     previously_out_of_bounds = True
@@ -211,9 +222,8 @@ async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     path_data_path: str = "flight/data/waypoint_data.json" if _sim else "flight/data/golf_data.json"
 
     flight_manager: FlightManager = FlightManager()
+    asyncio.ensure_future(waypoint_check(flight_manager.drone.system, _sim, path_data_path))
     flight_manager.run_manager(_sim, path_data_path)
-
-    await waypoint_check(flight_manager.drone.system, _sim, path_data_path)
 
 
 if __name__ == "__main__":
