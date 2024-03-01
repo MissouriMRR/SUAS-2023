@@ -20,6 +20,6 @@ if __name__ == "__main__":
         flight_manager: FlightManager = FlightManager()
         if "-s" in sys.argv:
             SIM_FLAG = True
-        flight_manager.start_manager(SIM_FLAG)
+        flight_manager.run_manager(SIM_FLAG)
     finally:
         logging.info("Done!")

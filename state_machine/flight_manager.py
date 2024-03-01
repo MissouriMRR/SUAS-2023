@@ -38,11 +38,11 @@ class FlightManager:
     def __init__(self) -> None:
         self.drone: Drone = Drone()
 
-    def start_manager(
+    def run_manager(
         self, sim_flag: bool, path_data_path: str = "flight/data/waypoint_data.json"
     ) -> None:
         """
-        Test running the state machine in a separate process.
+        Run the state machine until completion in a separate process.
         Sets the drone address to the simulation or physical address.
 
         Parameters
@@ -62,10 +62,10 @@ class FlightManager:
 
         logging.info("Starting processes")
         state_machine: Process = Process(
-            target=self.start_state_machine,
+            target=self.run_state_machine,
             args=(flight_settings_obj,),
         )
-        kill_switch_process: Process = Process(target=self.start_kill_switch, args=(state_machine,))
+        kill_switch_process: Process = Process(target=self.run_kill_switch, args=(state_machine,))
 
         state_machine.start()
         kill_switch_process.start()
@@ -85,10 +85,10 @@ class FlightManager:
             state_machine.terminate()
             asyncio.run(self.graceful_exit())
 
-    def start_state_machine(self, flight_settings: FlightSettings) -> None:
+    def run_state_machine(self, flight_settings: FlightSettings) -> None:
         """
-        Create and start a state machine in the event loop. This method should
-        be called in its own process.
+        Create and run a state machine until completion in the event loop.
+        This method should be called in its own process.
 
         Parameters
         ----------
@@ -100,7 +100,7 @@ class FlightManager:
             StateMachine(Start(self.drone, flight_settings), self.drone, flight_settings).run()
         )
 
-    def start_kill_switch(self, process: Process) -> None:
+    def run_kill_switch(self, process: Process) -> None:
         """
         Create and run a kill switch in the event loop.
 

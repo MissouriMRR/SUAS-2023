@@ -211,7 +211,7 @@ async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     path_data_path: str = "flight/data/waypoint_data.json" if _sim else "flight/data/golf_data.json"
 
     flight_manager: FlightManager = FlightManager()
-    flight_manager.start_manager(_sim, path_data_path)
+    flight_manager.run_manager(_sim, path_data_path)
 
     await waypoint_check(flight_manager.drone.system, _sim, path_data_path)
 
