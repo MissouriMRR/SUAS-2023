@@ -22,18 +22,26 @@ run_test(_sim)
 
 import asyncio
 import logging
+import math
+import time
 import sys
 from typing import Final
 
 from mavsdk import System
+import utm
+
 from flight.extract_gps import BoundaryPoint, GPSData, extract_gps
 from flight.extract_gps import Waypoint as Waylist
-
 from state_machine.flight_manager import FlightManager
 
 
 SIM_ADDR: Final[str] = "udp://:14540"  # Address to connect to the simulator
 CONTROLLER_ADDR: Final[str] = "serial:///dev/ttyUSB0"  # Address to connect to a pixhawk board
+
+# 3.281 feet per meter
+CLOSE_THRESHOLD: Final[float] = (
+    15 / 3.281
+)  # How close the drone should get to each waypoint, in meters
 
 
 def in_bounds(
@@ -82,6 +90,58 @@ def in_bounds(
     return inside
 
 
+def calculate_distance(
+    lat_deg_1: float,
+    lon_deg_1: float,
+    altitude_m_1: float,
+    lat_deg_2: float,
+    lon_deg_2: float,
+    altitude_m_2: float,
+) -> float:
+    """
+    Calculate the distance, in meters, between two coordinates
+
+    Parameters
+    ----------
+    lat_deg_1 : float
+        The latitude, in degrees, of the first coordinate.
+    lon_deg_1 : float
+        The longitude, in degrees, of the first coordinate.
+    altitude_m_1 : float
+        The altitude, in meters, of the first coordinate.
+    lat_deg_2 : float
+        The latitude, in degrees, of the second coordinate.
+    lon_deg_2 : float
+        The longitude, in degrees, of the second coordinate.
+    altitude_m_2 : float
+        The altitude, in meters, of the second coordinate.
+
+    Returns
+    -------
+    float
+        The distance between the two coordinates.
+    """
+    easting_2: float
+    northing_2: float
+    zone_num_2: int
+    zone_letter_2: str
+    easting_2, northing_2, zone_num_2, zone_letter_2 = utm.from_latlon(lat_deg_2, lon_deg_2)
+    easting_1: float
+    northing_1: float
+    easting_1, northing_1, _, _ = utm.from_latlon(
+        lat_deg_1,
+        lon_deg_1,
+        force_zone_number=zone_num_2,
+        force_zone_letter=zone_letter_2,
+    )
+
+    return math.hypot(
+        easting_1 - easting_2,
+        northing_1 - northing_2,
+        altitude_m_1 - altitude_m_2,
+    )
+
+
 async def waypoint_check(drone: System, _sim: bool, path_data_path: str) -> None:
     """
     Checks if the drone reaches each waypoint in a list and remains
@@ -96,21 +156,21 @@ async def waypoint_check(drone: System, _sim: bool, path_data_path: str) -> None
     path_data_path : str
         The path to the JSON file containing the boundary and waypoint data.
     """
-
     gps_dict: GPSData = extract_gps(path_data_path)
     waypoints: list[Waylist] = gps_dict["waypoints"]
     boundary: list[BoundaryPoint] = gps_dict["boundary_points"]
 
     previously_out_of_bounds: bool = False
+    previous_log_time: float = time.perf_counter()  # time.perf_counter() is monotonic
     for waypoint_num, waypoint in enumerate(waypoints):
         async for position in drone.telemetry.position():
             # continuously checks current latitude, longitude and altitude of the drone
             drone_lat: float = position.latitude_deg
-            drone_long: float = position.longitude_deg
+            drone_lon: float = position.longitude_deg
             drone_alt: float = position.relative_altitude_m
 
             # checks if drone's location is within boundary
-            if not in_bounds(boundary, drone_lat, drone_long, drone_alt):
+            if not in_bounds(boundary, drone_lat, drone_lon, drone_alt):
                 if not previously_out_of_bounds:
                     logging.info("(Waypoint State Test) Out of bounds!")
                     previously_out_of_bounds = True
@@ -119,13 +179,18 @@ async def waypoint_check(drone: System, _sim: bool, path_data_path: str) -> None
                     logging.info("(Waypoint State Test) Re-entered bounds.")
                     previously_out_of_bounds = False
 
+            distance_to_waypoint: float = calculate_distance(
+                drone_lat, drone_lon, drone_alt, *waypoint
+            )
+
             # accurately checks if location is reached
-            if (
-                (round(drone_lat, 5) == round(waypoint[0], 5))
-                and (round(drone_long, 5) == round(waypoint[1], 5))
-                and (round(drone_alt, 1) == round(waypoint[2], 1))
-            ):
+            if distance_to_waypoint < CLOSE_THRESHOLD:
                 break
+
+            curr_time: float = time.perf_counter()
+            if curr_time - previous_log_time >= 1.0:
+                logging.info("(Waypoint State Test) %f m to waypoint", distance_to_waypoint)
+                previous_log_time = curr_time
 
         logging.info("(Waypoint State Test) Waypoint %d reached.", waypoint_num)
 
