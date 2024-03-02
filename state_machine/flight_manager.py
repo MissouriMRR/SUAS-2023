@@ -20,18 +20,18 @@ class FlightManager:
     -------
     __init__(self) -> None
         Initialize a flight manager object.
-    start_manager() -> None
-        Test running the state machine in a separate process.
+    run_manager() -> None
+        Run the state machine until completion in a separate process.
         Sets the drone address to the simulation or physical address.
-    start_state_machine(drone: Drone) -> None
-        Create and start a state machine in the event loop. This method should
-        be called in its own process.
-    start_kill_switch(state_machine_process: Process, drone: Drone) -> None
-        Create and start a kill switch in the event loop.
-    kill_switch(state_machine_process: Process, drone: Drone) -> Awaitable[None]
+    _run_state_machine(drone: Drone) -> None
+        Create and run a state machine until completion in the event loop.
+        This method should be called in its own process.
+    _run_kill_switch(state_machine_process: Process, drone: Drone) -> None
+        Create and run a kill switch in the event loop.
+    _kill_switch(state_machine_process: Process, drone: Drone) -> Awaitable[None]
         Enable the kill switch and wait until it activates. The drone should be
         in manual mode after this method returns.
-    graceful_exit(drone: Drone) -> Awaitable[None]
+    _graceful_exit(drone: Drone) -> Awaitable[None]
         Lands the drone and exits the program.
     """
 
@@ -61,17 +61,19 @@ class FlightManager:
         )
 
         logging.info("Starting processes")
-        state_machine: Process = Process(
-            target=self.run_state_machine,
+        state_machine_process: Process = Process(
+            target=self._run_state_machine,
             args=(flight_settings_obj,),
         )
-        kill_switch_process: Process = Process(target=self.run_kill_switch, args=(state_machine,))
+        kill_switch_process: Process = Process(
+            target=self._run_kill_switch, args=(state_machine_process,)
+        )
 
-        state_machine.start()
+        state_machine_process.start()
         kill_switch_process.start()
 
         try:
-            state_machine.join()
+            state_machine_process.join()
             logging.info("State machine joined")
             kill_switch_process.join()
             logging.info("Kill switch joined")
@@ -82,10 +84,10 @@ class FlightManager:
                 "Keyboard interrupt detected. Killing state machine and landing drone."
             )
         finally:
-            state_machine.terminate()
-            asyncio.run(self.graceful_exit())
+            state_machine_process.terminate()
+            asyncio.run(self._graceful_exit())
 
-    def run_state_machine(self, flight_settings: FlightSettings) -> None:
+    def _run_state_machine(self, flight_settings: FlightSettings) -> None:
         """
         Create and run a state machine until completion in the event loop.
         This method should be called in its own process.
@@ -100,7 +102,7 @@ class FlightManager:
             StateMachine(Start(self.drone, flight_settings), self.drone, flight_settings).run()
         )
 
-    def run_kill_switch(self, process: Process) -> None:
+    def _run_kill_switch(self, process: Process) -> None:
         """
         Create and run a kill switch in the event loop.
 
@@ -110,9 +112,9 @@ class FlightManager:
             The process running the state machine to kill.
         """
         logging.info("-- Starting kill switch")
-        asyncio.run(self.kill_switch(process))
+        asyncio.run(self._kill_switch(process))
 
-    async def kill_switch(self, state_machine_process: Process) -> None:
+    async def _kill_switch(self, state_machine_process: Process) -> None:
         """
         Enable the kill switch and wait until it activates. The drone should be
         Continuously check for whether or not the kill switch has been activated.
@@ -142,7 +144,7 @@ class FlightManager:
         state_machine_process.terminate()
         return
 
-    async def graceful_exit(self) -> None:
+    async def _graceful_exit(self) -> None:
         """
         Land the drone and exit the program.
         """
