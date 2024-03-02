@@ -171,6 +171,12 @@ async def waypoint_check(drone: Drone, _sim: bool, path_data_path: str) -> None:
     min_altitude: float = gps_dict["altitude_limits"][0] / 3.28084
     max_altitude: float = gps_dict["altitude_limits"][1] / 3.28084
 
+    # Ensure that the flight manager code starts and sets the correct address.
+    # 5 seconds is probably far longer than necessary.
+    # Anyway, the drone will probably not have finished taking off after only
+    # 5 seconds, so it doesn't matter.
+    await asyncio.sleep(5.0)
+
     await drone.connect_drone()
 
     # connect to the drone

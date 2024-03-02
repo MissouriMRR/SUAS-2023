@@ -52,10 +52,11 @@ class FlightManager:
         path_data_path : str, default "flight/data/waypoint_data.json"
             The path to the JSON file containing the boundary and waypoint data.
         """
-        if sim_flag is True:
+        if sim_flag:
             self.drone.address = "udp://:14540"
         else:
             self.drone.address = "serial:///dev/ttyUSB0:921600"
+
         flight_settings_obj: FlightSettings = FlightSettings(
             sim_flag=sim_flag, path_data_path=path_data_path
         )
