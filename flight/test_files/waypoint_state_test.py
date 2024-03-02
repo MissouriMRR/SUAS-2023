@@ -16,31 +16,41 @@ in_bounds(boundary, latitude, longitude, altitude)
 waypoint_check(drone, _sim)
     Verifies if a drone reaches each waypoint in a predefined path.
 
-run_waypoint_thread(drone)
-    Runs the waypoint check in an asynchronous loop.
-
 run_test(_sim)
-    Initializes the state machine and starts the waypoint check thread.
-
+    Initializes the state machine and starts the waypoint check.
 """
 
 import asyncio
 import logging
-import threading
-from mavsdk import System
+import math
+import time
+import sys
+from typing import Final
+
+import utm
+
 from flight.extract_gps import BoundaryPoint, GPSData, extract_gps
 from flight.extract_gps import Waypoint as Waylist
-
+from state_machine.drone import Drone
 from state_machine.flight_manager import FlightManager
 
 
-SIM_ADDR: str = "udp://:14540"  # Address to connect to the simulator
-CONTROLLER_ADDR: str = "serial:///dev/ttyUSB0"  # Address to connect to a pixhawk board
-GPS_PATH: str = "flight/data/waypoint_data.json"
+SIM_ADDR: Final[str] = "udp://:14540"  # Address to connect to the simulator
+CONTROLLER_ADDR: Final[str] = "serial:///dev/ttyUSB0"  # Address to connect to a pixhawk board
+
+# 3.28084 feet per meter
+CLOSE_THRESHOLD: Final[float] = (
+    15 / 3.28084
+)  # How close the drone should get to each waypoint, in meters
 
 
-async def in_bounds(
-    boundary: list[BoundaryPoint], latitude: float, longitude: float, altitude: float
+def in_bounds(
+    boundary: list[BoundaryPoint],
+    latitude: float,
+    longitude: float,
+    altitude: float,
+    min_altitude: float,
+    max_altitude: float,
 ) -> bool:
     """
     Determines if a point specified by latitude, longitude, and altitude
@@ -55,14 +65,18 @@ async def in_bounds(
     longitude : float
         The longitude of the point to check.
     altitude : float
-        The altitude of the point to check.
+        The altitude of the point to check, in meters.
+    min_altitude : float
+        The minimum allowed altitude, in meters.
+    max_altitude : float
+        The maximum allowed altitude, in meters.
 
     Returns
     -------
     bool
         True if the point is inside the boundary, False otherwise.
     """
-    if altitude < 75 or altitude > 750:
+    if not min_altitude <= altitude <= max_altitude:
         return False
     num: int = len(boundary)
     j: int = num - 1
@@ -84,72 +98,130 @@ async def in_bounds(
     return inside
 
 
-async def waypoint_check(drone: System, _sim: bool = True) -> None:
+def calculate_distance(
+    lat_deg_1: float,
+    lon_deg_1: float,
+    altitude_m_1: float,
+    lat_deg_2: float,
+    lon_deg_2: float,
+    altitude_m_2: float,
+) -> float:
+    """
+    Calculate the distance, in meters, between two coordinates
+
+    Parameters
+    ----------
+    lat_deg_1 : float
+        The latitude, in degrees, of the first coordinate.
+    lon_deg_1 : float
+        The longitude, in degrees, of the first coordinate.
+    altitude_m_1 : float
+        The altitude, in meters, of the first coordinate.
+    lat_deg_2 : float
+        The latitude, in degrees, of the second coordinate.
+    lon_deg_2 : float
+        The longitude, in degrees, of the second coordinate.
+    altitude_m_2 : float
+        The altitude, in meters, of the second coordinate.
+
+    Returns
+    -------
+    float
+        The distance between the two coordinates.
+    """
+    easting_2: float
+    northing_2: float
+    zone_num_2: int
+    zone_letter_2: str
+    easting_2, northing_2, zone_num_2, zone_letter_2 = utm.from_latlon(lat_deg_2, lon_deg_2)
+    easting_1: float
+    northing_1: float
+    easting_1, northing_1, _, _ = utm.from_latlon(
+        lat_deg_1,
+        lon_deg_1,
+        force_zone_number=zone_num_2,
+        force_zone_letter=zone_letter_2,
+    )
+
+    return math.hypot(
+        easting_1 - easting_2,
+        northing_1 - northing_2,
+        altitude_m_1 - altitude_m_2,
+    )
+
+
+async def waypoint_check(drone: Drone, _sim: bool, path_data_path: str) -> None:
     """
     Checks if the drone reaches each waypoint in a list and remains
     within the specified boundary during its flight.
 
     Parameters
     ----------
-    drone : System
-        The drone system object from mavsdk.
-    _sim : bool, optional
-        Specifies whether the function is being run in a simulation mode (default is True).
-
+    drone : Drone
+        The drone object from the flight manager.
+    _sim : bool
+        Specifies whether the function is being run in a simulation mode.
+    path_data_path : str
+        The path to the JSON file containing the boundary and waypoint data.
     """
-
-    gps_dict: GPSData = extract_gps(GPS_PATH)
+    gps_dict: GPSData = extract_gps(path_data_path)
     waypoints: list[Waylist] = gps_dict["waypoints"]
     boundary: list[BoundaryPoint] = gps_dict["boundary_points"]
-    current_waypoint: int = 1
-    for waypoint in waypoints:
-        reached: bool = False
-        while not reached:
-            async for position in drone.telemetry.position():
-                # continuously checks current latitude, longitude and altitude of the drone
-                drone_lat: float = position.latitude_deg
-                drone_long: float = position.longitude_deg
-                drone_alt: float = position.relative_altitude_m
+    # 3.28084 ft per m
+    min_altitude: float = gps_dict["altitude_limits"][0] / 3.28084
+    max_altitude: float = gps_dict["altitude_limits"][1] / 3.28084
 
-                # checks if drone's location is within boundary
-                if not await in_bounds(boundary, drone_lat, drone_long, drone_alt):
-                    logging.info("Out of bounds!")
-                    break
+    # Ensure that the flight manager code starts and sets the correct address.
+    # 5 seconds is probably far longer than necessary.
+    # Anyway, the drone will probably not have finished taking off after only
+    # 5 seconds, so it doesn't matter.
+    await asyncio.sleep(5.0)
 
-                #  accurately checks if location is reached and
-                #  stops for 15 secs and then moves on.
-                if (
-                    (round(drone_lat, int(6 * (5 / 6))) == round(waypoint[0], int(6 * (5 / 6))))
-                    and (
-                        round(drone_long, int(6 * (5 / 6))) == round(waypoint[1], int(6 * (5 / 6)))
-                    )
-                    and (round(drone_alt, 1) == round(waypoint[2], 1))
-                ):
-                    reached = True
-                    break
-        logging.info("Waypoint %d reached.", current_waypoint)
-        current_waypoint += 1
+    await drone.connect_drone()
 
+    # connect to the drone
+    async for state in drone.system.core.connection_state():
+        if state.is_connected:
+            break
 
-def run_waypoint_thread(drone: System) -> None:
-    """
-    Initializes and runs an event loop to execute waypoint_check asynchronously.
+    previously_out_of_bounds: bool = False
+    previous_log_time: float = time.perf_counter()  # time.perf_counter() is monotonic
+    for waypoint_num, waypoint in enumerate(waypoints):
+        async for position in drone.system.telemetry.position():
+            # continuously checks current latitude, longitude and altitude of the drone
+            drone_lat: float = position.latitude_deg
+            drone_lon: float = position.longitude_deg
+            drone_alt: float = position.relative_altitude_m
 
-    Parameters
-    ----------
-    drone : System
-        The drone system object from mavsdk.
-    """
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+            # checks if drone's location is within boundary
+            if not in_bounds(boundary, drone_lat, drone_lon, drone_alt, min_altitude, max_altitude):
+                if not previously_out_of_bounds:
+                    logging.info("(Waypoint State Test) Out of bounds!")
+                    previously_out_of_bounds = True
+            else:
+                if previously_out_of_bounds:
+                    logging.info("(Waypoint State Test) Re-entered bounds.")
+                    previously_out_of_bounds = False
 
-    loop.run_until_complete(waypoint_check(drone))
-    loop.close()
+            distance_to_waypoint: float = calculate_distance(
+                drone_lat, drone_lon, drone_alt, *waypoint
+            )
+
+            # accurately checks if location is reached
+            if distance_to_waypoint < CLOSE_THRESHOLD:
+                break
+
+            curr_time: float = time.perf_counter()
+            if curr_time - previous_log_time >= 1.0:
+                logging.info("(Waypoint State Test) %f m to waypoint", distance_to_waypoint)
+                previous_log_time = curr_time
+
+        logging.info("(Waypoint State Test) Waypoint %d reached.", waypoint_num)
 
 
 async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     """
-    Initializes and runs the flight manager and waypoint thread for testing
+    Initialize and run the flight manager and waypoint check for testing
     the state machine in either simulated or real-world mode.
 
     Parameters
@@ -157,12 +229,18 @@ async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     _sim : bool
         Specifies whether to run the state machine in simulation mode.
     """
-    flight_manager = FlightManager()
-    flight_manager.start_manager(_sim)
+    # Output logging info to stdout
+    logging.basicConfig(filename="/dev/stdout", level=logging.INFO)
 
-    _thread = threading.Thread(target=run_waypoint_thread, args=(flight_manager.drone.system))
-    _thread.start()
+    path_data_path: str = "flight/data/waypoint_data.json" if _sim else "flight/data/golf_data.json"
+
+    flight_manager: FlightManager = FlightManager()
+    asyncio.ensure_future(waypoint_check(flight_manager.drone, _sim, path_data_path))
+    await flight_manager.run_manager(_sim, path_data_path)
 
 
 if __name__ == "__main__":
-    asyncio.run(run_test(True))
+    print("Pass argument --sim to enable the simulation flag.")
+    print("When the simulation flag is not set, golf data is used for the boundary and waypoints.")
+    print()
+    asyncio.run(run_test("--sim" in sys.argv))
