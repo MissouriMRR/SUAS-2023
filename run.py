@@ -7,6 +7,7 @@ If running for competition, make sure that the following is set:
 - Waypoints in flight/data/waypoint_data.json
 """
 
+import asyncio
 import logging
 import sys
 from state_machine.flight_manager import FlightManager
@@ -20,6 +21,6 @@ if __name__ == "__main__":
         flight_manager: FlightManager = FlightManager()
         if "-s" in sys.argv:
             SIM_FLAG = True
-        flight_manager.run_manager(SIM_FLAG)
+        asyncio.run(flight_manager.run_manager(SIM_FLAG))
     finally:
         logging.info("Done!")

@@ -20,7 +20,7 @@ class FlightManager:
     -------
     __init__(self) -> None
         Initialize a flight manager object.
-    run_manager() -> None
+    run_manager() -> Awaitable[None]
         Run the state machine until completion in a separate process.
         Sets the drone address to the simulation or physical address.
     _run_state_machine(drone: Drone) -> None
@@ -38,7 +38,7 @@ class FlightManager:
     def __init__(self) -> None:
         self.drone: Drone = Drone()
 
-    def run_manager(
+    async def run_manager(
         self, sim_flag: bool, path_data_path: str = "flight/data/waypoint_data.json"
     ) -> None:
         """
@@ -73,9 +73,14 @@ class FlightManager:
         kill_switch_process.start()
 
         try:
-            state_machine_process.join()
+            while state_machine_process.is_alive():
+                await asyncio.sleep(0.25)
+
             logging.info("State machine joined")
-            kill_switch_process.join()
+
+            while kill_switch_process.is_alive():
+                await asyncio.sleep(0.25)
+
             logging.info("Kill switch joined")
 
             logging.info("Done!")
@@ -85,7 +90,7 @@ class FlightManager:
             )
         finally:
             state_machine_process.terminate()
-            asyncio.run(self._graceful_exit())
+            await self._graceful_exit()
 
     def _run_state_machine(self, flight_settings: FlightSettings) -> None:
         """

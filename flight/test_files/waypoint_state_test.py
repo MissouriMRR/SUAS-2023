@@ -27,11 +27,11 @@ import time
 import sys
 from typing import Final
 
-from mavsdk import System
 import utm
 
 from flight.extract_gps import BoundaryPoint, GPSData, extract_gps
 from flight.extract_gps import Waypoint as Waylist
+from state_machine.drone import Drone
 from state_machine.flight_manager import FlightManager
 
 
@@ -150,15 +150,15 @@ def calculate_distance(
     )
 
 
-async def waypoint_check(drone: System, _sim: bool, path_data_path: str) -> None:
+async def waypoint_check(drone: Drone, _sim: bool, path_data_path: str) -> None:
     """
     Checks if the drone reaches each waypoint in a list and remains
     within the specified boundary during its flight.
 
     Parameters
     ----------
-    drone : System
-        The drone system object from mavsdk.
+    drone : Drone
+        The drone object from the flight manager.
     _sim : bool
         Specifies whether the function is being run in a simulation mode.
     path_data_path : str
@@ -171,10 +171,17 @@ async def waypoint_check(drone: System, _sim: bool, path_data_path: str) -> None
     min_altitude: float = gps_dict["altitude_limits"][0] / 3.28084
     max_altitude: float = gps_dict["altitude_limits"][1] / 3.28084
 
+    await drone.connect_drone()
+
+    # connect to the drone
+    async for state in drone.system.core.connection_state():
+        if state.is_connected:
+            break
+
     previously_out_of_bounds: bool = False
     previous_log_time: float = time.perf_counter()  # time.perf_counter() is monotonic
     for waypoint_num, waypoint in enumerate(waypoints):
-        async for position in drone.telemetry.position():
+        async for position in drone.system.telemetry.position():
             # continuously checks current latitude, longitude and altitude of the drone
             drone_lat: float = position.latitude_deg
             drone_lon: float = position.longitude_deg
@@ -222,8 +229,8 @@ async def run_test(_sim: bool) -> None:  # Temporary fix for unused variable
     path_data_path: str = "flight/data/waypoint_data.json" if _sim else "flight/data/golf_data.json"
 
     flight_manager: FlightManager = FlightManager()
-    asyncio.ensure_future(waypoint_check(flight_manager.drone.system, _sim, path_data_path))
-    flight_manager.run_manager(_sim, path_data_path)
+    asyncio.ensure_future(waypoint_check(flight_manager.drone, _sim, path_data_path))
+    await flight_manager.run_manager(_sim, path_data_path)
 
 
 if __name__ == "__main__":
