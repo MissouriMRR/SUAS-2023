@@ -20,6 +20,14 @@ class Coordinate(TypedDict):
     longitude: float
 
 
+class CoordinateWithAltitude(TypedDict):
+    """A coordinate with altitude in waypoint_data.json"""
+
+    latitude: float
+    longitude: float
+    altitude: float
+
+
 class Flyzones(TypedDict):
     """flyzones in waypoint_data.json"""
 
@@ -187,6 +195,58 @@ def draw_graph(nodes: list[GraphNode[Point, float]]) -> str:
     return "".join(string_builder)
 
 
+def generate_random_waypoints(
+    vertices: Iterable[Point],
+    utm_zone_number: int,
+    utm_zone_letter: str,
+    min_altitude: float,
+    max_altitude: float,
+) -> str:
+    """
+    Generate random waypoints inside a shape that can be used for the
+    waypoint state unit test.
+
+    Parameters
+    ----------
+    vertices : list[Point]
+        The vertices of the boundary of the shape in the correct order.
+    utm_zone_number : int
+        The UTM zone number of the boundary vertices.
+    utm_zone_letter : str
+        The UTM zone letter of the boundary vertices.
+    min_altitude : float
+        The minimum allowed altitude, in meters.
+    max_altitude : float
+        The maximum allowed altitude, in meters.
+
+    Returns
+    -------
+    str
+        JSON data to be pasted into ../data/waypoint_data.json or
+        ../data/golf_data.json before running the waypoint state unit test.
+    """
+    waypoints: list[CoordinateWithAltitude] = []
+    for _ in range(100):
+        random_point: Point = random_point_in_shape(vertices)
+
+        latitude: float
+        longitude: float
+        latitude, longitude = utm.to_latlon(
+            random_point.x, random_point.y, utm_zone_number, utm_zone_letter
+        )
+        altitude: float = min_altitude + (max_altitude - min_altitude) * random.random()
+
+        waypoints.append(
+            {
+                "latitude": latitude,
+                "longitude": longitude,
+                "altitude": altitude,
+            }
+        )
+
+    return json.dumps(waypoints)
+
+
 def main() -> None:
     """Run tests for waypoint pathfinding."""
     waypoint_data_filepath: str = str(
@@ -213,6 +273,18 @@ def main() -> None:
             coord["latitude"], coord["longitude"], force_zone_number, force_zone_letter
         )
         boundary_vertices.append(Point(easting, northing))
+
+    # 3.28084 ft per m
+    min_altitude: float = waypoint_data["flyzones"]["altitudeMin"] / 3.28084
+    max_altitude: float = waypoint_data["flyzones"]["altitudeMax"] / 3.28084
+
+    # Generate random waypoints to use for the waypoint state unit test
+    # Prints json data to be pasted in ../data/waypoint_data.json
+    print(
+        generate_random_waypoints(
+            boundary_vertices, force_zone_number, force_zone_letter, min_altitude, max_altitude
+        )
+    )
 
     graph: list[GraphNode[Point, float]] = pathfinding.create_pathfinding_graph(
         boundary_vertices, 0.0
