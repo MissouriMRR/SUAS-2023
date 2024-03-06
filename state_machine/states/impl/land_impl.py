@@ -5,7 +5,7 @@ import time
 import logging
 
 from state_machine.states.land import Land
-from state_machine.states.state import State
+
 from mavsdk.telemetry import FlightMode
 
 
@@ -30,7 +30,9 @@ async def run(self: Land) -> None:
         logging.info("Landing")
 
         # Instruct the drone to land
-        await self.drone.system.action.land()
+
+        await self.drone.system.action.return_to_launch()
+
         time.sleep(5)
         async for flight_mode in self.drone.system.telemetry.flight_mode():
             while flight_mode == FlightMode.Land:
