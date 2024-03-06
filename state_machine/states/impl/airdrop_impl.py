@@ -39,6 +39,8 @@ async def run(self: Airdrop) -> State:
         with open("flight/data/bottles.json", encoding="utf8") as output:
             cylinders = json.load(output)
 
+        bottle: int = 0
+
         # For the amount of bottles there are...
         logging.info("Bottle drop started")
 
@@ -49,7 +51,7 @@ async def run(self: Airdrop) -> State:
         # Move to the nearest bottle
         await move_to(self.drone.system, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
 
-        logging.info("Starting bottle drop")
+        logging.info(f"Starting bottle drop {bottle}")
         if self.drone.address == "serial:///dev/ttyUSB0:921600":
             await airdrop.drop_bottle(self.drone.servo_num)
 
@@ -65,13 +67,13 @@ async def run(self: Airdrop) -> State:
         else:
             self.drone.servo_num = self.drone.servo_num + 1
 
-        continuerun: bool = False
+        continue_run: bool = False
 
         for cylinder in cylinders:
             if cylinder["Loaded"]:
-                continuerun = True
+                continue_run = True
 
-        if continuerun:
+        if continue_run:
             return Waypoint(self.drone, self.flight_settings)
         return Land(self.drone, self.flight_settings)
 
