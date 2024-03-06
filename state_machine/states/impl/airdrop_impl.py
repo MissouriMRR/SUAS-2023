@@ -79,12 +79,6 @@ async def run(self: Airdrop) -> State:
 
         logging.info("-- Airdrop done!")
 
-        self.drone.bottle_num = self.drone.bottle_num + 1
-        if self.drone.servo_num == 2:
-            self.drone.servo_num = 0
-        else:
-            self.drone.servo_num = self.drone.servo_num + 1
-
         continue_run: bool = False
 
         for cylinder in cylinders:
