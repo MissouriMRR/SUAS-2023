@@ -4,9 +4,9 @@ import asyncio
 import time
 import logging
 
-from state_machine.states.land import Land
-from state_machine.states.state import State
 from mavsdk.telemetry import FlightMode
+from json_functions import update_state, update_drone, update_flight_settings
+from state_machine.states.land import Land
 
 
 async def run(self: Land) -> None:
@@ -27,13 +27,23 @@ async def run(self: Land) -> None:
 
     """
     try:
+        update_state("data.json", "Land")
+        update_drone("data.json", self.drone.address, self.drone.odlc_scan)
+        update_flight_settings(
+            "data.json",
+            self.flight_settings.simple_takeoff,
+            self.flight_settings.run_title,
+            self.flight_settings.run_description,
+            self.flight_settings.waypoint_count,
+        )
+
         logging.info("Landing")
 
         # Instruct the drone to land
         await self.drone.system.action.land()
         time.sleep(5)
         async for flight_mode in self.drone.system.telemetry.flight_mode():
-            while flight_mode == FlightMode.Land:
+            while flight_mode == FlightMode.LAND:
                 time.sleep(1)
 
     except asyncio.CancelledError as ex:

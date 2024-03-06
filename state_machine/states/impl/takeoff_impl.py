@@ -5,6 +5,7 @@ import logging
 
 import mavsdk.telemetry
 
+from json_functions import update_state
 from flight.extract_gps import extract_gps
 from state_machine.states.state import State
 from state_machine.states.takeoff import Takeoff
@@ -34,6 +35,7 @@ async def run(self: Takeoff) -> State:
 
     """
     try:
+        update_state("data.json", "Takeoff")
         logging.info("Takeoff state running")
 
         # Set takeoff altitude to the minimum allowed altitude, plus one meter
