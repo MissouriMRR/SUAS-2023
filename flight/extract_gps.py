@@ -2,6 +2,7 @@
 Contains the extract_gps() function for extracting data out of
 the provided waypoint data JSON file for the SUAS competition.
 """
+
 import argparse
 import json
 from typing import Any, List, NamedTuple

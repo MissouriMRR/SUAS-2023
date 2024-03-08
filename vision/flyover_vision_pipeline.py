@@ -2,7 +2,7 @@
 
 from typing import Callable
 from ctypes import c_bool
-from multiprocessing.sharedctypes import SynchronizedBase
+from multiprocessing.sharedctypes import SynchronizedBase  # pylint: disable=unused-import
 
 import time
 import cv2
@@ -91,8 +91,9 @@ def flyover_pipeline(
     pipe_utils.output_odlc_json(output_path, odlc_dict)
 
     # Pick the emergent object and save the image cropped in on the emergent object
-    emergent_object: BoundingBox = pick_emergent_object(saved_humanoids, odlc_dict)
-    emergent_image: consts.Image = cv2.imread(emergent_object.get_attribute("image_path"))
-    emergent_crop: consts.Image = crop_image(emergent_image, emergent_object)
+    if len(saved_humanoids) > 0:
+        emergent_object: BoundingBox = pick_emergent_object(saved_humanoids, odlc_dict)
+        emergent_image: consts.Image = cv2.imread(emergent_object.get_attribute("image_path"))
+        emergent_crop: consts.Image = crop_image(emergent_image, emergent_object)
 
-    cv2.imwrite("emergent_object.jpg", emergent_crop)
+        cv2.imwrite("emergent_object.jpg", emergent_crop)

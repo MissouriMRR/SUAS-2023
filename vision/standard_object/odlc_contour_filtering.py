@@ -3,6 +3,7 @@ This file contains functions to filter contours to identify the odlc shapes from
 processed image. The only function that should be needed is filter_contour(), the rest are helper
 functions.
 """
+
 import numpy as np
 from nptyping import NDArray, Shape, UInt8, IntC, Float32, Bool8
 import cv2
