@@ -2,10 +2,11 @@
 
 import asyncio
 from ctypes import c_bool
-from multiprocessing import Process, Value
-from multiprocessing.sharedctypes import SynchronizedBase
 import logging
 import json
+from multiprocessing import Process, Value
+from multiprocessing.sharedctypes import SynchronizedBase
+from typing import Final
 
 from flight.camera import Camera
 
@@ -14,6 +15,17 @@ from state_machine.states.odlc import ODLC
 from state_machine.states.state import State
 
 from vision.flyover_vision_pipeline import flyover_pipeline
+
+
+# Parameters for the golf course
+# https://www.google.com/maps/place/37%C2%B056'53.0%22N+91%C2%B047'02.9%22W/@37.9480567,-91.7847826,180m/data=!3m1!1e3!4m4!3m3!8m2!3d37.9480556!4d-91.7841389?entry=ttu
+GOLF_LATITUDE: Final[float] = +(37 + 56 / 60 + 53.00 / 60 / 60)
+GOLF_LONGITUDE: Final[float] = -(91 + 47 / 60 + 02.90 / 60 / 60)
+# Circumference of Earth through poles is 40,007,863 m
+GOLF_AREA_SIZE: Final[float] = (
+    100 / 3.28084 * (360 / 40_007_863)
+)  # 100 feet north-south, smaller east-west
+GOLF_ALTITUDE: Final[float] = 100 / 3.28084  # 100 feet
 
 
 async def run(self: ODLC) -> State:
