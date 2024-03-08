@@ -20,6 +20,11 @@ import vision.pipeline.pipeline_utils as pipe_utils
 # https://www.google.com/maps/place/37%C2%B056'53.0%22N+91%C2%B047'02.9%22W/@37.9480567,-91.7847826,180m/data=!3m1!1e3!4m4!3m3!8m2!3d37.9480556!4d-91.7841389?entry=ttu
 TEST_LATITUDE: Final[float] = +(37 + 56 / 60 + 53.00 / 60 / 60)
 TEST_LONGITUDE: Final[float] = -(91 + 47 / 60 + 02.90 / 60 / 60)
+# Circumference of Earth through poles is 40,007,863 m
+TEST_AREA_SIZE: Final[float] = (
+    100 / 3.28084 * (360 / 40_007_863)
+)  # 100 feet north-south, smaller east-west
+TEST_ALTITUDE: Final[float] = 100 / 3.28084  # 100 feet
 
 
 # Disable duplicate code checking because the flyover pipeline is similar
