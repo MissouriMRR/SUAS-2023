@@ -104,68 +104,68 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
     This method is responsible for initiating the ODLC scanning process of the drone.
     """ 
     try:
+        logging.info("ODLC")
+
+        # Initialize the camera
         if(self.flight_settings.sim_flag == False):
-
-            logging.info("ODLC")
-
-            # Initialize the camera
             camera: Camera = Camera()
 
-            # These waypoint values are all that are needed to traverse the whole odlc drop location
-            # because it is a small rectangle
-            # The first waypoint is the midpoint of
-            # the left side of the rectangle(one of the short sides), the second point is the
-            # midpoint of the right side of the rectangle(other short side),
-            # and the third point is the top left corner of the rectangle
-            # it goes there for knowing where the drone ends to travel to each of the drop locations,
-            # the altitude is locked at 100 because
-            # we want the drone to stay level and the camera to view the whole odlc boundary
-            # the altitude 100 feet was chosen to cover the whole odlc boundary
-            # because the boundary is 70ft by 360ft the fov of the camera
-            # is vertical 52.1 degrees and horizontal 72.5,
-            # so using the minimum length side of the photo the coverage would be 90 feet allowing
-            # 10 feet overlap on both sides
-            waypoint: dict[str, list[float]] = {
-                "lats": [38.31451966813249, 38.31430872867596, 38.31461622313521],
-                "longs": [-76.54519982319357, -76.54397320409971, -76.54516993186949],
-                "Altitude": [100],
-            }
+        # These waypoint values are all that are needed to traverse the whole odlc drop location
+        # because it is a small rectangle
+        # The first waypoint is the midpoint of
+        # the left side of the rectangle(one of the short sides), the second point is the
+        # midpoint of the right side of the rectangle(other short side),
+        # and the third point is the top left corner of the rectangle
+        # it goes there for knowing where the drone ends to travel to each of the drop locations,
+        # the altitude is locked at 100 because
+        # we want the drone to stay level and the camera to view the whole odlc boundary
+        # the altitude 100 feet was chosen to cover the whole odlc boundary
+        # because the boundary is 70ft by 360ft the fov of the camera
+        # is vertical 52.1 degrees and horizontal 72.5,
+        # so using the minimum length side of the photo the coverage would be 90 feet allowing
+        # 10 feet overlap on both sides
+        waypoint: dict[str, list[float]] = {
+            "lats": [38.31451966813249, 38.31430872867596, 38.31461622313521],
+            "longs": [-76.54519982319357, -76.54397320409971, -76.54516993186949],
+            "Altitude": [100],
+        }
 
-            # traverses the 3 waypoints starting at the midpoint on left to midpoint on the right
-            # then to the top left corner at the rectangle
-            with open("flight/data/output.json", encoding="ascii") as output:
-                airdrop_dict = json.load(output)
-                airdrops: int = len(airdrop_dict)
-                point: int
-            while airdrops != 5:
-                logging.info("Starting odlc zone flyover")
+        # traverses the 3 waypoints starting at the midpoint on left to midpoint on the right
+        # then to the top left corner at the rectangle
+        with open("flight/data/output.json", encoding="ascii") as output:
+            airdrop_dict = json.load(output)
+            airdrops: int = len(airdrop_dict)
+            point: int
+        while airdrops != 5:
+            logging.info("Starting odlc zone flyover")
 
-                for point in range(3):
-                    take_photos: bool = False
+            for point in range(3):
+                take_photos: bool = False
 
-                    if point == 0:
-                        logging.info("Moving to the center of the west boundary")
-                    elif point == 1:
-                        # starts taking photos at a .5 second interval because we want
-                        # to get multiple photos of the boundary so there is overlap and
-                        # the speed of the drone should be 20 m/s which is 64 feet/s which means
-                        # it will traverse the length of the boundary (360 ft) in 6 sec
-                        # and that means with the shortest length of photos
-                        #  being taken depending on rotation
-                        # would be 90 feet and we want to take multiple photos
-                        # so we would need a minimum of 4 photos to cover
-                        #  the whole boundary and we want multiple,
-                        # so using .5 seconds between each photo allows
-                        # it to take a minimum of 12 photos of
-                        #  the odlc boundary which will capture the whole area
+                if point == 0:
+                    logging.info("Moving to the center of the west boundary")
+                elif point == 1:
+                    # starts taking photos at a .5 second interval because we want
+                    # to get multiple photos of the boundary so there is overlap and
+                    # the speed of the drone should be 20 m/s which is 64 feet/s which means
+                    # it will traverse the length of the boundary (360 ft) in 6 sec
+                    # and that means with the shortest length of photos
+                    #  being taken depending on rotation
+                    # would be 90 feet and we want to take multiple photos
+                    # so we would need a minimum of 4 photos to cover
+                    #  the whole boundary and we want multiple,
+                    # so using .5 seconds between each photo allows
+                    # it to take a minimum of 12 photos of
+                    #  the odlc boundary which will capture the whole area
 
-                        logging.info("Moving to the center of the east boundary")
-                        take_photos = True
+                    logging.info("Moving to the center of the east boundary")
+                    take_photos = True
 
-                    elif point == 2:
-                        capture_status.value = c_bool(True)  # type: ignore
-                        logging.info("Moving to the north west corner")
+                elif point == 2:
+                    capture_status.value = c_bool(True)  # type: ignore
+                    logging.info("Moving to the north west corner")
 
+                if(self.flight_settings.sim_flag == False):
                     await camera.odlc_move_to(
                         self.drone,
                         waypoint["lats"][point],
@@ -175,11 +175,11 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
                         take_photos,
                     )
 
-                with open("flight/data/output.json", encoding="ascii") as output:
-                    airdrop_dict = json.load(output)
-                    airdrops = len(airdrop_dict)
+            with open("flight/data/output.json", encoding="ascii") as output:
+                airdrop_dict = json.load(output)
+                airdrops = len(airdrop_dict)
 
-            self.drone.odlc_scan = False
+        self.drone.odlc_scan = False
     except asyncio.CancelledError as ex:
         logging.error("ODLC state canceled")
         raise ex
