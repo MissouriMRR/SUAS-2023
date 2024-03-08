@@ -101,9 +101,8 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
 
     Notes
     -----
-    This method is responsible for initiating the ODLC scanning process of the drone
-    and transitioning it to the Airdrop state.
-    """
+    This method is responsible for initiating the ODLC scanning process of the drone.
+    """ 
     try:
         logging.info("ODLC")
 
