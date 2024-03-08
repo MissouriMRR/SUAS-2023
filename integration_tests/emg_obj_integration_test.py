@@ -10,11 +10,10 @@ import vision.common.constants as consts
 
 from vision.common.bounding_box import BoundingBox
 from vision.emergent_object.emergent_object import create_emergent_model
-from vision.emergent_object.emergent_object_processing import calc_emerg_obj_min_dist
-from vision.airdrop_vision_pipeline import create_judge_dict
 
 import vision.pipeline.emergent_pipeline as emg_obj
 import vision.pipeline.pipeline_utils as pipe_utils
+
 
 # Disable duplicate code checking because the flyover pipeline is similar
 # pylint: disable=duplicate-code
@@ -52,7 +51,7 @@ def emg_integration_pipeline(camera_data_path: str, state_path: str, output_path
         image_parameters: dict[str, consts.CameraParameters] = pipe_utils.read_parameter_json(
             camera_data_path
         )
-        
+
         detected_emergents: list[BoundingBox] = []
 
         image_path: str
@@ -72,23 +71,26 @@ def emg_integration_pipeline(camera_data_path: str, state_path: str, output_path
                 img_detections: list[BoundingBox] = emg_obj.find_humanoids(
                     emg_model, image, camera_parameters, image_path
                 )
-                
+
                 detected_emergents += img_detections
-        
+
+        # Get an array of all locations of detections
         location_array = np.zeros((len(detected_emergents), 2), dtype=np.float64)
         detection: BoundingBox
         for i, detection in enumerate(detected_emergents):
             latitude: float = detection.get_attribute("latitude")
             longitude: float = detection.get_attribute("longitude")
-            
+
             location = np.array([latitude, longitude], dtype=np.float64)
-            
+
             location_array[i] = location
-        
+
+        # Average the locations together
         avg_location = np.mean(location_array, axis=0)
-        
+
+        # Create the dictionary which will be saved as a json
         output_dict: consts.ODLCDict = {
             "0": {"latitude": avg_location[0], "longitude": avg_location[1]},
         }
-        
+
         pipe_utils.output_odlc_json(output_path, output_dict)
