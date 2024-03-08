@@ -7,7 +7,7 @@ from typing import Final
 import mavsdk.telemetry
 import utm
 
-from mavsdk.action import ActionError, ActionResult
+from mavsdk.action import ActionError
 
 from flight.extract_gps import extract_gps, GPSData
 from flight.extract_gps import (
@@ -128,7 +128,7 @@ async def run(self: Waypoint) -> State:
                 try:
                     await move_to(self.drone.system, lat_deg, lon_deg, curr_altitude, 1.0)
                 except ActionError:
-                    logging.warning(ActionResult.Result.TIMEOUT)
+                    logging.warning(ActionError)
 
             # use 0.9 for fast_param to get within 25 ft of waypoint with plenty of leeway
             # while being fast (values above 5/6 and less than 1 check for lat and lon with
