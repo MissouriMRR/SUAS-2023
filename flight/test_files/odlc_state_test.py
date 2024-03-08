@@ -7,6 +7,11 @@ from state_machine.state_machine import StateMachine
 from state_machine.states import ODLC
 from state_machine.flight_settings import FlightSettings
 
+def start_state_machine(state_machine: StateMachine) -> None:
+        """
+        add
+        """
+        asyncio.run(state_machine.run())
 
 async def run_test(_sim: bool) -> None:
     """
@@ -17,8 +22,8 @@ async def run_test(_sim: bool) -> None:
     await drone.connect_drone()
     state_machine = StateMachine(ODLC(drone, flight_settings), drone, flight_settings)
     state_machine_process: Process = Process(
-        state_machine.run,
-        args=(),
+        target=start_state_machine,
+        args=(state_machine,),
     )
     state_machine_process.start()
 
