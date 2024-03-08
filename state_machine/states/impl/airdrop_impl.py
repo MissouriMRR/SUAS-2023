@@ -5,9 +5,9 @@ import logging
 import json
 
 from state_machine.states.airdrop import Airdrop
+from state_machine.states.land import Land
 from state_machine.states.waypoint import Waypoint
 from state_machine.states.state import State
-from state_machine.states.land import Land
 
 from flight.maestro.air_drop import AirdropControl
 from flight.waypoint.goto import move_to
@@ -36,17 +36,42 @@ async def run(self: Airdrop) -> State:
         with open("flight/data/output.json", encoding="utf8") as output:
             bottle_locations = json.load(output)
 
+        with open("flight/data/bottles.json", encoding="utf8") as output:
+            cylinders = json.load(output)
+
         logging.info("Moving to bottle drop")
-        # Set initial value for lowest distance so we can compare
 
-        bottle_loc: dict[str, float] = bottle_locations[str(self.drone.bottle_num)]
+        bottle: int
+        servo_num: int
+        cylinder_num: str
 
-        # Move to the nearest bottle
+        # setting a priority for bottles
+        if (cylinders["C1"])["Loaded"]:
+            bottle = (cylinders["C1"])["Bottle"]
+            servo_num = (cylinders["C1"])["Bottle"]
+            cylinder_num = "C1"
+        elif (cylinders["C3"])["Loaded"]:
+            bottle = (cylinders["C3"])["Bottle"]
+            servo_num = (cylinders["C3"])["Bottle"]
+            cylinder_num = "C3"
+        elif (cylinders["C2"])["Loaded"]:
+            bottle = (cylinders["C2"])["Bottle"]
+            servo_num = (cylinders["C2"])["Bottle"]
+            cylinder_num = "C2"
+
+        bottle_loc: dict[str, float] = bottle_locations[str(bottle)]
+
+        # Move to the bottle with priority
         await move_to(self.drone.system, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
 
-        logging.info("Starting bottle drop")
+        logging.info(f"Starting bottle drop {bottle}")
         if self.drone.address == "serial:///dev/ttyUSB0:921600":
-            await airdrop.drop_bottle(self.drone.servo_num)
+            await airdrop.drop_bottle(servo_num)
+
+        (cylinders[cylinder_num])["Loaded"] = False
+
+        with open("flight/data/bottles.json", encoding="utf8") as output:
+            json.dump(cylinders, output)
 
         await asyncio.sleep(
             15
@@ -54,15 +79,15 @@ async def run(self: Airdrop) -> State:
 
         logging.info("-- Airdrop done!")
 
-        self.drone.bottle_num = self.drone.bottle_num + 1
-        if self.drone.servo_num == 2:
-            self.drone.servo_num = 0
-        else:
-            self.drone.servo_num = self.drone.servo_num + 1
+        continue_run: bool = False
 
-        if self.drone.bottle_num == 6:
-            return Land(self.drone, self.flight_settings)
-        return Waypoint(self.drone, self.flight_settings)
+        for cylinder in cylinders:
+            if cylinder["Loaded"]:
+                continue_run = True
+
+        if continue_run:
+            return Waypoint(self.drone, self.flight_settings)
+        return Land(self.drone, self.flight_settings)
 
     except asyncio.CancelledError as ex:
         logging.error("Airdrop state canceled")
