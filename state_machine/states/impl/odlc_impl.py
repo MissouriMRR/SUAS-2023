@@ -12,6 +12,8 @@ from state_machine.states.airdrop import Airdrop
 from state_machine.states.odlc import ODLC
 from state_machine.states.state import State
 
+from flight.waypoint.goto import move_to
+
 from vision.flyover_vision_pipeline import flyover_pipeline
 
 
@@ -173,6 +175,14 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
                         waypoint["Altitude"][0],
                         5 / 6,
                         take_photos,
+                )
+                else:
+                    await move_to(
+                        self.drone,
+                        waypoint["lats"][point],
+                        waypoint["longs"][point],
+                        waypoint["Altitude"][0],
+                        5 / 6,
                     )
 
             with open("flight/data/output.json", encoding="ascii") as output:
