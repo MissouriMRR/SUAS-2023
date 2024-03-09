@@ -8,6 +8,8 @@
         "simple_takeoff": true,
         "title": "",
         "description": "",
-        "waypoint_count": 0
+        "waypoint_count": 0,
+        "sim_flag": false,
+        "path_data_path": ""
     }
 }

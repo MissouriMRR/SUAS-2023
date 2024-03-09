@@ -5,7 +5,7 @@ import time
 import logging
 
 from mavsdk.telemetry import FlightMode
-from json_functions import update_state, update_drone, update_flight_settings
+from state_machine.state_tracker import update_state, update_drone, update_flight_settings
 from state_machine.states.land import Land
 
 
@@ -27,15 +27,9 @@ async def run(self: Land) -> None:
 
     """
     try:
-        update_state("data.json", "Land")
-        update_drone("data.json", self.drone.address, self.drone.odlc_scan)
-        update_flight_settings(
-            "data.json",
-            self.flight_settings.simple_takeoff,
-            self.flight_settings.run_title,
-            self.flight_settings.run_description,
-            self.flight_settings.waypoint_count,
-        )
+        update_state("Land")
+        update_drone(self.drone)
+        update_flight_settings(self.flight_settings)
 
         logging.info("Landing")
 

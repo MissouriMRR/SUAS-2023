@@ -4,7 +4,7 @@ import asyncio
 import logging
 import json
 
-from json_functions import update_state
+from state_machine.state_tracker import update_state
 
 from state_machine.states.airdrop import Airdrop
 from state_machine.states.waypoint import Waypoint
@@ -30,7 +30,7 @@ async def run(self: Airdrop) -> State:
     it back to the Waypoint state.
     """
     try:
-        update_state("data.json", "Airdrop")
+        update_state("Airdrop")
         logging.info("Airdrop")
         if self.drone.address == "serial:///dev/ttyUSB0:921600":
             # setup airdrop
@@ -67,7 +67,7 @@ async def run(self: Airdrop) -> State:
         # Move to the bottle with priority
         await move_to(self.drone.system, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
 
-        logging.info("Starting bottle drop")
+        logging.info("Starting bottle drop %s", bottle)
         if self.drone.address == "serial:///dev/ttyUSB0:921600":
             await airdrop.drop_bottle(servo_num)
 
@@ -82,10 +82,15 @@ async def run(self: Airdrop) -> State:
 
         logging.info("-- Airdrop done!")
 
-        if self.drone.bottle_num == 5:
-            return Land(self.drone, self.flight_settings)
-        self.drone.bottle_num = self.drone.bottle_num + 1
-        return Waypoint(self.drone, self.flight_settings)
+        continue_run: bool = False
+
+        for cylinder in cylinders:
+            if cylinder["Loaded"]:
+                continue_run = True
+
+        if continue_run:
+            return Waypoint(self.drone, self.flight_settings)
+        return Land(self.drone, self.flight_settings)
 
     except asyncio.CancelledError as ex:
         logging.error("Airdrop state canceled")

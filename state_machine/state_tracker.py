@@ -14,20 +14,50 @@ Each function is designed to handle specific types of updates, ensuring flexibil
 for managing JSON-based configurations or data storage. The module is built to be robust, handling
 common errors such as file not found or JSON decoding errors, and provides clear feedback for
 successful operations or encountered issues.
-
-- ChatGPT :)
 """
 
 import json
 from typing import Optional, Dict, Any
 
+from state_machine.drone import Drone
+from state_machine.flight_settings import FlightSettings
 
-def update_state(file_path: str, new_state: str) -> None:
+DEFAULT_STATE_PATH = "state_machine/state.json"
+
+
+def read_state_data(file_path: str = DEFAULT_STATE_PATH) -> Optional[Dict[str, Any]]:
+    """Reads the data from the state JSON file.
+
+    Parameters
+    ----------
+    file_path : str, optional
+        The file path of the JSON file, by default "state_machine/state.json"
+
+    Returns
+    -------
+    Optional[Dict[str, Any]]
+        The data from the JSON file, or None if there was an error reading the file
     """
-    Updates the 'state' field in a JSON file.
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        print(f"File {file_path} not found.")
+    except json.JSONDecodeError:
+        print(f"Error decoding JSON from file {file_path}.")
 
-    :param file_path: Path to the JSON file to be updated.
-    :param new_state: New state value as a string to replace the current state.
+    return None  # Return None if there was an error reading the file
+
+
+def update_state(new_state: str, file_path: str = DEFAULT_STATE_PATH) -> None:
+    """Updates the 'state' field in the JSON file with the new state.
+
+    Parameters
+    ----------
+    new_state : str
+        The new state to update the 'state' field with.
+    file_path : str, optional
+        The file path of the JSON file, by default "state_machine/state.json"
     """
     # Step 1: Read the current data from the file
     try:
@@ -50,13 +80,18 @@ def update_state(file_path: str, new_state: str) -> None:
     print(f"State updated to '{new_state}' in {file_path}.")
 
 
-def read_state_from_json(file_path: str) -> Optional[str]:
-    """
-    Reads the 'state' field from a JSON file and returns it.
+def read_state_from_json(file_path: str = DEFAULT_STATE_PATH) -> Optional[str]:
+    """Reads and returns the 'state' field from a JSON file.
 
-    :param file_path: Path to the JSON file to be read.
-    :return: The value of the 'state' field or None if the
-             file cannot be read or the field is missing.
+    Parameters
+    ----------
+    file_path : str, optional
+        The file path of the JSON file, by default "state_machine/state.json"
+
+    Returns
+    -------
+    Optional[str]
+        The 'state' field from the JSON file, or None if there was an error reading the file
     """
     try:
         with open(file_path, "r", encoding="utf-8") as file:
@@ -70,14 +105,15 @@ def read_state_from_json(file_path: str) -> Optional[str]:
     return None  # Return None if there was an error reading the file
 
 
-def update_drone(file_path: str, address: str, odlc_scan: bool) -> None:
-    """
-    Updates values in the 'drone' category of a JSON file.
+def update_drone(drone: Drone, file_path: str = DEFAULT_STATE_PATH) -> None:
+    """Updates the drone-specific information in the 'drone' category of a JSON file.
 
-    :param file_path: Path to the JSON file to be updated.
-    :param address: New address value (str).
-    :param odlc_scan: New odlc_scan value (bool).
-    :param servo_num: New servo_num value (int).
+    Parameters
+    ----------
+    drone : Drone
+        The drone object containing the updated information.
+    file_path : str, optional
+        The file path of the JSON file, by default "state_machine/state.json"
     """
     try:
         with open(file_path, "r", encoding="utf-8") as file:
@@ -87,10 +123,10 @@ def update_drone(file_path: str, address: str, odlc_scan: bool) -> None:
             print("No 'drone' category in JSON.")
             return
 
-        if address is not None:
-            data["drone"]["address"] = address
-        if odlc_scan is not None:
-            data["drone"]["odlc_scan"] = odlc_scan
+        if drone.address is not None:
+            data["drone"]["address"] = drone.address
+        if drone.odlc_scan is not None:
+            data["drone"]["odlc_scan"] = drone.odlc_scan
 
         with open(file_path, "w", encoding="utf-8") as file:
             json.dump(data, file, indent=4)
@@ -106,16 +142,16 @@ def update_drone(file_path: str, address: str, odlc_scan: bool) -> None:
 
 
 def update_flight_settings(
-    file_path: str, simple_takeoff: bool, title: str, description: str, waypoint_count: int
+    flight_settings: FlightSettings, file_path: str = DEFAULT_STATE_PATH
 ) -> None:
-    """
-    Updates values in the 'flight_settings' category of a JSON file.
+    """Updates the flight settings in the 'flight_settings' category of a JSON file.
 
-    :param file_path: Path to the JSON file to be updated.
-    :param simple_takeoff: New simple_takeoff value (bool).
-    :param title: New title value (str).
-    :param description: New description value (str).
-    :param waypoint_count: New waypoint_count value (int).
+    Parameters
+    ----------
+    flight_settings : FlightSettings
+        The flight settings object containing the updated information.
+    file_path : str, optional
+        The file path of the JSON file, by default "state_machine/state.json"
     """
     try:
         with open(file_path, "r", encoding="utf-8") as file:
@@ -125,14 +161,14 @@ def update_flight_settings(
             print("No 'flight_settings' category in JSON.")
             return
 
-        if simple_takeoff is not None:
-            data["flight_settings"]["simple_takeoff"] = simple_takeoff
-        if title is not None:
-            data["flight_settings"]["title"] = title
-        if description is not None:
-            data["flight_settings"]["description"] = description
-        if waypoint_count is not None:
-            data["flight_settings"]["waypoint_count"] = waypoint_count
+        if flight_settings.simple_takeoff is not None:
+            data["flight_settings"]["simple_takeoff"] = flight_settings.simple_takeoff
+        if flight_settings.run_title is not None:
+            data["flight_settings"]["title"] = flight_settings.run_title
+        if flight_settings.run_description is not None:
+            data["flight_settings"]["description"] = flight_settings.run_description
+        if flight_settings.waypoint_count is not None:
+            data["flight_settings"]["waypoint_count"] = flight_settings.waypoint_count
 
         with open(file_path, "w", encoding="utf-8") as file:
             json.dump(data, file, indent=4)

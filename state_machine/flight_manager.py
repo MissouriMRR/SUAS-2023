@@ -3,7 +3,9 @@
 import asyncio
 import logging
 from multiprocessing import Process
+import sys
 import time
+from typing import Any, Dict
 from mavsdk.telemetry import FlightMode, LandedState
 
 from state_machine.drone import Drone
@@ -11,6 +13,7 @@ from state_machine.state_machine import StateMachine
 from state_machine.states import Start
 from state_machine.states.state import State
 from state_machine.flight_settings import FlightSettings
+from state_machine.state_tracker import read_state_data
 
 
 class FlightManager:
@@ -150,11 +153,34 @@ class FlightManager:
         logging.critical("Kill switch activated. Terminating state machine.")
         state_machine_process.terminate()
 
-        # Get latest state sent through the pipe
-        state: State = Start(self.drone, FlightSettings())
+        # Get latest state started in the state machine
+        last_state_data: Dict[str, Any] | None = read_state_data()
+        if last_state_data is not None:
+            logging.info(last_state_data)
+            last_flight_settings: FlightSettings = FlightSettings(
+                simple_takeoff=last_state_data["flight_settings"]["simple_takeoff"],
+                title=last_state_data["flight_settings"]["title"],
+                description=last_state_data["flight_settings"]["description"],
+                waypoints=last_state_data["flight_settings"]["waypoint_count"],
+                sim_flag=last_state_data["flight_settings"]["sim_flag"],
+                path_data_path=last_state_data["flight_settings"]["path_data_path"],
+            )
+            last_drone: Drone = Drone(
+                address=last_state_data["drone"]["address"],
+            )
+            last_drone.odlc_scan = last_state_data["drone"]["odlc_scan"]
+            state: State = getattr(sys.modules["state_machine.states"], last_state_data["state"])
+        else:
+            # Unknown last state, just use Start
+            last_flight_settings = FlightSettings()
+            last_drone = Drone()
+            state = Start(last_drone, last_flight_settings)
+        print(__name__)
+        print(state)
 
         # Gotta wait for user input here
         logging.critical("Press enter to restart the state machine.")
+        input()
         input()
         state_machine: Process = Process(
             target=self._run_state_machine,
