@@ -7,9 +7,9 @@ import json
 from state_machine.state_tracker import update_state
 
 from state_machine.states.airdrop import Airdrop
+from state_machine.states.land import Land
 from state_machine.states.waypoint import Waypoint
 from state_machine.states.state import State
-from state_machine.states.land import Land
 
 from flight.maestro.air_drop import AirdropControl
 from flight.waypoint.goto import move_to
