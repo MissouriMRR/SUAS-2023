@@ -178,7 +178,7 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
                 )
                 else:
                     await move_to(
-                        self.drone,
+                        self.drone.system,
                         waypoint["lats"][point],
                         waypoint["longs"][point],
                         waypoint["Altitude"][0],
