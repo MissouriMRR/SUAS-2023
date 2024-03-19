@@ -26,17 +26,13 @@ async def run_test(_sim: bool) -> None:
     await drone.connect_drone()
     await drone.system.action.arm()
     await drone.system.action.takeoff()
-    print("hamood 1")
     state_machine = StateMachine(ODLC(drone, flight_settings), drone, flight_settings)
     state_machine_process: Process = Process(
         target=start_state_machine,
         args=(state_machine,),
     )
-    print("hamood 2")
     state_machine_process.start()
-    print("hamood3")
 
-    # compare test and main data
     activated_odlcs = 0
     while (activated_odlcs != 5):
         try:
