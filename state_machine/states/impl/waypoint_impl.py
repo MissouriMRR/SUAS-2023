@@ -126,7 +126,7 @@ async def run(self: Waypoint) -> State:
                 curr_altitude += altitude_slope * line_segment.length()
 
                 try:
-                    await move_to(self.drone.system, lat_deg, lon_deg, curr_altitude, .83)
+                    await move_to(self.drone.system, lat_deg, lon_deg, curr_altitude, 0.83)
                 except ActionError:
                     logging.warning(ActionError)
 
