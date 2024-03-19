@@ -6,26 +6,15 @@ import logging
 import json
 from multiprocessing import Process, Value
 from multiprocessing.sharedctypes import SynchronizedBase
-from typing import Final
 
 from flight.camera import Camera
 
+from flight.extract_gps import extract_gps, GPSData
 from state_machine.states.airdrop import Airdrop
 from state_machine.states.odlc import ODLC
 from state_machine.states.state import State
 
 from vision.flyover_vision_pipeline import flyover_pipeline
-
-
-# Parameters for the golf course
-# https://www.google.com/maps/place/37%C2%B056'53.0%22N+91%C2%B047'02.9%22W/@37.9480567,-91.7847826,180m/data=!3m1!1e3!4m4!3m3!8m2!3d37.9480556!4d-91.7841389?entry=ttu
-GOLF_LATITUDE: Final[float] = +(37 + 56 / 60 + 53.00 / 60 / 60)
-GOLF_LONGITUDE: Final[float] = -(91 + 47 / 60 + 02.90 / 60 / 60)
-# Circumference of Earth through poles is 40,007,863 m
-GOLF_AREA_SIZE: Final[float] = (
-    100 / 3.28084 * (360 / 40_007_863)
-)  # 100 feet north-south, smaller east-west
-GOLF_ALTITUDE: Final[float] = 100 / 3.28084  # 100 feet
 
 
 async def run(self: ODLC) -> State:
@@ -123,7 +112,8 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
         # Initialize the camera
         camera: Camera = Camera()
 
-        # These waypoint values are all that are needed to traverse the whole odlc drop location
+        # The waypoint values stored in waypoint_data.json are all that are needed
+        # to traverse the whole odlc drop location
         # because it is a small rectangle
         # The first waypoint is the midpoint of
         # the left side of the rectangle(one of the short sides), the second point is the
@@ -137,11 +127,8 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
         # is vertical 52.1 degrees and horizontal 72.5,
         # so using the minimum length side of the photo the coverage would be 90 feet allowing
         # 10 feet overlap on both sides
-        waypoint: dict[str, list[float]] = {
-            "lats": [38.31451966813249, 38.31430872867596, 38.31461622313521],
-            "longs": [-76.54519982319357, -76.54397320409971, -76.54516993186949],
-            "Altitude": [100],
-        }
+
+        gps_data: GPSData = extract_gps(self.flight_settings.path_data_path)
 
         # traverses the 3 waypoints starting at the midpoint on left to midpoint on the right
         # then to the top left corner at the rectangle
@@ -180,9 +167,9 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
 
                 await camera.odlc_move_to(
                     self.drone,
-                    waypoint["lats"][point],
-                    waypoint["longs"][point],
-                    waypoint["Altitude"][0],
+                    gps_data["odlc_waypoints"][point].latitude,
+                    gps_data["odlc_waypoints"][point].longitude,
+                    gps_data["odlc_altitude"],
                     5 / 6,
                     take_photos,
                 )

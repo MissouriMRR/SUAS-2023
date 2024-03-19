@@ -43,5 +43,11 @@
 	"longitude": -91.784169,
 	"altitude": 90
     }
-  ]
+  ],
+	"odlcAltitude": 100,
+	"odlcWaypoints": [
+		{"latitude": 37.94806200686384, "longitude": -91.78476320151908},
+		{"latitude": 37.94804910203295, "longitude": -91.78351457643927},
+		{"latitude": 37.94815813564722, "longitude": -91.78476161793802}
+	]
 }
