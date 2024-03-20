@@ -70,9 +70,9 @@ class FlightManager:
             target=self._run_state_machine,
             args=(flight_settings_obj,),
         )
-        
+
         self._run_kill_switch(state_machine_process)
-        
+
         state_machine_process.start()
 
         try:
@@ -138,17 +138,13 @@ class FlightManager:
             if connection_state.is_connected:
                 logging.info("Kill switch has been enabled.")
                 break
-    
-        #async for flight_mode in self.drone.system.telemetry.flight_mode():
+
+        # async for flight_mode in self.drone.system.telemetry.flight_mode():
         #    while flight_mode != FlightMode.POSCTL:
         #        time.sleep(1)
 
         logging.critical("Kill switch activated. Terminating state machine.")
         state_machine_process.terminate()
-
-
-
-
 
         # Get latest state started in the state machine
         last_state_data: Dict[str, Any] | None = read_state_data()
@@ -176,9 +172,6 @@ class FlightManager:
             state = Start(last_drone, last_flight_settings)
         print(__name__)
         print(state)
-
-
-
 
         # Gotta wait for user input here
         logging.critical("Press enter to restart the state machine.")
