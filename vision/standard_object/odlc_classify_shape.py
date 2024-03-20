@@ -1,16 +1,21 @@
 """
 Takes the contour of an ODLC shape and determine which shape it is
-"""
+""" 
 import numpy as np
 import nptyping as npt
 import cv2
-import vision.common.constants as consts
-import vision.common.odlc_characteristics as chars
-import vision.standard_object.odlc_contour_filtering as filtering
-import vision.common.bounding_box as bbox
+import scipy
+from scipy import signal
+from typing import List
+from vision.common import constants as consts
+from vision.common import odlc_characteristics as chars
+import json
 
 
 # constants
+NUM_STEPS: int = 128
+# Represents the number of intervals used when analyzing polar graph of shape
+
 MAX_CHILD_AMT: int = 2
 # The max number of (direct) child contours that a contour can have and be considered
 
@@ -39,77 +44,182 @@ CIRCULAR_RATIO_RANGE: float = 0.054
 # The max amount that the calculated ratio in classify_circular() may differ from the exact value
 # NOTE: do not set to above 0.054, this will result in overlap between two ratio ranges
 
+shape_from_peaks = {
+    1 : chars.ODLCShape.CIRCLE,
+    2 : chars.ODLCShape.SEMICIRCLE,
+    4 : chars.ODLCShape.RECTANGLE,
+    8 : chars.ODLCShape.CROSS
+}
 
-def process_shapes(
-    contours: list[consts.Contour], hierarchy: consts.Hierarchy, image_dims: tuple[int, int]
-) -> list[bbox.BoundingBox]:
-    """
-    Takes all of the contours of an image and will return BoundingBox list w/ shape attributes
+# Convertes x and y rectangular values to radius, angle tuples
+def cart2pol(x, y):
+    rho = np.sqrt(x**2 + y**2)
+    phi = np.arctan2(y, x)
+    return(rho, phi)
 
-    Parameters
-    ----------
-    contours : list[consts.Contour]
-        List of all contours from the image (from cv2.findContours())
-        NOTE: cv2.findContours() returns as a tuple, so convert it to list w/ list(the_tuple)
-    hierarchy : consts.Hierarchy
-        The contour hierarchy information returned from cv2.findContours()
-        (The 2nd returned value)
-    image_dims : tuple[int, int]
-        The dimensions of the image the contours are from.
-        y_dim : int
-            Image height.
-        x_dim : int
-            Image width.
+# Converts an array of Rectangular Coordinates to Polar
+def toPolar(arr):
+    polar = [] # Stores an array of angles and radii as tuples (radius, angle)
+    for i in range(len(arr)):
+        coord = cart2pol(arr[i][0][1],arr[i][0][0])
+        polar.append(coord)
+    return polar
 
-    Returns
-    -------
-    bounding_boxes : list[bbox.BoundingBox]
-        A list of BoundingBox objects that are the upright bounding box arround each corresponding
-        contour at same index in list and with an attribute that is {"shape": chars.ODLCShape}
-        with the identified shape or {"shape": None} if the contour does not match any.
-    """
-    retval_boxes: list[tuple[int, int, int, int]] = [cv2.boundingRect(cnt) for cnt in contours]
-    verts_lst: list[bbox.Vertices] = [
-        bbox.tlwh_to_vertices(retval_box[0], retval_box[1], retval_box[2], retval_box[3])
-        for retval_box in retval_boxes
-    ]
-    boxes: list[bbox.BoundingBox] = [
-        bbox.BoundingBox(verts, bbox.ObjectType.STD_OBJECT) for verts in verts_lst
-    ]
-
-    shape_boxes: list[bbox.BoundingBox] = []
-
-    idx: int
-    hier: npt.NDArray[npt.Shape["4"], npt.IntC]
-    box: bbox.BoundingBox
-    # for each contour (and corresponding elements in hierarchy array and box list)
-    for idx, (hier, box) in enumerate(zip(hierarchy[0], boxes)):
-        classification: chars.ODLCShape | None
-
-        # as long as the contour is not inside another contour that has been classified as a shape
-        if (
-            hier[3] == -1
-            or not boxes[hier[3]].attributes
-            or boxes[hier[3]].attributes["shape"] is None
-        ) and get_child_amt(idx, hierarchy) <= MAX_CHILD_AMT:
-            classification = classify_shape(contours[idx], image_dims)
+# Python implementation of merge sort algorithm, slightly edited to fit our array structure of tuples (sorted based on increasing angle).
+def merge_sort(data: List[int]) -> List[int]:
+    data_length = len(data)
+    if data_length < 2:
+        return data
+    
+    results = list()
+    midpoint = data_length // 2
+    
+    lefts = merge_sort(data[:midpoint])
+    rights = merge_sort(data[midpoint:])
+    
+    l = r = 0
+    while l < len(lefts) and r < len(rights):
+        if lefts[l][1] <= rights[r][1]:
+            results.append(lefts[l])
+            l += 1
         else:
-            # if the contour is inside an identified ODLC shape then it should not be recognized
-            classification = None
+            results.append(rights[r])
+            r += 1
+    
+    if l < len(lefts):
+        results += lefts[l:]
+    elif r < len(rights):
+        results += rights[r:]
+        
+    return results
 
-        if classification is not None:
-            box.set_attribute("shape", classification)
-            shape_boxes.append(box)
 
-    return shape_boxes
+# Condenses the array of polar coordinates to have 'NUM_STEPS' points stored for analysis
+def condense_polar(polar_array) :
+    step = 2 * 3.141592 / NUM_STEPS # distance between each x-value (angle)
+    new_array = np.empty(NUM_STEPS, dtype=tuple)
+    current_step = -3.141592 + step # start at -PI (plus step, because at exactly -PI there is no data)
+    index = 0 # index of new_array
+    length_polar_array = len(polar_array)
+    sum = 0
+    last_i = 0
 
+    x = np.empty(len(polar_array))
+    y = np.empty(len(polar_array))
+    for i in range (len(polar_array)):
+        x[i] = polar_array[i][1]
+        y[i] = polar_array[i][0]
+
+
+    # f = RegularGridInterpolator((x), y)
+    f = scipy.interpolate.interp1d(x, y, kind='linear', fill_value='extrapolate')
+    newx = np.linspace(x.min(), x.max(), num=NUM_STEPS)
+    newy = f(newx)
+    return newx, newy
+
+
+# Returns an array of tuples of the radii and angles of the contours from a given image address. Format: (radius, angle)
+def Generate_Polar_Array(cnt: consts.Contour): # Returns an array of Polar Coordinate Tuples, sorted with increasing angles from -PI to PI
+    x_avg = 0
+    y_avg = 0
+    numPoints = 0
+    # Finds average x and y value
+    for point in cnt:
+        y_avg += point[0][0]
+        x_avg += point[0][1]
+        numPoints += 1
+    
+    x_avg = x_avg // numPoints
+    y_avg = y_avg // numPoints
+    i = 0
+    # Centers the shape at (0,0) to allow for a better scan of the shape in polar coordinates
+    for point in cnt:
+        point[0][0] -= y_avg
+        point[0][1] -= x_avg
+        i += 1
+
+    pol_cnt = toPolar(cnt) # Converts array of rectangular coordinates (x,y) to polar (angle, radius)
+    pol_cnt_sorted = merge_sort(pol_cnt)
+    x, y = condense_polar(pol_cnt_sorted)
+
+    return x, y
+
+ODLCShape_To_ODLC_Index = {
+    chars.ODLCShape.CIRCLE : 0,
+    chars.ODLCShape.QUARTER_CIRCLE : 1,
+    chars.ODLCShape.SEMICIRCLE : 2,
+    chars.ODLCShape.TRIANGLE : 3,
+    chars.ODLCShape.PENTAGON : 4,
+    chars.ODLCShape.STAR : 5,
+    chars.ODLCShape.RECTANGLE : 6,
+    chars.ODLCShape.CROSS : 7
+}
+
+# Checks to see if an ODLC's Polar graph is adequately similar to the "guessed" ODLC's sample graph
+def Verify_Shape_Choice(mystery_radii_list, shape_choice, sample_ODLC_radii):
+    difference = 0.0
+    for i in range(NUM_STEPS):
+        difference += abs(mystery_radii_list[i] - sample_ODLC_radii[i])
+    return difference < NUM_STEPS / 8 # IMPORTANT -------------------THIS EQUATION IS NOT TESTED AT ALLLLL--------------------
+        
+def Compare_Based_On_Peaks(mysteryArr) -> chars.ODLCShape | None:  # Returns the name of the most similar ODLC object given an array of Polar Tuples (radius, angle)
+        mysteryArr_x, mysteryArr_y = mysteryArr
+        mysteryArr_y /= np.max(mysteryArr_y) # Normalizes radii to all be between 0 and 1
+        mystery_min_index = np.argmin(mysteryArr_y)
+        mysteryArr_y = np.roll(mysteryArr_y, -mystery_min_index) # Rolls all values to put minimum radius at x = 0
+
+
+        peaks = signal.find_peaks(mysteryArr_y, prominence=0.05)[0]
+        num_peaks = len(peaks)
+        ODLC_guess: chars.ODLCShape
+
+
+        if(mysteryArr_y[0] > .9): # If the minimum value is greater than .9 (90% of Maximum Radius), then it is a circle
+            ODLC_guess = chars.ODLCShape.CIRCLE
+
+        elif num_peaks == 2 or num_peaks == 4 or num_peaks == 8: # If we have a shape able to be uniquely defined by it's number of peaks
+            ODLC_guess = shape_from_peaks[num_peaks]
+        
+        elif num_peaks == 3: # Must narrow down from triangle or quarter circle
+            # Sort peaks in by increasing value
+            peaks = (np.asarray(peaks))
+            peaksVals = [0.0] * 3
+            peaksVals[0] = mysteryArr_y[peaks[0]]
+            peaksVals[1] = mysteryArr_y[peaks[1]]
+            peaksVals[2] = mysteryArr_y[peaks[2]]
+            peaksVals = np.sort(peaksVals)
+            if peaksVals[2] - peaksVals[1] < .05 and peaksVals[1] - peaksVals[0] > .15: # If there is a small enough difference between 2 greatest peaks,
+                                                                                        # And large enough difference between 2 smallest peaks, we have
+                                                                                        # A quarter cricle
+                ODLC_guess = chars.ODLCShape.QUARTER_CIRCLE
+            else:
+                ODLC_guess = chars.ODLCShape.TRIANGLE
+            
+        elif num_peaks == 5: # Must narrow down from pentagon or star
+            min = np.min(mysteryArr_y)
+            if min < .55: # If minimum radius is less than .55 (55% of maximum radius), the we have a star
+                ODLC_guess = chars.ODLCShape.STAR
+            else:
+                ODLC_guess = chars.ODLCShape.PENTAGON
+        elif len(signal.find_peaks([0 if val < .85 else val for val in mysteryArr_y], prominence=0.02)[0]) == 8:
+            ODLC_guess = chars.ODLCShape.CROSS
+        else:
+            return None
+        # Read the appropriate Array from json file
+        f = open("vision/standard_object/sample_ODLCs.json")
+        sample_shapes = json.load(f)
+        sample_shape = sample_shapes[ODLCShape_To_ODLC_Index[ODLC_guess]]  # Finds the correct sample shape's array
+        sample_shape = np.asarray(sample_shape)
+        if not Verify_Shape_Choice(mysteryArr_y, ODLC_guess, sample_shape):
+            return None
+        return ODLC_guess
 
 def classify_shape(
     contour: consts.Contour,
     image_dims: tuple[int, int],
-    approx_contour: consts.Contour | None = None,
 ) -> chars.ODLCShape | None:
-    """
+    return Compare_Based_On_Peaks(Generate_Polar_Array(contour))
+"""
     Will first determine whether the specified contour is an ODLC shape, then will determine
     which ODLC shape it is.
 
@@ -124,364 +234,25 @@ def classify_shape(
             The height dimension of the image
         image_dim_width : int
             The width dimension of the image
-    approx_contour : consts.Contour | None = None
-        Optional parameter to provide the approximated version (from cv2.approxPolyDP) of the
-        contour to be checked to avoid recalculation
-        This is None by default, it is only not None when the approximated contour is provided
 
     Returns
     -------
     shape : chars.ODLCShape | None
         Will return one of the ODLC shapes defined in vision/common/odlc_characteristics or None
-        if the given contour is not an ODLC shape (fails filtering or doesnt match any ODLC)
-    """
-    if approx_contour is None:
-        approx_contour = cv2.approxPolyDP(contour, APPROX_CNT_EPSILON, True)
+        if the given contour is not an ODLC shape (doesnt match any ODLC)
+"""
+def Image_Address_To_Contour(address):
+    image = cv2.imread(address, cv2.IMREAD_GRAYSCALE)
+    
+    ret, image = cv2.threshold(image, 190, 255, 1)
+    image = 255 - image
+    #image = cv2.blur(image, (5,5)) # Currently not using, but could be useful in the future for reducing noise
+    
+    contours, _hierarchy = cv2.findContours(image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE) #, 2, 1
 
-    is_shape: bool
-    is_circular: bool
-    is_shape, is_circular = filtering.filter_contour(contour, image_dims, approx_contour)
-
-    if not is_shape:
-        return None
-
-    defects: int = check_concavity(approx_contour)
-
-    shape: chars.ODLCShape | None
-    if defects not in {0, 4, 5}:
-        shape = None  # if has not 0, 4, or 5 defects then not a valid shape
-    elif is_circular and defects == 0:
-        shape = classify_circular(contour)
-    else:
-        shape = check_polygons(approx_contour)
-
-        if (defects == 4) ^ (shape == chars.ODLCShape.CROSS):  # logical xor
-            shape = None  # one of above cannot be true while the other is false if valid shape
-        elif (defects == 5) ^ (shape == chars.ODLCShape.STAR):
-            shape = None  # one of above cannot be true while the other is false if valid shape
-
-    return shape
-
-
-def get_child_amt(idx: int, hier: consts.Hierarchy) -> int:
-    """
-    Returns the number of child contours that the contour at the given idx has.
-    Does not count children of children.
-
-    Parameters
-    ----------
-    idx : int
-        The index of the contour to count the number of children of (idx < len(hier))
-    hier : consts.Hierarchy
-        The structure that contains the contour hierarchy information
-
-    Returns
-    -------
-    count : int
-        The number of (direct) children that the given contour has
-    """
-    count: int = 1
-    curr: int = hier[0, idx, 2]
-
-    if curr == -1:
-        return 0
-
-    while hier[0, curr, 0] != -1:
-        curr = hier[0, curr, 0]
-        count += 1
-
-    return count
-
-
-def check_concavity(approx: consts.Contour) -> int:
-    """
-    Counts for the number of convexity defects that a shape has.
-
-    Parameters
-    ----------
-    approx : consts.Contour
-        Approximated version of the contour (polygon approximation with cv2.approxPolyDP())
-
-    Returns
-    -------
-    defects_amt : int
-        The number of defects that the given contour has.
-    """
-    # cv2.convexHull() will give a new contour that has filled out any concave "dents" in the
-    # given contour. Can be thought of as taking the shape a rubber band makes around the contour
-    convex_hull: npt.NDArray[npt.Shape["*, 1"], npt.IntC] = cv2.convexHull(
-        approx, returnPoints=False
-    )
-
-    # cv2.convexityDefects takes result of cv2.convexHull() and original contour and returns all
-    # of the points where the two shapes differ.
-    # in rubber band analogy, counting the number of gaps between the shape and the rubber band
-    # eg. a plus has 4 corners that point inward so the rubber band would not touch it in 4 spots
-    defects: npt.NDArray[npt.Shape["*, 1, 4"], npt.IntC] | None = cv2.convexityDefects(
-        approx, convex_hull
-    )
-
-    return len(defects) if defects is not None else 0
-
-
-def get_angle(
-    pts: tuple[
-        npt.NDArray[npt.Shape["1, 2"], npt.IntC],
-        npt.NDArray[npt.Shape["1, 2"], npt.IntC],
-        npt.NDArray[npt.Shape["1, 2"], npt.IntC],
-    ]
-) -> npt.Float64:
-    """
-    Takes 3 points and calculates the angle they make.
-
-    Parameters
-    ----------
-    pts : tuple[
-        npt.NDArray[npt.Shape["1, 2"], npt.IntC],
-        npt.NDArray[npt.Shape["1, 2"], npt.IntC],
-        npt.NDArray[npt.Shape["1, 2"], npt.IntC]
-    ]
-        Three points that make an angle that will be calculated
-        All points formatted as done in openCV [[y, x]].
-        pt_a : npt.NDArray[npt.Shape["1, 2"], npt.IntC]
-            One of the points that form the angle, 0th index in the tuple.
-        vertex : npt.NDArray[npt.Shape["1, 2"], npt.IntC]
-            The point that is in the middle, where the angle is, 1st index in the tuple.
-        pt_b : npt.NDArray[npt.Shape["1, 2"], npt.IntC]
-            The other point that forms the angle, 2nd index in the tuple.
-
-    Returns
-    -------
-    angle : npt.Float64
-        The angle (in deg) of the angle formed by the lines (pt_a, vertex) and (vertex, pt_b)
-
-    Notes
-    -----
-    Angle formula is derived from vector dot product (the one that uses the angle between vectors)
-    If there are vectors a and b with angle t between them then:
-        a.b = ||a||*||b||*cos(t)
-        (Where a.b is the dot product of a and b)
-    This can be rearranged to:
-        t = arccos((a.b) / (||a||*||b||))
-    """
-    # vector forms of points a (pts[0]) and b (pts[2]) with vertex (pts[1]) as origin
-    vec_a: npt.NDArray[npt.Shape["1, 2"], npt.IntC] = pts[0] - pts[1]
-    vec_b: npt.NDArray[npt.Shape["1, 2"], npt.IntC] = pts[2] - pts[1]
-
-    vec_a = np.squeeze(vec_a)
-    vec_b = np.squeeze(vec_b)
-
-    return np.degrees(
-        np.arccos(np.dot(vec_a, vec_b) / (np.linalg.norm(vec_a) * np.linalg.norm(vec_b)))
-    )
-
-
-def get_angles(approx: consts.Contour) -> npt.NDArray[npt.Shape["*"], npt.Float64]:
-    """
-    Will find the angle at every point in the given approximated contour.
-
-    Parameters
-    ----------
-    approx : consts.Contour
-        Approximated version of the contour (polygon approximation with cv2.approxPolyDP())
-
-    Returns
-    -------
-    angles : npt.NDArray[npt.Shape["*"], npt.Float64]
-        1d array of angles for each corresponding vertex in the given approximated contour
-    """
-    angles: npt.NDArray[npt.Shape["*"], npt.Float64] = np.empty(approx.shape[0], npt.Float64)
-    idx: int
-    a_pt: npt.NDArray[npt.Shape["1, 2"], npt.IntC]  # one point of the approx contour
-    for idx, a_pt in enumerate(approx):
-        angles[idx] = get_angle((approx[idx - 1], a_pt, approx[(idx + 1) % approx.shape[0]]))
-
-    return angles
-
-
-def compare_angles(
-    angles: npt.NDArray[npt.Shape["*"], npt.Float64], compare_angle: float, thresh: float
-) -> npt.NDArray[npt.Shape["*"], npt.Bool8]:
-    """
-    Takes an array, angles, and compares each element against a specific angle.
-
-    Parameters
-    ----------
-    angles : npt.NDArray[npt.Shape["*"], npt.Float64]
-        An array of angles of some contour (assumed in degrees but would work if all values are
-        the same unit)
-    compare_angle : float
-        The value to compare each element of angles to.
-    thresh : float
-        The range on each side of angle that each element of angles may be and still pass.
-
-    Returns
-    -------
-    are_valid : npt.NDArray[npt.Shape["*"], npt.Bool8]
-        Each element represents whether the corresponding element of angles was within thresh
-        of angle
-    """
-    are_valid: npt.NDArray[npt.Shape["*"], npt.Bool8] = np.empty(angles.shape[0], npt.Bool8)
-    idx: int
-    ang: npt.Float64  # each individual angle in angles
-    for idx, ang in enumerate(angles):
-        are_valid[idx] = abs(ang - compare_angle) < thresh
-
-    return are_valid
-
-
-def get_lengths(cnt: consts.Contour) -> npt.NDArray[npt.Shape["*"], npt.Float64]:
-    """
-    Takes a closed contour and will return an array of all its side lengths.
-
-    Parameters
-    ----------
-    cnt : consts.Contour
-        The contour that this will calculate all of the lengths between consecutive points of
-        If approximated with cv2.approxPolyDP(), then each length will be a side length
-
-    Returns
-    -------
-    lengths : npt.NDArray[npt.Shape["*"], npt.Float64]
-        Array of each side length of the given approximated contour
-        Or just length between consecutive points in an unapproximated contour
-    """
-    lengths: npt.NDArray[npt.Shape["*"], npt.Float64] = np.empty(cnt.shape[0], npt.Float64)
-    idx: int
-    cnt_pt: npt.NDArray[npt.Shape["1, 2"], npt.IntC]  # each point in the contour
-    for idx, cnt_pt in enumerate(cnt):
-        lengths[idx] = np.sqrt(
-            np.square(cnt_pt[0, 0] - cnt[(idx + 1) % cnt.shape[0], 0, 0])
-            + np.square(cnt_pt[0, 1] - cnt[(idx + 1) % cnt.shape[0], 0, 1])
-        )
-
-    return lengths
-
-
-def check_polygons(approx: consts.Contour) -> chars.ODLCShape | None:
-    """
-    Checks the shape against the possible noncircular odlc polygons based on number of sides.
-
-    Parameters
-    ----------
-    approx : consts.Contour
-        Approximated version of the contour (polygon approximation with cv2.approxPolyDP())
-
-    Returns
-    -------
-    polygonal_shape : chars.ODLCShape | None
-        Will return one of TRIANGLE, SQUARE, RECTANGLE, TRAPEZOID, PENTAGON, HEXAGON, OCTAGON,
-        STAR, or CROSS from ODLCShape Enum or None if shape does not match any of these.
-    """
-    lengths: npt.NDArray[npt.Shape["*"], npt.Float64] = get_lengths(approx)
-    has_eq_side_lengths: bool = compare_side_len_eq(lengths)
-    good_aspect_ratio: bool = filtering.test_min_area_box(approx, SHAPE_ASPECT_RATIO_RANGE)
-
-    angles: npt.NDArray[npt.Shape["*"], npt.Float64]
-    shape: chars.ODLCShape | None = None
-    match len(approx):
-        case 3:
-            shape = chars.ODLCShape.TRIANGLE
-        case 4:
-            angles = get_angles(approx)
-            # if all angles approximately 90 deg, square or rectangle, else trapezoid
-            if np.all(compare_angles(angles, 90, RIGHT_ANG_THRESH)):
-                # if all side lengths are (approximately) equal then square, else rectangle
-                if has_eq_side_lengths and good_aspect_ratio:
-                    shape = chars.ODLCShape.SQUARE
-                else:
-                    shape = chars.ODLCShape.RECTANGLE
-            else:
-                shape = chars.ODLCShape.TRAPEZOID
-        case 5:
-            if good_aspect_ratio:
-                shape = chars.ODLCShape.PENTAGON
-        case 6:
-            if good_aspect_ratio:
-                shape = chars.ODLCShape.HEXAGON
-        case 7:
-            if good_aspect_ratio:
-                shape = chars.ODLCShape.HEPTAGON
-        case 8:
-            if good_aspect_ratio:
-                shape = chars.ODLCShape.OCTAGON
-        case 10:
-            if has_eq_side_lengths:
-                shape = chars.ODLCShape.STAR
-        case 12:
-            angles = get_angles(approx)
-            # a plus shape should have exactly 8 right angles *inside* of it (2 on each bar)
-            if np.count_nonzero(compare_angles(angles, 90, RIGHT_ANG_THRESH)) == 8:
-                shape = chars.ODLCShape.CROSS
-        case _:
-            shape = None
-
-    return shape
-
-
-def compare_side_len_eq(lengs: npt.NDArray[npt.Shape["*"], npt.Float64]) -> bool:
-    """
-    Checks if all of the side lengths given are (approximately) equal.
-
-    Parameters
-    ----------
-    lengths : npt.NDArray[npt.Shape["*"], npt.Float64]
-        An array of all the side lengths of a polygon (from get_lengths())
-
-    Returns
-    -------
-    eq_side_lengths : bool
-        True if all of the given side lengths are approximately equal
-    """
-    return bool(
-        np.all(np.where(abs((lengs / np.mean(lengs)) - 1) < SIDE_LEN_EQ_THRESH, True, False))
-    )
-
-
-def classify_circular(contour: consts.Contour) -> chars.ODLCShape:
-    """
-    Determines which circular shape the given contour is (assumed to be a circular shape)
-
-    Parameters
-    ----------
-    contour : consts.Contour
-        The original contour to evaluate
-
-    Returns
-    -------
-    circular_shape : chars.ODLCShape
-        Will return one of CIRCLE, SEMICIRCLE, QUARTER_CIRCLE from ODLCShape Enum
-
-    Notes
-    -----
-    Alternative method to determine which circular shape could be to see how many right angles
-    the given shape has a quarter-circle may have 1 or 3 (if corner between straight line and
-    curve show up as a right angle), and a semicircle would have 0 or 2 for same reason. But
-    a regular circle would have 0 right angles, which may conflict with semicircle.
-    """
-    approx: consts.Contour = cv2.approxPolyDP(contour, cv2.arcLength(contour, True) * 0.01, True)
-    max_dist: npt.Float64 = np.max(get_lengths(approx))
-    perimeter: npt.Float64 = cv2.arcLength(contour, True)
-
-    if abs((max_dist / perimeter) - QUARTER_CIRCLE_RATIO) < CIRCULAR_RATIO_RANGE:
-        return chars.ODLCShape.QUARTER_CIRCLE
-
-    if abs((max_dist / perimeter) - SEMICIRCLE_RATIO) < CIRCULAR_RATIO_RANGE:
-        return chars.ODLCShape.SEMICIRCLE
-    return chars.ODLCShape.CIRCLE
-
-
-if __name__ == "__main__":
-    # make some test shape
-    main_shape: consts.Contour = np.array(
-        [[[0, 0]], [[5, 5]], [[0, 10]], [[10, 10]], [[5, 5]], [[10, 0]]]
-    )
-    # make an approximation
-    main_approx: consts.Contour = cv2.approxPolyDP(main_shape, APPROX_CNT_EPSILON, True)
-
-    print(type(main_shape), main_shape.shape, main_shape)
-    print(type(main_approx), main_approx.shape, main_approx)
-    # run each individual internal testing function to check behavior
-    print(check_concavity(main_shape))
-    print(check_polygons(main_approx))
-    print(classify_circular(main_shape))
+    cnt = contours[0] # Sets cnt equal to most outer Contours
+    cv2.drawContours(image, cnt, -1, (100, 100, 100), 3)
+    return cnt
+def test_all_shapes():
+    for i in range(8):
+        print("shape: " + classify_shape(Image_Address_To_Contour("/home/lukedennison/Pictures/bin_real_images/shape" + str(i + 1) + ".png")))
