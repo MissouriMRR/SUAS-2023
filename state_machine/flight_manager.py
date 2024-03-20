@@ -70,23 +70,16 @@ class FlightManager:
             target=self._run_state_machine,
             args=(flight_settings_obj,),
         )
-        kill_switch_process: Process = Process(
-            target=self._run_kill_switch, args=(state_machine_process,)
-        )
-
+        
+        self._run_kill_switch(state_machine_process)
+        
         state_machine_process.start()
-        kill_switch_process.start()
 
         try:
             while state_machine_process.is_alive():
                 await asyncio.sleep(0.25)
 
             logging.info("State machine joined")
-
-            while kill_switch_process.is_alive():
-                await asyncio.sleep(0.25)
-
-            logging.info("Kill switch joined")
 
             logging.info("Done!")
         except KeyboardInterrupt:
@@ -145,13 +138,17 @@ class FlightManager:
             if connection_state.is_connected:
                 logging.info("Kill switch has been enabled.")
                 break
-
-        async for flight_mode in self.drone.system.telemetry.flight_mode():
-            while flight_mode != FlightMode.HOLD:
-                time.sleep(1)
+    
+        #async for flight_mode in self.drone.system.telemetry.flight_mode():
+        #    while flight_mode != FlightMode.POSCTL:
+        #        time.sleep(1)
 
         logging.critical("Kill switch activated. Terminating state machine.")
         state_machine_process.terminate()
+
+
+
+
 
         # Get latest state started in the state machine
         last_state_data: Dict[str, Any] | None = read_state_data()
@@ -169,7 +166,9 @@ class FlightManager:
                 address=last_state_data["drone"]["address"],
             )
             last_drone.odlc_scan = last_state_data["drone"]["odlc_scan"]
-            state: State = getattr(sys.modules["state_machine.states"], last_state_data["state"])
+            # in case the drone eventually needs to start from another state
+            # state: State = getattr(sys.modules["state_machine.states"], last_state_data["state"])
+            state = Start(last_drone, last_flight_settings)
         else:
             # Unknown last state, just use Start
             last_flight_settings = FlightSettings()
@@ -178,9 +177,13 @@ class FlightManager:
         print(__name__)
         print(state)
 
+
+
+
         # Gotta wait for user input here
         logging.critical("Press enter to restart the state machine.")
         input()
+        logging.critical("Are you sure?")
         input()
         state_machine: Process = Process(
             target=self._run_state_machine,
