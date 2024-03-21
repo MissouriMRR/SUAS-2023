@@ -136,7 +136,7 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
             airdrop_dict = json.load(output)
             airdrops: int = len(airdrop_dict)
             point: int
-        while airdrops != 5:
+        while airdrops < self.flight_settings.standard_object_count:
             logging.info("Starting odlc zone flyover")
 
             for point in range(3):

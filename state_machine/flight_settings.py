@@ -4,6 +4,7 @@ from typing import Final
 
 DEFAULT_RUN_TITLE: Final[str] = "SUAS Test Flight"
 DEFAULT_RUN_DESCRIPTION: Final[str] = "Test flight for SUAS 2023"
+DEFAULT_STANDARD_OBJECT_COUNT: Final[int] = 5
 
 
 class FlightSettings:
@@ -20,6 +21,8 @@ class FlightSettings:
         A small description for the current flight
     __skip_waypoint: bool
         Whether to skip the waypoint state.
+    __standard_object_count: int
+        The number of standard objects to attempt to find.
     __sim_flag: bool
         A flag representing if the connected drone is a simulation
     __path_data_path: str
@@ -35,6 +38,10 @@ class FlightSettings:
         Returns whether to skip the waypoint state.
     skip_waypoint(flag: bool) -> None
         Setter for configuring whether to skip the waypoint state.
+    standard_object_count() -> int
+        Returns the number of standard objects to attempt to find.
+    standard_object_count(count: int) -> None
+        Setter for the number of standard objects to attempt to find.
     run_title() -> str
         `Returns the flight title
     run_title(new_title: str) -> None
@@ -59,6 +66,7 @@ class FlightSettings:
         title: str = DEFAULT_RUN_TITLE,
         description: str = DEFAULT_RUN_DESCRIPTION,
         skip_waypoint: bool = False,
+        standard_object_count: int = DEFAULT_STANDARD_OBJECT_COUNT,
         sim_flag: bool = False,
         path_data_path: str = "flight/data/waypoint_data.json",
     ) -> None:
@@ -75,6 +83,8 @@ class FlightSettings:
             Sets a descriptive explanation for the current flight execution
         skip_waypoint : bool
             Whether to skip the waypoint state.
+        standard_object_count : int
+            The number of standard objects to attempt to find.
         sim_flag : bool, default False
             A flag representing if the connected drone is a simulation
         path_data_path : str, default "flight/data/waypoint_data.json"
@@ -84,6 +94,7 @@ class FlightSettings:
         self.__run_title: str = title
         self.__run_description: str = description
         self.__skip_waypoint: bool = skip_waypoint
+        self.__standard_object_count: int = standard_object_count
         self.__sim_flag: bool = sim_flag
         self.__path_data_path: str = path_data_path
 
@@ -136,6 +147,31 @@ class FlightSettings:
             Whether to skip the waypoint state.
         """
         self.__skip_waypoint = flag
+
+    # ----- ODLC Settings ----- #
+    @property
+    def standard_object_count(self) -> int:
+        """
+        Get the number of standard objects to attempt to find.
+
+        Returns
+        -------
+        count : int
+            The number of standard objects to attempt to find.
+        """
+        return self.__standard_object_count
+
+    @standard_object_count.setter
+    def standard_object_count(self, count: int) -> None:
+        """
+        Set the number of standard objects to attempt to find.
+
+        Parameters
+        ----------
+        count : int
+            The number of standard objects to attempt to find.
+        """
+        self.__standard_object_count = count
 
     # ----- Flight Initialization Settings ----- #
     @property
