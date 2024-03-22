@@ -1,10 +1,13 @@
 """Runs emergent object code for testing purposes"""
 
+from ctypes import c_bool
+from multiprocessing.sharedctypes import SynchronizedBase
 import time
 from typing import Callable
+
 import cv2
-import numpy as np
 from nptyping import NDArray, Shape
+import numpy as np
 
 import vision.common.constants as consts
 
@@ -17,7 +20,9 @@ import vision.pipeline.pipeline_utils as pipe_utils
 
 # Disable duplicate code checking because the flyover pipeline is similar
 # pylint: disable=duplicate-code
-def emg_integration_pipeline(camera_data_path: str, state_path: str, output_path: str) -> None:
+def emg_integration_pipeline(
+    camera_data_path: str, capture_status: "SynchronizedBase[c_bool]", output_path: str
+) -> None:
     """
     Runs the emergent object integration test - finds the emergent object in a set of images
     Saves a single coordinate in the json file output_path, with the key "0".
@@ -26,7 +31,7 @@ def emg_integration_pipeline(camera_data_path: str, state_path: str, output_path
     ----------
     camera_data_path: str
         The path to the json file containing the CameraParameters entries
-    state_path: str
+    capture_status: SynchronizedBase[c_bool]
         A text file containing True if all images have been taken and False otherwise
     output_path: str
         The json file name and path to save the data in
@@ -45,7 +50,7 @@ def emg_integration_pipeline(camera_data_path: str, state_path: str, output_path
         time.sleep(0.1)
 
         # Check if all images have been taken
-        all_images_taken = pipe_utils.flyover_finished(state_path)
+        all_images_taken = capture_status.value  # type: ignore
 
         # Load in the json containing the camera data
         image_parameters: dict[str, consts.CameraParameters] = pipe_utils.read_parameter_json(

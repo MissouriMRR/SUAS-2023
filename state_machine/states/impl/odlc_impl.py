@@ -10,10 +10,11 @@ from multiprocessing.sharedctypes import SynchronizedBase
 from flight.camera import Camera
 
 from flight.extract_gps import extract_gps, GPSData
+from integration_tests.emg_obj_vision import emg_integration_pipeline
+from state_machine.flight_settings import FlightSettings
 from state_machine.states.airdrop import Airdrop
 from state_machine.states.odlc import ODLC
 from state_machine.states.state import State
-
 from vision.flyover_vision_pipeline import flyover_pipeline
 
 
@@ -55,7 +56,9 @@ async def run(self: ODLC) -> State:
                 capture_status,
             ),
         )
-        vision_process = Process(target=vision_odlc_logic, args=(capture_status,))
+        vision_process = Process(
+            target=vision_odlc_logic, args=(capture_status, self.flight_settings)
+        )
 
         flight_process.start()
         vision_process.start()
@@ -186,9 +189,18 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
         pass
 
 
-def vision_odlc_logic(capture_status: "SynchronizedBase[c_bool]") -> None:
+def vision_odlc_logic(
+    capture_status: "SynchronizedBase[c_bool]", flight_settings: FlightSettings
+) -> None:
     """
     Implements the run method for the ODLC state.
+
+    Parameters
+    ----------
+    capture_status : SynchronizedBase[c_bool]
+        A text file containing True if all images have been taken and False otherwise
+    flight_settings : FlightSettings
+        Settings for this flight.
 
     Returns
     -------
@@ -201,7 +213,12 @@ def vision_odlc_logic(capture_status: "SynchronizedBase[c_bool]") -> None:
     and transitioning it to the Airdrop state.
     """
     try:
-        flyover_pipeline("flight/data/camera.json", capture_status, "flight/data/output.json")
+        pipeline = (
+            emg_integration_pipeline
+            if flight_settings.standard_object_count == 0
+            else flyover_pipeline
+        )
+        pipeline("flight/data/camera.json", capture_status, "flight/data/output.json")
     except asyncio.CancelledError as ex:
         logging.error("ODLC state canceled")
         raise ex
