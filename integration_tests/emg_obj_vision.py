@@ -1,4 +1,4 @@
-"""Runs emergent object code for testing purposes"""
+"""Contains the emergent object integration test pipeline."""
 
 from ctypes import c_bool
 from multiprocessing.sharedctypes import SynchronizedBase
