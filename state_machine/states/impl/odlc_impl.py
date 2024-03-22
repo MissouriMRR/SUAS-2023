@@ -2,17 +2,19 @@
 
 import asyncio
 from ctypes import c_bool
-from multiprocessing import Process, Value
-from multiprocessing.sharedctypes import SynchronizedBase
 import logging
 import json
+from multiprocessing import Process, Value
+from multiprocessing.sharedctypes import SynchronizedBase
 
 from flight.camera import Camera
 
+from flight.extract_gps import extract_gps, GPSData
+from integration_tests.emg_obj_vision import emg_integration_pipeline
+from state_machine.flight_settings import FlightSettings
 from state_machine.states.airdrop import Airdrop
 from state_machine.states.odlc import ODLC
 from state_machine.states.state import State
-
 from vision.flyover_vision_pipeline import flyover_pipeline
 
 
@@ -54,7 +56,9 @@ async def run(self: ODLC) -> State:
                 capture_status,
             ),
         )
-        vision_process = Process(target=vision_odlc_logic, args=(capture_status,))
+        vision_process = Process(
+            target=vision_odlc_logic, args=(capture_status, self.flight_settings)
+        )
 
         flight_process.start()
         vision_process.start()
@@ -111,7 +115,8 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
         # Initialize the camera
         camera: Camera = Camera()
 
-        # These waypoint values are all that are needed to traverse the whole odlc drop location
+        # The waypoint values stored in waypoint_data.json are all that are needed
+        # to traverse the whole odlc drop location
         # because it is a small rectangle
         # The first waypoint is the midpoint of
         # the left side of the rectangle(one of the short sides), the second point is the
@@ -125,11 +130,8 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
         # is vertical 52.1 degrees and horizontal 72.5,
         # so using the minimum length side of the photo the coverage would be 90 feet allowing
         # 10 feet overlap on both sides
-        waypoint: dict[str, list[float]] = {
-            "lats": [38.31451966813249, 38.31430872867596, 38.31461622313521],
-            "longs": [-76.54519982319357, -76.54397320409971, -76.54516993186949],
-            "Altitude": [100],
-        }
+
+        gps_data: GPSData = extract_gps(self.flight_settings.path_data_path)
 
         # traverses the 3 waypoints starting at the midpoint on left to midpoint on the right
         # then to the top left corner at the rectangle
@@ -137,7 +139,7 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
             airdrop_dict = json.load(output)
             airdrops: int = len(airdrop_dict)
             point: int
-        while airdrops != 5:
+        while airdrops < self.flight_settings.standard_object_count:
             logging.info("Starting odlc zone flyover")
 
             for point in range(3):
@@ -168,9 +170,9 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
 
                 await camera.odlc_move_to(
                     self.drone,
-                    waypoint["lats"][point],
-                    waypoint["longs"][point],
-                    waypoint["Altitude"][0],
+                    gps_data["odlc_waypoints"][point].latitude,
+                    gps_data["odlc_waypoints"][point].longitude,
+                    gps_data["odlc_altitude"],
                     5 / 6,
                     take_photos,
                 )
@@ -187,9 +189,18 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
         pass
 
 
-def vision_odlc_logic(capture_status: "SynchronizedBase[c_bool]") -> None:
+def vision_odlc_logic(
+    capture_status: "SynchronizedBase[c_bool]", flight_settings: FlightSettings
+) -> None:
     """
     Implements the run method for the ODLC state.
+
+    Parameters
+    ----------
+    capture_status : SynchronizedBase[c_bool]
+        A text file containing True if all images have been taken and False otherwise
+    flight_settings : FlightSettings
+        Settings for this flight.
 
     Returns
     -------
@@ -202,7 +213,12 @@ def vision_odlc_logic(capture_status: "SynchronizedBase[c_bool]") -> None:
     and transitioning it to the Airdrop state.
     """
     try:
-        flyover_pipeline("flight/data/camera.json", capture_status, "flight/data/output.json")
+        pipeline = (
+            emg_integration_pipeline
+            if flight_settings.standard_object_count == 0
+            else flyover_pipeline
+        )
+        pipeline("flight/data/camera.json", capture_status, "flight/data/output.json")
     except asyncio.CancelledError as ex:
         logging.error("ODLC state canceled")
         raise ex

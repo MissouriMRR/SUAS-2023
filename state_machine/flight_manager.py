@@ -9,7 +9,7 @@ from mavsdk.telemetry import FlightMode, LandedState
 from state_machine.drone import Drone
 from state_machine.state_machine import StateMachine
 from state_machine.states import Start
-from state_machine.flight_settings import FlightSettings
+from state_machine.flight_settings import DEFAULT_STANDARD_OBJECT_COUNT, FlightSettings
 
 
 class FlightManager:
@@ -39,7 +39,11 @@ class FlightManager:
         self.drone: Drone = Drone()
 
     async def run_manager(
-        self, sim_flag: bool, path_data_path: str = "flight/data/waypoint_data.json"
+        self,
+        sim_flag: bool,
+        path_data_path: str = "flight/data/waypoint_data.json",
+        skip_waypoint: bool = False,
+        standard_object_count: int = DEFAULT_STANDARD_OBJECT_COUNT,
     ) -> None:
         """
         Run the state machine until completion in a separate process.
@@ -51,6 +55,10 @@ class FlightManager:
             A flag representing if the drone is a simulation.
         path_data_path : str, default "flight/data/waypoint_data.json"
             The path to the JSON file containing the boundary and waypoint data.
+        skip_waypoint : bool, default False
+            Whether to skip the waypoint state.
+        standard_object_count : int, default DEFAULT_STANDARD_OBJECT_COUNT
+            The number of standard objects to attempt to find.
         """
         if sim_flag:
             self.drone.address = "udp://:14540"
@@ -58,7 +66,10 @@ class FlightManager:
             self.drone.address = "serial:///dev/ttyUSB0:921600"
 
         flight_settings_obj: FlightSettings = FlightSettings(
-            sim_flag=sim_flag, path_data_path=path_data_path
+            sim_flag=sim_flag,
+            path_data_path=path_data_path,
+            skip_waypoint=skip_waypoint,
+            standard_object_count=standard_object_count,
         )
 
         logging.info("Starting processes")
