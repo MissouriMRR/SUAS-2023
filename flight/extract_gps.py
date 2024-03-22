@@ -5,7 +5,7 @@ the provided waypoint data JSON file for the SUAS competition.
 
 import argparse
 import json
-from typing import Any, List, NamedTuple
+from typing import Any, NamedTuple
 from typing_extensions import TypedDict
 
 import utm
@@ -23,7 +23,7 @@ class Waypoint(NamedTuple):
     longitude : float
         The longitude of the waypoint.
     altitude : float
-        The altitude of the waypoint.
+        The altitude of the waypoint, in meters
     """
 
     latitude: float
@@ -54,6 +54,22 @@ class WaypointUtm(NamedTuple):
     zone_number: int
     zone_letter: str
     altitude: float
+
+
+class OdlcWaypoint(NamedTuple):
+    """
+    NamedTuple storing the data for a single ODLC waypoint.
+
+    Attributes
+    ----------
+    latitude : float
+        The latitude of the waypoint.
+    longitude : float
+        The longitude of the waypoint.
+    """
+
+    latitude: float
+    longitude: float
 
 
 class BoundaryPoint(NamedTuple):
@@ -98,11 +114,13 @@ class BoundaryPointUtm(NamedTuple):
 GPSData = TypedDict(
     "GPSData",
     {
-        "waypoints": List[Waypoint],
-        "waypoints_utm": List[WaypointUtm],
-        "boundary_points": List[BoundaryPoint],
-        "boundary_points_utm": List[BoundaryPointUtm],
-        "altitude_limits": List[int],
+        "waypoints": list[Waypoint],
+        "waypoints_utm": list[WaypointUtm],
+        "odlc_waypoints": list[OdlcWaypoint],
+        "boundary_points": list[BoundaryPoint],
+        "boundary_points_utm": list[BoundaryPointUtm],
+        "altitude_limits": list[int],
+        "odlc_altitude": int,
     },
 )
 
@@ -121,9 +139,10 @@ def extract_gps(path: str) -> GPSData:
     GPSData : TypedDict[
             list[Waypoint[float, float, float]],
             list[WaypointUtm[float, float, int, str, float]],
+            list[OdlcWaypoint[float, float]],
             list[BoundaryPoint[float, float]],
             list[BoundaryPointUtm[float, float, int, str]],
-            list[int, int],
+            list[int, int, int],
         ]
         The data in the waypoint data file
         waypoints : list[Waypoint[float, float, float]]
@@ -146,6 +165,12 @@ def extract_gps(path: str) -> GPSData:
                     The zone letter of the waypoint.
                 altitude : float
                     The altitude of the waypoint.
+        odlc_waypoints : list[OdlcWaypoint[float, float]]
+            OdlcWaypoint : OdlcWaypoint[float, float]
+                latitude : float
+                    The latitude of the waypoint.
+                longitude : float
+                    The longitude of the waypoint.
         boundary_points : list[BoundaryPoint[float, float]]
             BoundaryPoint : BoundaryPoint[float, float]
                 latitude : float
@@ -164,9 +189,11 @@ def extract_gps(path: str) -> GPSData:
                     The zone letter of the boundary point.
         altitude_limits : list[int, int]
             altitude_min : int
-                The minimum altitude that the drone must fly at all times.
+                The minimum altitude that the drone must fly at all times, in feet.
             altitude_max : int
-                The maximum altitude that the drone must fly at all times.
+                The maximum altitude that the drone must fly at all times, in feet.
+        odlc_altitude : int
+            The altitude to fly at during the ODLC state, in feet.
     """
 
     # Load the JSON file as a Python dict to be able to easily access the data
@@ -176,6 +203,7 @@ def extract_gps(path: str) -> GPSData:
     # Initialize lists to store waypoints & boundary points
     waypoints: list[Waypoint] = []
     waypoints_utm: list[WaypointUtm] = []
+    odlc_waypoints: list[OdlcWaypoint] = []
     boundary_points: list[BoundaryPoint] = []
     boundary_points_utm: list[BoundaryPointUtm] = []
 
@@ -202,6 +230,12 @@ def extract_gps(path: str) -> GPSData:
         full_waypoint_utm: WaypointUtm = WaypointUtm(*utm_coords, altitude)
         waypoints_utm.append(full_waypoint_utm)
 
+    odlc_waypoint: dict[str, float]
+    for odlc_waypoint in json_data["odlcWaypoints"]:
+        latitude = odlc_waypoint["latitude"]
+        longitude = odlc_waypoint["longitude"]
+        odlc_waypoints.append(OdlcWaypoint(latitude, longitude))
+
     boundary_point: dict[str, float]
     for boundary_point in json_data["flyzones"]["boundaryPoints"]:
         latitude = boundary_point["latitude"]
@@ -217,12 +251,14 @@ def extract_gps(path: str) -> GPSData:
     waypoint_data: GPSData = {
         "waypoints": waypoints,
         "waypoints_utm": waypoints_utm,
+        "odlc_waypoints": odlc_waypoints,
         "boundary_points": boundary_points,
         "boundary_points_utm": boundary_points_utm,
         "altitude_limits": [
             json_data["flyzones"]["altitudeMin"],
             json_data["flyzones"]["altitudeMax"],
         ],
+        "odlc_altitude": json_data["odlcAltitude"],
     }
     return waypoint_data
 

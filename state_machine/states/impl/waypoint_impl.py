@@ -50,87 +50,8 @@ async def run(self: Waypoint) -> State:
     """
 
     try:
-        logging.info("Waypoint state running")
-
-        gps_dict: GPSData = extract_gps(self.flight_settings.path_data_path)
-        waypoints_utm: list[WaylistUtm] = gps_dict["waypoints_utm"]
-
-        boundary_points: list[BoundarylistUtm] = gps_dict["boundary_points_utm"]
-        boundary_points.pop()  # The last point is a duplicate of the first
-
-        boundary_vertices: list[Point] = []
-        for point in boundary_points:
-            boundary_vertices.append(Point(point.easting, point.northing))
-
-        search_graph: list[GraphNode[Point, float]] = pathfinding.create_pathfinding_graph(
-            boundary_vertices, BOUNDARY_SHRINKAGE
-        )
-
-        for waypoint_num, waypoint in enumerate(waypoints_utm):
-            drone_position: mavsdk.telemetry.Position = await anext(
-                self.drone.system.telemetry.position()
-            )
-            drone_northing, drone_easting, _, _ = utm.from_latlon(
-                drone_position.latitude_deg,
-                drone_position.longitude_deg,
-                boundary_points[0].zone_number,
-                boundary_points[0].zone_letter,
-            )
-
-            goto_points: list[Point]
-            try:
-                goto_points = list(
-                    pathfinding.shortest_path_between(
-                        Point(drone_easting, drone_northing),
-                        Point(waypoint.easting, waypoint.northing),
-                        search_graph,
-                    )
-                )
-            except RuntimeError:
-                # Unable to find path that doesn't intersect boundary
-                # This should never happen
-                goto_points = [Point(waypoint.easting, waypoint.northing)]
-
-            path_length: float = (
-                sum(
-                    line_segment.length()
-                    for line_segment in LineSegment.from_points(goto_points, False)
-                )
-                + (goto_points[0] - Point(drone_easting, drone_northing)).distance_from_origin()
-            )
-
-            curr_altitude: float = drone_position.relative_altitude_m
-            altitude_slope: float = (waypoint.altitude - curr_altitude) / path_length
-
-            goto_points.pop()  # The last point is just the waypoint
-
-            lat_deg: float
-            lon_deg: float
-            lat_deg, lon_deg = utm.to_latlon(
-                waypoint.easting, waypoint.northing, waypoint.zone_number, waypoint.zone_letter
-            )
-
-            logging.info("Moving to waypoint %d (lat=%f, lon=%f)", waypoint_num, lat_deg, lon_deg)
-
-            for line_segment in LineSegment.from_points(goto_points, False):
-                lat_deg, lon_deg = utm.to_latlon(
-                    line_segment.p_2.x,
-                    line_segment.p_2.y,
-                    boundary_points[0].zone_number,
-                    boundary_points[0].zone_letter,
-                )
-
-                # Gradually move toward goal altitude
-                curr_altitude += altitude_slope * line_segment.length()
-
-                await move_to(self.drone.system, lat_deg, lon_deg, curr_altitude, 1.0)
-
-            # use 0.9 for fast_param to get within 25 ft of waypoint with plenty of leeway
-            # while being fast (values above 5/6 and less than 1 check for lat and lon with
-            # 5 digit of precision, or about 1.11 m)
-            await move_to(self.drone.system, lat_deg, lon_deg, waypoint.altitude, 0.9)
-
-            logging.info("Reached waypoint %d", waypoint_num)
+        if not self.flight_settings.skip_waypoint:
+            await waypoint_logic(self)
 
         return (ODLC if self.drone.odlc_scan else Airdrop)(self.drone, self.flight_settings)
 
@@ -139,6 +60,98 @@ async def run(self: Waypoint) -> State:
         raise ex
     finally:
         pass
+
+
+async def waypoint_logic(self: Waypoint) -> None:
+    """
+    Run the logic for the waypoint state.
+
+    Parameters
+    ----------
+    self : Waypoint
+        The waypoint state object.
+    """
+    logging.info("Waypoint state running")
+
+    gps_dict: GPSData = extract_gps(self.flight_settings.path_data_path)
+    waypoints_utm: list[WaylistUtm] = gps_dict["waypoints_utm"]
+
+    boundary_points: list[BoundarylistUtm] = gps_dict["boundary_points_utm"]
+    boundary_points.pop()  # The last point is a duplicate of the first
+
+    boundary_vertices: list[Point] = []
+    for point in boundary_points:
+        boundary_vertices.append(Point(point.easting, point.northing))
+
+    search_graph: list[GraphNode[Point, float]] = pathfinding.create_pathfinding_graph(
+        boundary_vertices, BOUNDARY_SHRINKAGE
+    )
+
+    for waypoint_num, waypoint in enumerate(waypoints_utm):
+        drone_position: mavsdk.telemetry.Position = await anext(
+            self.drone.system.telemetry.position()
+        )
+        drone_northing, drone_easting, _, _ = utm.from_latlon(
+            drone_position.latitude_deg,
+            drone_position.longitude_deg,
+            boundary_points[0].zone_number,
+            boundary_points[0].zone_letter,
+        )
+
+        goto_points: list[Point]
+        try:
+            goto_points = list(
+                pathfinding.shortest_path_between(
+                    Point(drone_easting, drone_northing),
+                    Point(waypoint.easting, waypoint.northing),
+                    search_graph,
+                )
+            )
+        except RuntimeError:
+            # Unable to find path that doesn't intersect boundary
+            # This should never happen
+            goto_points = [Point(waypoint.easting, waypoint.northing)]
+
+        path_length: float = (
+            sum(
+                line_segment.length()
+                for line_segment in LineSegment.from_points(goto_points, False)
+            )
+            + (goto_points[0] - Point(drone_easting, drone_northing)).distance_from_origin()
+        )
+
+        curr_altitude: float = drone_position.relative_altitude_m
+        altitude_slope: float = (waypoint.altitude - curr_altitude) / path_length
+
+        goto_points.pop()  # The last point is just the waypoint
+
+        lat_deg: float
+        lon_deg: float
+        lat_deg, lon_deg = utm.to_latlon(
+            waypoint.easting, waypoint.northing, waypoint.zone_number, waypoint.zone_letter
+        )
+
+        logging.info("Moving to waypoint %d (lat=%f, lon=%f)", waypoint_num, lat_deg, lon_deg)
+
+        for line_segment in LineSegment.from_points(goto_points, False):
+            lat_deg, lon_deg = utm.to_latlon(
+                line_segment.p_2.x,
+                line_segment.p_2.y,
+                boundary_points[0].zone_number,
+                boundary_points[0].zone_letter,
+            )
+
+            # Gradually move toward goal altitude
+            curr_altitude += altitude_slope * line_segment.length()
+
+            await move_to(self.drone.system, lat_deg, lon_deg, curr_altitude, 1.0)
+
+        # use 0.9 for fast_param to get within 25 ft of waypoint with plenty of leeway
+        # while being fast (values above 5/6 and less than 1 check for lat and lon with
+        # 5 digit of precision, or about 1.11 m)
+        await move_to(self.drone.system, lat_deg, lon_deg, waypoint.altitude, 0.9)
+
+        logging.info("Reached waypoint %d", waypoint_num)
 
 
 # Set the run_callable attribute of the Waypoint class to the run function
