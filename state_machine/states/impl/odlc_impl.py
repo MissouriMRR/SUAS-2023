@@ -43,7 +43,7 @@ async def run(self: ODLC) -> State:
     https://github.com/python/typeshed/issues/8799
     """
     try:
-        # Syncronized type hint is broken, see https://github.com/python/typeshed/issues/8799
+        # Synchronized type hint is broken, see https://github.com/python/typeshed/issues/8799
         capture_status: SynchronizedBase[c_bool] = Value(c_bool, False)  # type: ignore
 
         vision_process = Process(target=vision_odlc_logic, args=(capture_status,))
@@ -154,7 +154,6 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
                         take_photos,
                     )
                 else:
-                    logging.info("MOVINGGG")
                     await move_to(
                         self.drone.system,
                         waypoint["lats"][point],

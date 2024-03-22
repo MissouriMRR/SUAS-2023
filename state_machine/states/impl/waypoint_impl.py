@@ -52,6 +52,9 @@ async def run(self: Waypoint) -> State:
     try:
         logging.info("Waypoint state running")
 
+        if self.flight_settings.skip_waypoint:
+            return (ODLC if self.drone.odlc_scan else Airdrop)(self.drone, self.flight_settings)
+
         gps_dict: GPSData = extract_gps(self.flight_settings.path_data_path)
         waypoints_utm: list[WaylistUtm] = gps_dict["waypoints_utm"]
 
@@ -100,7 +103,8 @@ async def run(self: Waypoint) -> State:
             )
 
             curr_altitude: float = drone_position.relative_altitude_m
-            altitude_slope: float = (waypoint.altitude - curr_altitude) / path_length
+            # altitude_slope: float = (waypoint.altitude - curr_altitude) / path_length
+            # removing this because "too many local variables" eww
 
             goto_points.pop()  # The last point is just the waypoint
 
@@ -121,7 +125,9 @@ async def run(self: Waypoint) -> State:
                 )
 
                 # Gradually move toward goal altitude
-                curr_altitude += altitude_slope * line_segment.length()
+                curr_altitude += (
+                    (waypoint.altitude - curr_altitude) / path_length
+                ) * line_segment.length()
 
                 await move_to(self.drone.system, lat_deg, lon_deg, curr_altitude, 1.0)
 

@@ -24,9 +24,7 @@ async def run_test(_sim: bool) -> None:
     """
     logging.basicConfig(level=logging.INFO)
     drone = Drone()
-    if drone.address == "udp://:14540":
-        sflag = True
-    flight_settings = FlightSettings(sim_flag=sflag)
+    flight_settings = FlightSettings(sim_flag=_sim, skip_waypoint=True)
     state_machine = StateMachine(Start(drone, flight_settings), drone, flight_settings)
     state_machine_process: Process = Process(
         target=start_state_machine,
