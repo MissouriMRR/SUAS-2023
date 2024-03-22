@@ -1,10 +1,10 @@
 """Runs emergent object code for testing purposes"""
 
-from typing import Callable
-
 import time
-import numpy as np
+from typing import Callable
 import cv2
+import numpy as np
+from nptyping import NDArray, Shape
 
 import vision.common.constants as consts
 
@@ -74,19 +74,21 @@ def emg_integration_pipeline(camera_data_path: str, state_path: str, output_path
 
                 detected_emergents += img_detections
 
-        # Get an array of all locations of detections
-        location_array = np.zeros((len(detected_emergents), 2), dtype=np.float64)
+        # Gather the detections into a numpy array
+        location_array: NDArray[Shape["*, 2"]] = np.zeros(
+            (len(detected_emergents), 2), dtype=np.float64
+        )
         detection: BoundingBox
         for i, detection in enumerate(detected_emergents):
             latitude: float = detection.get_attribute("latitude")
             longitude: float = detection.get_attribute("longitude")
 
-            location = np.array([latitude, longitude], dtype=np.float64)
+            location: consts.Point = np.array([latitude, longitude], dtype=np.float64)
 
             location_array[i] = location
 
         # Average the locations together
-        avg_location = np.mean(location_array, axis=0)
+        avg_location: consts.Point = np.mean(location_array, axis=0)
 
         # Create the dictionary which will be saved as a json
         output_dict: consts.ODLCDict = {
