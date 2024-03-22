@@ -8,11 +8,10 @@ import logging
 import json
 
 from flight.camera import Camera
-
+from state_machine.state_tracker import update_state
 from state_machine.states.airdrop import Airdrop
 from state_machine.states.odlc import ODLC
 from state_machine.states.state import State
-
 from vision.flyover_vision_pipeline import flyover_pipeline
 
 
@@ -44,6 +43,7 @@ async def run(self: ODLC) -> State:
     https://github.com/python/typeshed/issues/8799
     """
     try:
+        update_state("ODLC")
         # Syncronized type hint is broken, see https://github.com/python/typeshed/issues/8799
         capture_status: SynchronizedBase[c_bool] = Value(c_bool, False)  # type: ignore
 

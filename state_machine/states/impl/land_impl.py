@@ -4,9 +4,9 @@ import asyncio
 import time
 import logging
 
-from state_machine.states.land import Land
-
 from mavsdk.telemetry import FlightMode
+from state_machine.state_tracker import update_state, update_drone, update_flight_settings
+from state_machine.states.land import Land
 
 
 async def run(self: Land) -> None:
@@ -27,6 +27,10 @@ async def run(self: Land) -> None:
 
     """
     try:
+        update_state("Land")
+        update_drone(self.drone)
+        update_flight_settings(self.flight_settings)
+
         logging.info("Landing")
 
         # Instruct the drone to land
@@ -35,7 +39,7 @@ async def run(self: Land) -> None:
 
         time.sleep(5)
         async for flight_mode in self.drone.system.telemetry.flight_mode():
-            while flight_mode == FlightMode.Land:
+            while flight_mode == FlightMode.LAND:
                 time.sleep(1)
 
     except asyncio.CancelledError as ex:

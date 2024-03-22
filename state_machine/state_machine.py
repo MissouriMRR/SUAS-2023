@@ -80,6 +80,7 @@ class StateMachine:
     async def _run(self) -> None:
         """Runs the flight code specific to each state until completion."""
         while self.current_state:
+            print(self.current_state)
             self.current_state = await self.current_state.run()
 
     def cancel(self) -> None:

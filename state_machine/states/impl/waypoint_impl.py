@@ -1,5 +1,7 @@
 """Implement the behavior of the Waypoint state."""
 
+# pylint: disable=too-many-locals
+
 import asyncio
 import logging
 from typing import Final
@@ -24,6 +26,7 @@ from state_machine.states.airdrop import Airdrop
 from state_machine.states.odlc import ODLC
 from state_machine.states.state import State
 from state_machine.states.waypoint import Waypoint
+from state_machine.state_tracker import update_state
 
 BOUNDARY_SHRINKAGE: Final[float] = 5.0  # in meters
 
@@ -52,6 +55,7 @@ async def run(self: Waypoint) -> State:
     """
 
     try:
+        update_state("Waypoint")
         logging.info("Waypoint state running")
 
         gps_dict: GPSData = extract_gps(self.flight_settings.path_data_path)

@@ -4,6 +4,8 @@ import asyncio
 import logging
 import json
 
+from state_machine.state_tracker import update_state
+
 from state_machine.states.airdrop import Airdrop
 from state_machine.states.land import Land
 from state_machine.states.waypoint import Waypoint
@@ -28,6 +30,7 @@ async def run(self: Airdrop) -> State:
     it back to the Waypoint state.
     """
     try:
+        update_state("Airdrop")
         logging.info("Airdrop")
         if self.drone.address == "serial:///dev/ttyUSB0:921600":
             # setup airdrop
@@ -64,7 +67,7 @@ async def run(self: Airdrop) -> State:
         # Move to the bottle with priority
         await move_to(self.drone.system, bottle_loc["latitude"], bottle_loc["longitude"], 80, 1)
 
-        logging.info(f"Starting bottle drop {bottle}")
+        logging.info("Starting bottle drop %s", bottle)
         if self.drone.address == "serial:///dev/ttyUSB0:921600":
             await airdrop.drop_bottle(servo_num)
 
