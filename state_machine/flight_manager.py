@@ -186,9 +186,7 @@ class FlightManager:
         input()
         state_machine: Process = Process(
             target=self._run_state_machine,
-            args=(
-                FlightSettings(),
-            ),
+            args=(FlightSettings(),),
         )
         state_machine.start()
         await self._kill_switch(state_machine)
