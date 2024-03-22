@@ -75,6 +75,8 @@ class FlightManager:
 
         state_machine_process.start()
 
+        await self._run_kill_switch(state_machine_process)
+
         try:
             while state_machine_process.is_alive():
                 await asyncio.sleep(0.25)
@@ -105,7 +107,7 @@ class FlightManager:
             StateMachine(Start(self.drone, flight_settings), self.drone, flight_settings).run()
         )
 
-    def _run_kill_switch(self, process: Process) -> None:
+    async def _run_kill_switch(self, process: Process) -> None:
         """
         Create and run a kill switch in the event loop.
 
@@ -115,7 +117,7 @@ class FlightManager:
             The process running the state machine to kill.
         """
         logging.info("-- Starting kill switch")
-        asyncio.run(self._kill_switch(process))
+        await self._kill_switch(process)
 
     async def _kill_switch(self, state_machine_process: Process) -> None:
         """
@@ -142,8 +144,12 @@ class FlightManager:
         # async for flight_mode in self.drone.system.telemetry.flight_mode():
         #    while flight_mode != FlightMode.POSCTL:
         #        time.sleep(1)
+        time.sleep(20)
 
         logging.critical("Kill switch activated. Terminating state machine.")
+
+        await self.drone.system.offboard.stop()
+
         state_machine_process.terminate()
 
         # Get latest state started in the state machine
@@ -182,7 +188,6 @@ class FlightManager:
             target=self._run_state_machine,
             args=(
                 FlightSettings(),
-                state,
             ),
         )
         state_machine.start()
