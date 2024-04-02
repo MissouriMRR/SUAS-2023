@@ -1,6 +1,7 @@
 """
 Testing vision.deskew.coordinate_lengths.py
 """
+
 import json
 import os.path
 from typing import TypedDict
@@ -9,15 +10,21 @@ import numpy as np
 
 from vision.competition_inputs.bottle_reader import load_bottle_info, BottleData
 
+
 class TestBottleRead(unittest.TestCase):
 
     "test file exists"
+
     def test_bottle_file(self) -> None:
-         self.assertTrue(os.path.isfile("vision/competition_inputs/bottle.json"), "json file missing")
-        #self.assertEqual()
+        self.assertTrue(
+            os.path.isfile("vision/competition_inputs/bottle.json"), "json file missing"
+        )
+
+    # self.assertEqual()
     """
     make sure bottle list has what it should in it
     """
+
     def test_bottle_read(self) -> None:
         with open("vision/competition_inputs/bottle.json", encoding="utf-8") as file:
             bottle_list: dict[str, BottleData] = json.load(file)
@@ -37,8 +44,6 @@ class TestBottleRead(unittest.TestCase):
         # Assert the equality
         self.assertEqual(values_match, 1)
         self.assertEqual(keys_match, 1)
-
-    
 
 
 if __name__ == "__main__":
