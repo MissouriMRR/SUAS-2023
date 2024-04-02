@@ -11,14 +11,14 @@ class Land(State):
 
     Attributes
     ----------
-    run_callable : ClassVar[Callable[["Land"], Awaitable[State]]]
+    run_callable : ClassVar[Callable[["Land"], Awaitable[None]]]
         The callable object to call when this state is run. This object is
         shared between all instances of this class.
 
     Methods
     -------
-    run() -> Awaitable[State]:
-        Execute the logic associated with this state and return the next state
+    run() -> Awaitable[None]:
+        Execute the logic associated with this state and return the end of the run
         to transition to.
     """
 

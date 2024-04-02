@@ -1,0 +1,18 @@
+{
+    "C1":{
+        "Servo": 0,
+        "Loaded": false,
+        "Bottle": 1
+    },
+    "C2":{
+        "Servo": 1,
+        "Loaded": true,
+        "Bottle": 2
+    },
+    "C3":{
+        "Servo": 2,
+        "Loaded": true,
+        "Bottle": 3
+    }
+
+}

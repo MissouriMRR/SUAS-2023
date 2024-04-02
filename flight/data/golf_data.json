@@ -1,27 +1,23 @@
 {
   "flyzones":{
-    "altitudeMin": 75,
-    "altitudeMax": 750,
+    "altitudeMin": 50,
+    "altitudeMax": 100,
     "boundaryPoints": [
     	{
 	  "latitude": 37.947427,
 	  "longitude": -91.783078
 	},
 	{
-	  "latitude": 37.948650,
-	  "longitude": -91.782980
+	  "latitude": 37.948218,
+	  "longitude": -91.783290
 	},
 	{
-	  "latitude": 37.949360,
-	  "longitude": -91.784342
+	  "latitude": 37.948835,
+	  "longitude": -91.784535
 	},
 	{
-	  "latitude": 37.948692,
-	  "longitude": -91.785125
-	},
-	{
-	  "latitude": 37.947856,
-	  "longitude": -91.784500
+	  "latitude": 37.948277,
+	  "longitude": -91.784524
 	}
     ]
   },

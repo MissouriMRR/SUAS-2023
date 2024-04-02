@@ -20,54 +20,68 @@ class FlightManager:
     -------
     __init__(self) -> None
         Initialize a flight manager object.
-    start_manager() -> None
-        Test running the state machine in a separate process.
+    run_manager() -> Awaitable[None]
+        Run the state machine until completion in a separate process.
         Sets the drone address to the simulation or physical address.
-    start_state_machine(drone: Drone) -> None
-        Create and start a state machine in the event loop. This method should
-        be called in its own process.
-    start_kill_switch(state_machine_process: Process, drone: Drone) -> None
-        Create and start a kill switch in the event loop.
-    kill_switch(state_machine_process: Process, drone: Drone) -> Awaitable[None]
+    _run_state_machine(drone: Drone) -> None
+        Create and run a state machine until completion in the event loop.
+        This method should be called in its own process.
+    _run_kill_switch(state_machine_process: Process, drone: Drone) -> None
+        Create and run a kill switch in the event loop.
+    _kill_switch(state_machine_process: Process, drone: Drone) -> Awaitable[None]
         Enable the kill switch and wait until it activates. The drone should be
         in manual mode after this method returns.
-    graceful_exit(drone: Drone) -> Awaitable[None]
+    _graceful_exit(drone: Drone) -> Awaitable[None]
         Lands the drone and exits the program.
     """
 
     def __init__(self) -> None:
         self.drone: Drone = Drone()
 
-    def start_manager(self, sim_flag: bool) -> None:
+    async def run_manager(
+        self, sim_flag: bool, path_data_path: str = "flight/data/waypoint_data.json"
+    ) -> None:
         """
-        Test running the state machine in a separate process.
+        Run the state machine until completion in a separate process.
         Sets the drone address to the simulation or physical address.
 
         Parameters
         ----------
-        sim_flag: bool
-            A flag representing if the the drone is a simulation.
+        sim_flag : bool
+            A flag representing if the drone is a simulation.
+        path_data_path : str, default "flight/data/waypoint_data.json"
+            The path to the JSON file containing the boundary and waypoint data.
         """
-        if sim_flag is True:
+        if sim_flag:
             self.drone.address = "udp://:14540"
         else:
             self.drone.address = "serial:///dev/ttyUSB0:921600"
-        flight_settings_obj: FlightSettings = FlightSettings(sim_flag=sim_flag)
+
+        flight_settings_obj: FlightSettings = FlightSettings(
+            sim_flag=sim_flag, path_data_path=path_data_path
+        )
 
         logging.info("Starting processes")
-        state_machine: Process = Process(
-            target=self.start_state_machine,
+        state_machine_process: Process = Process(
+            target=self._run_state_machine,
             args=(flight_settings_obj,),
         )
-        kill_switch_process: Process = Process(target=self.start_kill_switch, args=(state_machine,))
+        kill_switch_process: Process = Process(
+            target=self._run_kill_switch, args=(state_machine_process,)
+        )
 
-        state_machine.start()
+        state_machine_process.start()
         kill_switch_process.start()
 
         try:
-            state_machine.join()
+            while state_machine_process.is_alive():
+                await asyncio.sleep(0.25)
+
             logging.info("State machine joined")
-            kill_switch_process.join()
+
+            while kill_switch_process.is_alive():
+                await asyncio.sleep(0.25)
+
             logging.info("Kill switch joined")
 
             logging.info("Done!")
@@ -76,13 +90,13 @@ class FlightManager:
                 "Keyboard interrupt detected. Killing state machine and landing drone."
             )
         finally:
-            state_machine.terminate()
-            asyncio.run(self.graceful_exit())
+            state_machine_process.terminate()
+            await self._graceful_exit()
 
-    def start_state_machine(self, flight_settings: FlightSettings) -> None:
+    def _run_state_machine(self, flight_settings: FlightSettings) -> None:
         """
-        Create and start a state machine in the event loop. This method should
-        be called in its own process.
+        Create and run a state machine until completion in the event loop.
+        This method should be called in its own process.
 
         Parameters
         ----------
@@ -94,7 +108,7 @@ class FlightManager:
             StateMachine(Start(self.drone, flight_settings), self.drone, flight_settings).run()
         )
 
-    def start_kill_switch(self, process: Process) -> None:
+    def _run_kill_switch(self, process: Process) -> None:
         """
         Create and run a kill switch in the event loop.
 
@@ -104,9 +118,9 @@ class FlightManager:
             The process running the state machine to kill.
         """
         logging.info("-- Starting kill switch")
-        asyncio.run(self.kill_switch(process))
+        asyncio.run(self._kill_switch(process))
 
-    async def kill_switch(self, state_machine_process: Process) -> None:
+    async def _kill_switch(self, state_machine_process: Process) -> None:
         """
         Enable the kill switch and wait until it activates. The drone should be
         Continuously check for whether or not the kill switch has been activated.
@@ -136,7 +150,7 @@ class FlightManager:
         state_machine_process.terminate()
         return
 
-    async def graceful_exit(self) -> None:
+    async def _graceful_exit(self) -> None:
         """
         Land the drone and exit the program.
         """
