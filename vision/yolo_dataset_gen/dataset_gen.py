@@ -49,8 +49,8 @@ def rotate_norm_ctr(nctr: ml_consts.Norm_Ctr, rot: float) -> ml_consts.Norm_Ctr:
     """
     out_nctr: ml_consts.Norm_Ctr = np.empty(nctr.shape, np.float64)
     for idx, pnt in enumerate(nctr):
-        out_nctr[idx, 0] = nctr[idx, 0] * m.cos(rot) - nctr[idx, 1] * m.sin(rot)
-        out_nctr[idx, 1] = nctr[idx, 0] * m.sin(rot) + nctr[idx, 1] * m.cos(rot)
+        out_nctr[idx, 0] = ((pnt[0] - 0.5) * m.cos(rot) - (pnt[1] - 0.5) * m.sin(rot)) + 0.5
+        out_nctr[idx, 1] = ((pnt[0] - 0.5) * m.sin(rot) + (pnt[1] - 0.5) * m.cos(rot)) + 0.5
     
     return out_nctr
 
@@ -59,4 +59,10 @@ def norm_ctr_to_cv2(norm: ml_consts.Norm_Ctr, out_size: int) -> consts.Contour:
     """
     
     """
-    out_ctr: consts.Contour = np.empty((len(norm),))
+    out_ctr: consts.Contour = np.empty((len(norm), 1, 2), np.intc)
+
+    for idx, pnt in enumerate(norm):
+        out_ctr[idx, 0, 0] = round(pnt[0] * (out_size - 1))
+        out_ctr[idx, 0, 1] = round(pnt[1] * (out_size - 1))
+    
+    return out_ctr
