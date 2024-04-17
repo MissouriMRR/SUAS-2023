@@ -1,5 +1,6 @@
 """File storing the webserver for our map overlay."""
 
+import asyncio
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 import json
@@ -32,7 +33,7 @@ def get_odlc_data() -> dict[int, int]:
     return data
 
 
-async def start_server(drone: Drone) -> None:
+async def start_server() -> None:
     """Start the webserver.
 
     Parameters
@@ -46,5 +47,8 @@ async def start_server(drone: Drone) -> None:
         log_level="info",
     )
     server = uvicorn.Server(config)
-    app.drone: Drone = drone
     await server.serve()
+
+
+if __name__ == "__main__":
+    asyncio.run(start_server())
