@@ -32,8 +32,8 @@ async def run(self: Airdrop) -> State:
     try:
         update_state("Airdrop")
         logging.info("Airdrop")
-        if self.drone.address == "serial:///dev/ttyUSB0:921600":
-            # setup airdrop
+        if not self.flight_settings.sim_flag:
+            # setup airdrop because we are not using simulation
             airdrop = AirdropControl()
 
         with open("flight/data/output.json", encoding="utf8") as output:
@@ -62,7 +62,22 @@ async def run(self: Airdrop) -> State:
             servo_num = (cylinders["C2"])["Bottle"]
             cylinder_num = "C2"
 
-        bottle_loc: dict[str, float] = bottle_locations[str(bottle)]
+        try:
+            logging.info("Bottle locations: %s", bottle_locations)
+            bottle_loc: dict[str, float] = bottle_locations[str(bottle)]
+        except KeyError:
+            logging.error("Bottle not found in bottle_locations")
+            if cylinder_num in cylinders:
+                (cylinders[cylinder_num])["Loaded"] = False
+
+            continue_run: bool = False
+            for cylinder in cylinders:
+                if "Loaded" in cylinder and cylinder["Loaded"]:
+                    continue_run = True
+
+            if continue_run:
+                return Waypoint(self.drone, self.flight_settings)
+            return Land(self.drone, self.flight_settings)
 
         # Move to the bottle with priority
         await move_to(self.drone.system, bottle_loc["latitude"], bottle_loc["longitude"], 80)
@@ -82,13 +97,13 @@ async def run(self: Airdrop) -> State:
 
         logging.info("-- Airdrop done!")
 
-        continue_run: bool = False
+        continue_state = False
 
         for cylinder in cylinders:
             if cylinder["Loaded"]:
-                continue_run = True
+                continue_state = True
 
-        if continue_run:
+        if continue_state:
             return Waypoint(self.drone, self.flight_settings)
         return Land(self.drone, self.flight_settings)
 

@@ -88,8 +88,24 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
         # Initialize the camera
         if self.flight_settings.sim_flag is False:
             camera: Camera | None = Camera()
+            # These waypoints are for Maryland
+            """ waypoint: dict[str, list[float]] = {
+                "lats": [38.31451966813249, 38.31430872867596, 38.31461622313521],
+                "longs": [-76.54519982319357, -76.54397320409971, -76.54516993186949],
+                "Altitude": [100],
+            } """
+            waypoint: dict[str, list[float]] = {
+                "lats": [37.948376, 37.948279, 37.948450],
+                "longs": [-91.784238, -91.783761, -91.783535],
+                "Altitude": [30.48],
+            }
         else:
             camera = None
+            waypoint = {
+                "lats": [37.948376, 37.948279, 37.948450],
+                "longs": [-91.784238, -91.783761, -91.783535],
+                "Altitude": [30.48],
+            }
 
         # These waypoint values are all that are needed to traverse the whole odlc drop location
         # because it is a small rectangle
@@ -105,11 +121,6 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
         # is vertical 52.1 degrees and horizontal 72.5,
         # so using the minimum length side of the photo the coverage would be 90 feet allowing
         # 10 feet overlap on both sides
-        waypoint: dict[str, list[float]] = {
-            "lats": [38.31451966813249, 38.31430872867596, 38.31461622313521],
-            "longs": [-76.54519982319357, -76.54397320409971, -76.54516993186949],
-            "Altitude": [100],
-        }
 
         # traverses the 3 waypoints starting at the midpoint on left to midpoint on the right
         # then to the top left corner at the rectangle
@@ -117,9 +128,10 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
             airdrop_dict = json.load(output)
             airdrops: int = len(airdrop_dict)
             point: int
-        while airdrops != 5:
+            loops: int = 0
+        while airdrops != 5 and loops < 3:
             logging.info("Starting odlc zone flyover")
-
+            logging.info(f"Status:\nLoops: {loops}\nAirdrops: {airdrops}")
             for point in range(3):
                 take_photos: bool = False
 
@@ -143,7 +155,6 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
                     take_photos = True
 
                 elif point == 2:
-                    capture_status.value = c_bool(True)  # type: ignore
                     logging.info("Moving to the north west corner")
 
                 if camera:
@@ -152,7 +163,6 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
                         waypoint["lats"][point],
                         waypoint["longs"][point],
                         waypoint["Altitude"][0],
-                        5 / 6,
                         take_photos,
                     )
                 else:
@@ -166,7 +176,9 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
             with open("flight/data/output.json", encoding="ascii") as output:
                 airdrop_dict = json.load(output)
                 airdrops = len(airdrop_dict)
+            loops += 1
 
+        capture_status.value = c_bool(True)  # type: ignore
         self.drone.odlc_scan = False
     except asyncio.CancelledError as ex:
         logging.error("ODLC state canceled")

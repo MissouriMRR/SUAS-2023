@@ -8,6 +8,7 @@ from datetime import datetime
 
 import gphoto2
 
+from flight.waypoint.calculate_distance import calculate_distance
 from state_machine.drone import Drone
 
 
@@ -108,7 +109,6 @@ class Camera:
         latitude: float,
         longitude: float,
         altitude: float,
-        fast_param: float,
         take_photos: bool,
     ) -> None:
         """
@@ -151,29 +151,25 @@ class Camera:
         # First determine if we need to move fast through waypoints or need to slow down at each one
         # Then loops until the waypoint is reached
         while not location_reached:
-            logging.info("Going to waypoint")
+            logging.info("Taking photo")
             async for position in drone.system.telemetry.position():
                 # continuously checks current latitude, longitude and altitude of the drone
                 drone_lat: float = position.latitude_deg
                 drone_long: float = position.longitude_deg
                 drone_alt: float = position.relative_altitude_m
 
-                #  accurately checks if location is reached and stops for 15 secs and then moves on.
-                if (
-                    (round(drone_lat, int(6 * fast_param)) == round(latitude, int(6 * fast_param)))
-                    and (
-                        round(drone_long, int(6 * fast_param))
-                        == round(longitude, int(6 * fast_param))
-                    )
-                    and (round(drone_alt, 1) == round(altitude, 1))
-                ):
+                total_distance: float = calculate_distance(
+                    drone_lat, drone_long, drone_alt, latitude, longitude, altitude
+                )
+
+                if total_distance < 6:  # 6 meters = 19.685 feet.
                     location_reached = True
-                    logging.info("arrived")
+                    logging.info("Arrived %sm away from waypoint", total_distance)
                     break
 
             if take_photos:
                 _full_path: str
-                file_path: str
+                file_path: str = "1"
                 _full_path, file_path = await self.capture_photo()
 
                 point: dict[str, dict[str, int | list[int | float] | float]] = {
