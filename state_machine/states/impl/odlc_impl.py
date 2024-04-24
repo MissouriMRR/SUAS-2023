@@ -89,11 +89,11 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
         if self.flight_settings.sim_flag is False:
             camera: Camera | None = Camera()
             # These waypoints are for Maryland
-            """ waypoint: dict[str, list[float]] = {
-                "lats": [38.31451966813249, 38.31430872867596, 38.31461622313521],
-                "longs": [-76.54519982319357, -76.54397320409971, -76.54516993186949],
-                "Altitude": [100],
-            } """
+            # waypoint: dict[str, list[float]] = {
+            #   "lats": [38.31451966813249, 38.31430872867596, 38.31461622313521],
+            #   "longs": [-76.54519982319357, -76.54397320409971, -76.54516993186949],
+            #   "Altitude": [100],
+            # } """
             waypoint: dict[str, list[float]] = {
                 "lats": [37.948376, 37.948279, 37.948450],
                 "longs": [-91.784238, -91.783761, -91.783535],
@@ -131,13 +131,12 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
             loops: int = 0
         while airdrops != 5 and loops < 3:
             logging.info("Starting odlc zone flyover")
-            logging.info(f"Status:\nLoops: {loops}\nAirdrops: {airdrops}")
-            for point in range(3):
+            logging.info("Status:\nLoops: %s\nAirdrops: %s", loops, airdrops)
+            for point in range(len(waypoint)):
                 take_photos: bool = False
-
                 if point == 0:
-                    logging.info("Moving to the center of the west boundary")
-                elif point == 1:
+                    logging.info("Moving to setup for picture taking")
+                else:
                     # starts taking photos at a .5 second interval because we want
                     # to get multiple photos of the boundary so there is overlap and
                     # the speed of the drone should be 20 m/s which is 64 feet/s which means
@@ -151,11 +150,8 @@ async def find_odlcs(self: ODLC, capture_status: "SynchronizedBase[c_bool]") -> 
                     # it to take a minimum of 12 photos of
                     #  the odlc boundary which will capture the whole area
 
-                    logging.info("Moving to the center of the east boundary")
+                    logging.info("Taking pictures, moving to point #%s", point)
                     take_photos = True
-
-                elif point == 2:
-                    logging.info("Moving to the north west corner")
 
                 if camera:
                     await camera.odlc_move_to(

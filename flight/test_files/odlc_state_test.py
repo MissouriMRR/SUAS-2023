@@ -4,6 +4,7 @@ import asyncio
 from multiprocessing import Process
 import json
 import logging
+import sys
 
 from state_machine.drone import Drone
 from state_machine.state_machine import StateMachine
@@ -68,4 +69,4 @@ async def run_test(_sim: bool, odlc_count: int = 5) -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(run_test(True))
+    asyncio.run(run_test("--sim" in sys.argv))
