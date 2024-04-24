@@ -1,5 +1,7 @@
 """Functions and Configurations for logging flight & vision data during flight"""
 
+from __future__ import annotations
+
 import logging
 
 from typing import TextIO
@@ -12,9 +14,10 @@ from colorlog import ColoredFormatter
 
 LOG_FILE: str = f"logs/{datetime.now()}.log"
 LOG_LEVEL = logging.DEBUG
-LOG_FORMAT: str = "%(levelname)s | %(asctime)s @ %(processname)s:%(funcName)s > %(message)s"
+LOG_FORMAT: str = "%(levelname)s | %(asctime)s @ %(processName)s:%(funcName)s > %(message)s"
 COLOR_LOG_FORMAT: str = (
-    "(log_color)s%(levelname)s | %(asctime)s @  %(processName)s:%(funcName)s > %(message)s%(reset)s"
+    "%(log_color)s%(levelname)s | %(asctime)s @ "
+    + " %(processName)s:%(funcName)s > %(message)s%(reset)s"
 )
 
 
@@ -33,8 +36,9 @@ def init_logger(queue: Queue[str]) -> QueueListener:
     queue_listener : QueueListener
         Object to process log messages
     """
+
     file_formatter: Formatter = logging.Formatter(LOG_FORMAT)
-    file: FileHandler = logging.FileHandler(LOG_FILE, "logFile")
+    file: FileHandler = logging.FileHandler(LOG_FILE)
     file.setFormatter(file_formatter)
 
     console_formatter: Formatter = ColoredFormatter(COLOR_LOG_FORMAT)
