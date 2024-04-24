@@ -12,7 +12,7 @@ from state_machine.drone import Drone
 async def run_flight_code() -> None:
     """Run flight code to hold the drone in mid air and log the flight mode."""
     logging.info("Starting state machine")
-    drone: Drone = Drone("serial:///dev/ttyUSB0")
+    drone: Drone = Drone()
     drone.address = "serial:///dev/ttyUSB0"
     await drone.connect_drone()
     # connect to the drone

@@ -1,13 +1,13 @@
 {
-    "state": "Land",
+    "state": "",
     "drone": {
-        "address": "udp://:14540",
-        "odlc_scan": false
+        "address": "",
+        "odlc_scan": true
     },
     "flight_settings": {
-        "simple_takeoff": false,
-        "title": "SUAS Test Flight",
-        "description": "Test flight for SUAS 2023",
+        "simple_takeoff": true,
+        "title": "",
+        "description": "",
         "waypoint_count": 0,
         "sim_flag": false,
         "path_data_path": ""
