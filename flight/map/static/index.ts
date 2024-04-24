@@ -43,3 +43,15 @@ function update_status() {
     place_objects(locations);
 }
 setInterval(update_status, 1000);
+
+function draw() {
+    const canvas: HTMLCanvasElement = document.createElement('canvas');
+    const ctx: CanvasRenderingContext2D = canvas.getContext('2d')!;
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0);
+    };
+    img.src = "backdrop.png";
+  }
+  
+  draw();
