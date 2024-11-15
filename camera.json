@@ -1,0 +1,17 @@
+{
+    "suas2.png": {
+        "focal_length": 10,
+        "rotation_deg": [10, 20, 30],
+        "drone_coordinates": [50.80085, 21.42069],
+        "altitude_f": 100
+    },
+
+
+
+    "suas.png": {
+        "focal_length": 10,
+        "rotation_deg": [10, 20, 30],
+        "drone_coordinates": [50.80085, 21.42069],
+        "altitude_f": 100
+    }
+}

@@ -50,7 +50,7 @@ def flyover_pipeline(camera_data_path: str) -> None:
     image_parameters: dict[str, consts.CameraParameters] = pipe_utils.read_parameter_json(
         camera_data_path
     )
-
+    print(image_parameters)
     # Loop through all images in the json - if it hasn't been processed, process it
     for image_path in image_parameters.keys():
         print(image_path)
@@ -108,4 +108,5 @@ def flyover_pipeline(camera_data_path: str) -> None:
 
 
 logging.basicConfig(filename="/dev/stdout", level=logging.INFO)
-flyover_pipeline("flight/data/camera.json")
+# flyover_pipeline("flight/data/camera.json")
+flyover_pipeline("camera.json")

@@ -1,15 +1,13 @@
 """Takes the contour of an ODLC shape and determine which shape it is in the certain file path"""
 
 import json
-from typing import List, Tuple, TypeAlias
-
 import cv2
 import numpy as np
 import scipy
 from nptyping import NDArray, Shape, Float64
 from scipy import signal
 import scipy.interpolate
-
+from typing import List, Tuple, TypeAlias
 from vision.common import constants as consts
 from vision.common import odlc_characteristics as chars
 from vision.common.bounding_box import BoundingBox as bbox

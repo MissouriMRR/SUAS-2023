@@ -1,18 +1,18 @@
 [tool.poetry]
-name = "suas-2023"
+name = "suas-2025"
 version = "0.1.0"
 description = ""
 authors = []
 license = "MIT"
+#package.mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
 pip = "^22.0.4"
 mavsdk = "*"
 numpy = "^1.21.2"
-opencv-python = "^4.5.3.56"
+opencv-python = "^4.8.0.76"
 pytesseract = "^0.3.9"
-lxml = "^4.8.0"
 colorlog = "^6.6.0"
 pyproj = "^3.3.0"
 pyusb = "^1.2.1"
@@ -22,15 +22,12 @@ utm = "^0.7.0"
 Shapely = "^1.8.1"
 nptyping = "^2.3.1"
 scipy = "^1.9.3"
-ouster-sdk = {extras = ["examples"], version = "^0.7.1"}
 ticlib = "^0.2.2"
 torch = "^1.13.1"
 pandas = "^1.5.3"
-requests = "^2.28.2"
 psutil = "^5.9.4"
 torchvision = "^0.14.1"
 pyyaml = "^6.0"
-tqdm = "^4.64.1"
 seaborn = "^0.12.2"
 gitpython = "^3.1.31"
 setuptools = "^67.4.0"

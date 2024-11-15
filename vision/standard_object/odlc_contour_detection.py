@@ -29,7 +29,7 @@ NORMAL_IMG_WEIGHT: float = 0.3
 
 def fetch_shape_contours(
     image: Image, draw_contours: bool = False, resulting_file_name: str = ""
-) -> list[np.ndarray[np.dtype[np.uint8], np.dtype[np.uint8]]]:
+) -> list[Contour]:
     """
     Detects the boundaries of potential shapes based on a pixel or region's
     brightness and saturation, finding only the darkest, brightest, and

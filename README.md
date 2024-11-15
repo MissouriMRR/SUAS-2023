@@ -1,6 +1,6 @@
-# SUAS-2023
+# SUAS-2025
 
-Missouri S&amp;T Multirotor Robot Design Team's code for the Association for Unmanned Vehicle Systems International's 2023 Student Unmanned Aerial Systems Competition (AUVSI SUAS 2023)
+Missouri S&amp;T Multirotor Drone Design Team's code for the Association for Unmanned Vehicle Systems International's 2025 Student Unmanned Aerial Systems Competition (AUVSI SUAS 2025) hosted by Robonation
 
 ## Table of contents
 
@@ -53,7 +53,7 @@ You will need to install pip with `sudo apt-get install python3-pip`. Pip is use
 
 ### Getting the Repo
 
-Go to your documents folder and clone the repo with `git clone https://github.com/MissouriMRR/SUAS-2023.git`
+Go to your documents folder and clone the repo with `git clone https://github.com/MissouriMRR/SUAS-2025.git`
 
 ### Pre-commit
 
