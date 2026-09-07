@@ -15,7 +15,6 @@ import torch
 from vision.common.bounding_box import BoundingBox, ObjectType, Vertices, tlwh_to_vertices
 from vision.common.constants import Image
 
-
 EMG_MODEL_PATH = "vision/emergent_object/emergent_model.pt"
 
 
