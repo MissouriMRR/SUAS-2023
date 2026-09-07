@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-""" Record data from Ouster OS-1-32-U LiDAR sensor to pcap file."""
+"""Record data from Ouster OS-1-32-U LiDAR sensor to pcap file."""
 
 import os
 import sys

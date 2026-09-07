@@ -10,7 +10,6 @@ import cv2
 import vision.common.constants as consts
 import vision.common.bounding_box as bbox
 
-
 # constants
 MIN_SHAPE_PIXEL_LEN: int = 30
 # The minimum length/width (vertical/horizontal) a shape may have in pixels
