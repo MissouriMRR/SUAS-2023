@@ -3,8 +3,8 @@ ci:
     skip: [pylint]
 
 repos:
--   repo: https://github.com/psf/black
-    rev: 24.1.1
+-   repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 26.5.1
     hooks:
     -   id: black
         additional_dependencies: ['click<8.1']
@@ -13,7 +13,7 @@ repos:
           ["--line-length=100"]
 
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0  # Use the ref you want to point at
+    rev: v6.0.0  # Use the ref you want to point at
     hooks:
     -   id: check-json
     -   id: check-xml
@@ -29,14 +29,14 @@ repos:
         description: Forces line endings to the UNIX LF character
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.8.0'
+    rev: 'v2.3.1'
     hooks:
     -   id: mypy
         args: ["--config-file=.mypy.ini"]
         additional_dependencies: ['numpy>=1.21.2']
 
 -   repo: https://github.com/PyCQA/pylint
-    rev: 'v3.0.3'
+    rev: 'v4.0.8'
     hooks:
     -   id: pylint
         name: pylint
