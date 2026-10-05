@@ -12,7 +12,6 @@ from nptyping import NDArray, Shape, UInt8, UInt32
 from ouster import client, pcap
 from ouster.sdk.examples.pcap import pcap_3d_one_scan
 
-
 HSCALE_DEFAULT: int = 2  # horizontal scale of image viewer
 VSCALE_DEFAULT: int = 8  # vertical scale of image viewer
 
