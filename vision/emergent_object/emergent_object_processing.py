@@ -9,7 +9,6 @@ from vision.common.bounding_box import BoundingBox, ObjectType, Vertices
 
 from vision.common.constants import Location, ODLCDict
 
-
 # Weights for each metric in pick_emergent_object()
 # is [standard_object_dist, emergent_object_dist, bounding_box_area, ai_confidence]
 # see pick_emergent_object() notes

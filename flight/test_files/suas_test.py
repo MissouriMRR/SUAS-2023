@@ -10,7 +10,6 @@ from typing import List
 
 from mavsdk import System
 
-
 SIM_ADDR: str = "udp://:14540"
 CON_ADDR: str = "serial:///dev/ttyFTDI:921600"
 

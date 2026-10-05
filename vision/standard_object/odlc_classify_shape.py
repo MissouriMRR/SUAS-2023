@@ -280,7 +280,7 @@ def generate_polar_array(cnt: consts.Contour) -> PolarArray:
 
 
 def condense_polar(
-    polar_array: NDArray[Shape["*, 2"], Float64]
+    polar_array: NDArray[Shape["*, 2"], Float64],
 ) -> NDArray[Shape["128,2"], Float64]:
     """
     Condenses a polar array to have 'NUM_STEPS' data points for analysis
@@ -339,7 +339,7 @@ def cartesian_to_polar(x: float, y: float) -> tuple[float, float]:
 
 
 def cartesian_array_to_polar(
-    cartesian_array: NDArray[Shape["*,2,2"], Float64]
+    cartesian_array: NDArray[Shape["*,2,2"], Float64],
 ) -> NDArray[Shape["*,2"], Float64]:
     """
     Converts an array of rectangular (cartesian) coordinates to an array of polar coordinates
